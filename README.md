@@ -1,0 +1,4 @@
+[ ] ExternalAPIToken
+[ ] UserMessageDelay
+[ ] MapOfEvents
+[ ] MapOfTelegramGroups
