@@ -51,5 +51,5 @@ func main() {
 
 	updates := bot.GetUpdatesChan(u)
 
-	go run(bot, updates)
+	run(bot, updates)
 }
