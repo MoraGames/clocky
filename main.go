@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/MoraGames/gooclock/config"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
@@ -22,6 +23,12 @@ func init() {
 }
 
 func main() {
+	conf, err := config.NewConfig()
+	if err != nil {
+		log.Fatal("Config error: ", err)
+	}
+	log.Printf("Config %v", conf)
+
 	apiToken := os.Getenv("TelegramAPIToken")
 	if apiToken == "" {
 		log.Fatal("TelegramAPIToken not set")

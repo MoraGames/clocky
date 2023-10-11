@@ -5,15 +5,16 @@ import (
 	"log"
 	"time"
 
+	"github.com/MoraGames/clockyuwu/events"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func run(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 	for update := range updates {
 		if update.Message != nil { // If we got a message
-			eventKey := toEventKey(update.Message.Time())
+			eventKey := events.NewEventKey(update.Message.Time())
 			msgTime := time.Now()
-			if event, ok := Events[eventKey]; ok && string(eventKey) == update.Message.Text {
+			if event, ok := events.Events[eventKey]; ok && string(eventKey) == update.Message.Text {
 				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 				if !event.Activated {
 					event.Activated = true

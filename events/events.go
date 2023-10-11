@@ -1,31 +1,32 @@
-package main
+package events
 
-import (
-	"time"
-)
+import "time"
 
-type EventKey string
+type EventsMap map[EventKey]*EventValue
 
-func toEventKey(t time.Time) EventKey {
-	return EventKey(time.Time(t).Format("15:04"))
+func NewEventsMap() EventsMap {
+	return make(EventsMap)
 }
 
-type EventValue struct {
-	Points      int
-	Activated   bool
-	ActivatedBy string
-	ActivatedAt time.Time
+func (events EventsMap) Add(eventKey EventKey, eventValue *EventValue) {
+	events[eventKey] = eventValue
 }
 
-func EventReset() {
-	for _, event := range Events {
+func (events EventsMap) Reset() {
+	for _, event := range events {
 		event.Activated = false
 		event.ActivatedBy = ""
 		event.ActivatedAt = time.Time{}
 	}
 }
 
-var Events = map[EventKey]*EventValue{
+func (events EventsMap) Clear() {
+	for eventKey := range events {
+		delete(events, eventKey)
+	}
+}
+
+var Events = EventsMap{
 	"00:00": {2, false, "", time.Time{}},
 	"00:12": {1, false, "", time.Time{}},
 	"00:24": {1, false, "", time.Time{}},
