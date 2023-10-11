@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/MoraGames/gooclock/config"
+	"github.com/MoraGames/clockyuwu/config"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
