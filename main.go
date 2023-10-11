@@ -5,42 +5,46 @@ import (
 	"os"
 
 	"github.com/MoraGames/clockyuwu/config"
+	"github.com/MoraGames/clockyuwu/pkg/logger"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/joho/godotenv"
+	"github.com/sirupsen/logrus"
 )
 
-/*
 func main() {
-	now := EventKey(time.Now())
-	fmt.Println(now.Sintax())
-}
-*/
-
-func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
-	}
-}
-
-func main() {
+	//get the configurations
 	conf, err := config.NewConfig()
 	if err != nil {
-		log.Fatal("Config error: ", err)
+		log.Fatalln(err)
 	}
-	log.Printf("Config %v", conf)
 
+	//setup the logger
+	l := logger.NewLogger(conf.Log.Level, conf.Log.Type)
+	l.WithFields(logrus.Fields{
+		"lvl": conf.Log.Level,
+		"typ": conf.Log.Type,
+	}).Debug("Logger initialized")
+
+	//link Telegram API
 	apiToken := os.Getenv("TelegramAPIToken")
 	if apiToken == "" {
-		log.Fatal("TelegramAPIToken not set")
+		l.WithFields(logrus.Fields{
+			"env": "TelegramAPIToken",
+		}).Panic("Env not set")
 	}
 
+	//get the bot API
 	bot, err := tgbotapi.NewBotAPI(apiToken)
 	if err != nil {
-		log.Panic(err)
+		l.WithFields(logrus.Fields{
+			"err": err,
+		}).Panic("Error while getting bot API")
 	}
 
 	bot.Debug = true
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	l.WithFields(logrus.Fields{
+		"id":       bot.Self.ID,
+		"username": bot.Self.UserName,
+	}).Info("Account authorized")
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60

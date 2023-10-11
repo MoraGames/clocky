@@ -1,0 +1,7 @@
+app:
+  name: "go-o-clock"
+  version: "0.0.1"
+
+logger:
+  level: "debug"
+  type: "text"
