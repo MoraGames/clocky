@@ -5,6 +5,6 @@ import (
 )
 
 type Data struct {
-	Bot *tgbotapi.BotAPI
+	Bot     *tgbotapi.BotAPI
 	Updates tgbotapi.UpdatesChannel
 }

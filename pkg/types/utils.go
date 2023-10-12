@@ -6,6 +6,6 @@ import (
 )
 
 type Utils struct {
-	Conf *config.Config
-	Log *logrus.Logger
+	Config *config.Config
+	Logger *logrus.Logger
 }

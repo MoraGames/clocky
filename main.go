@@ -1,14 +1,14 @@
 package main
 
 import (
-	"os"
 	"log"
+	"os"
 
 	"github.com/MoraGames/clockyuwu/config"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
+	"github.com/MoraGames/clockyuwu/pkg/types"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
-	"github.com/MoraGames/clockyuwu/pkg/types"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 		"id":       bot.Self.ID,
 		"username": bot.Self.UserName,
 	}).Info("Account authorized")
-		
+
 	bot.Debug = false
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
