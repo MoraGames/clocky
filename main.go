@@ -52,5 +52,5 @@ func main() {
 
 	updates := bot.GetUpdatesChan(u)
 
-	run(types.Utils{conf, l}, types.Data{bot, updates})
+	run(types.Utils{Config: conf, Logger: l}, types.Data{Bot: bot, Updates: updates})
 }
