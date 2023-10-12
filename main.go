@@ -46,7 +46,7 @@ func main() {
 		"username": bot.Self.UserName,
 	}).Info("Account authorized")
 
-	bot.Debug = false
+	bot.Debug = true
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
