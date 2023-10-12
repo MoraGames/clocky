@@ -8,7 +8,7 @@ import (
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
-	"github.com/MoraGames/pkg/types"
+	"github.com/MoraGames/clockyuwu/pkg/types"
 )
 
 func main() {

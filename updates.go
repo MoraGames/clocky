@@ -7,7 +7,7 @@ import (
 	"github.com/MoraGames/clockyuwu/events"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
-	"github.com/MoraGames/types"
+	"github.com/MoraGames/clockyuwu/pkg/types"
 )
 
 func run(utils types.Utils, data types.Data) {
