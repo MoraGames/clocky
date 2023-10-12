@@ -1,14 +1,24 @@
 package main
 
 import (
-	"log"
 	"os"
+	"log"
 
 	"github.com/MoraGames/clockyuwu/config"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
+
+type Utils struct {
+	conf *config.Config
+	log *logrus.Logger
+}
+
+type Data struct {
+	bot *tgbotapi.BotAPI
+	updates *tgbotapi.UpdatesChannel
+}
 
 func main() {
 	//get the configurations
@@ -40,16 +50,16 @@ func main() {
 		}).Panic("Error while getting bot API")
 	}
 
-	bot.Debug = true
 	l.WithFields(logrus.Fields{
 		"id":       bot.Self.ID,
 		"username": bot.Self.UserName,
 	}).Info("Account authorized")
-
+		
+	bot.Debug = false
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
 
-	run(bot, updates)
+	run(l, bot, updates)
 }
