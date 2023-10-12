@@ -8,17 +8,8 @@ import (
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
+	"github.com/MoraGames/pkg/types"
 )
-
-type Utils struct {
-	conf *config.Config
-	log *logrus.Logger
-}
-
-type Data struct {
-	bot *tgbotapi.BotAPI
-	updates *tgbotapi.UpdatesChannel
-}
 
 func main() {
 	//get the configurations
@@ -61,5 +52,5 @@ func main() {
 
 	updates := bot.GetUpdatesChan(u)
 
-	run(l, bot, updates)
+	run(types.Utils{conf, l}, types.Data{bot, updates})
 }
