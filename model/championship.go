@@ -1,12 +1,10 @@
-package structs
+package model
 
-/*
 import "time"
 
 type Championship struct {
-	Edition   int
+	Title     string
 	StartDate time.Time
 	Duration  time.Duration
 	Ranking   []Placement
 }
-*/
