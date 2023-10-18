@@ -124,5 +124,5 @@ var Events = EventsMap{
 	"23:45": {2, false, "", time.Time{}, make(map[int64]bool)},
 	"23:57": {1, false, "", time.Time{}, make(map[int64]bool)},
 	//TESTS: --------------------------------------------------------------
-	//"23:59": {0, false, "", time.Time{}, make(map[int64]bool)},
+	//"23:59": {99, false, "", time.Time{}, make(map[int64]bool)},
 }
