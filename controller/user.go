@@ -27,14 +27,14 @@ func (uc *UserController) CreateUser(userID int64, telegramUser *tgbotapi.User) 
 	}
 
 	//Create the user
-	model := &model.User{
+	user := &model.User{
 		TelegramUser:        telegramUser,
 		Points:              0,
 		EventPartecipations: 0,
 		EventWins:           0,
 	}
 
-	return uc.repo.Create(model)
+	return uc.repo.Create(user)
 }
 
 func (uc *UserController) GetUser(userID int64) (*model.User, error) {
@@ -47,17 +47,17 @@ func (uc *UserController) GetAllUsers() []*model.User {
 
 func (uc *UserController) GetUserPoints(userID int64) (int, error) {
 	//Check if the user already exists
-	model, err := uc.repo.Get(userID)
+	user, err := uc.repo.Get(userID)
 	if err != nil {
 		return 0, err
 	}
 
-	return model.Points, nil
+	return user.Points, nil
 }
 
 func (uc *UserController) SetUserPoints(userID int64, userPoints int) error {
 	//Check if the user already exists
-	model, err := uc.repo.Get(userID)
+	user, err := uc.repo.Get(userID)
 	if err != nil {
 		return err
 	}
@@ -72,9 +72,9 @@ func (uc *UserController) SetUserPoints(userID int64, userPoints int) error {
 	}
 
 	//Update the user
-	model.Points = userPoints
+	user.Points = userPoints
 
-	return uc.repo.Update(userID, model)
+	return uc.repo.Update(userID, user)
 }
 
 func (uc *UserController) ResetUser(userID int64) error {
