@@ -79,14 +79,14 @@ func (uc *UserController) SetUserPoints(userID int64, userPoints int) error {
 
 func (uc *UserController) ResetUser(userID int64) error {
 	//Check if the user already exists
-	model, err := uc.repo.Get(userID)
+	user, err := uc.repo.Get(userID)
 	if err != nil {
 		return err
 	}
 
 	//Reset the user
-	model = &model.User{
-		TelegramUser:        model.TelegramUser,
+	user = &model.User{
+		TelegramUser:        user.TelegramUser,
 		Points:              0,
 		EventPartecipations: 0,
 		EventWins:           0,
