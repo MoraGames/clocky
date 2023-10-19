@@ -17,14 +17,6 @@ type ChatRepoer interface {
 	Delete(int64) error
 }
 
-type PlacementRepoer interface {
-	Create(*model.Placement) error
-	Get(int64) (*model.Placement, error)
-	GetAll() []*model.Placement
-	Update(int64, *model.Placement) error
-	Delete(int64) error
-}
-
 type RecordRepoer interface {
 	Create(*model.Record) error
 	Get(string) (*model.Record, error)
