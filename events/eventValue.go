@@ -9,5 +9,6 @@ type EventValue struct {
 	Activated      bool
 	ActivatedBy    string
 	ActivatedAt    time.Time
+	ArrivedAt      time.Time
 	Partecipations map[int64]bool
 }

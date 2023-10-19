@@ -34,6 +34,7 @@ func run(utils types.Utils, data types.Data) {
 	}
 
 	for update := range data.Updates {
+		curTime := time.Now()
 		if update.CallbackQuery != nil {
 			utils.Logger.WithFields(logrus.Fields{}).Info("CallbackQuery received")
 			//TODO: Manage CallbackQuery
@@ -44,8 +45,8 @@ func run(utils types.Utils, data types.Data) {
 			msgTime := time.Now()
 
 			utils.Logger.WithFields(logrus.Fields{
-				"msgTime": update.Message.Time(),
-				"curTime": msgTime,
+				"msgTime": update.Message.Time().Format(utils.TimeFormat),
+				"curTime": curTime.Format(utils.TimeFormat),
 			}).Info("Message received")
 			if update.Message.IsCommand() {
 				switch update.Message.Command() {
@@ -74,8 +75,10 @@ func run(utils types.Utils, data types.Data) {
 				if !event.Activated {
 					event.Activated = true
 					event.ActivatedBy = update.Message.From.UserName
-					event.ActivatedAt = msgTime
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("+%v punti per %v!", event.Points, update.Message.From.UserName))
+					event.ActivatedAt = curTime
+					event.ArrivedAt = update.Message.Time()
+					retard := event.ActivatedAt.Sub(update.Message.Time())
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! +%v punti per te.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, retard.Seconds()))
 					msg.ReplyToMessageID = update.Message.MessageID
 					data.Bot.Send(msg)
 					utils.Logger.WithFields(logrus.Fields{
@@ -94,8 +97,18 @@ func run(utils types.Utils, data types.Data) {
 						Users[update.Message.From.ID].TotalEventWins++
 					}
 				} else {
-					delta := msgTime.Sub(event.ActivatedAt)
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v.\nSei stato più lento di: +%v.%vs", event.ActivatedBy, delta.Seconds(), delta.Milliseconds()))
+					retard := curTime.Sub(event.ArrivedAt)
+					delta := curTime.Sub(event.ActivatedAt)
+					utils.Logger.WithFields(logrus.Fields{
+						"evTStr": string(eventKey) + ":00",
+						"evTime": event.ArrivedAt,
+						"retard": retard,
+						"retSec": retard.Seconds(),
+						"retMil": retard.Milliseconds(),
+						"retMic": retard.Microseconds(),
+						"retNan": retard.Nanoseconds(),
+					}).Warn("Retard calculated")
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa.\nHai impiegato +%vs", event.ActivatedBy, delta.Seconds(), retard.Seconds()))
 					msg.ReplyToMessageID = update.Message.MessageID
 					data.Bot.Send(msg)
 					utils.Logger.WithFields(logrus.Fields{
