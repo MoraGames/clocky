@@ -17,8 +17,9 @@ type (
 	}
 
 	Log struct {
-		Level string `env-required:"true" yaml:"level" env:"LOG_LEVEL"`
-		Type  string `env-required:"true" yaml:"type"  env:"LOG_TYPE"`
+		Type   string `env-required:"true" yaml:"type"  env:"LOG_TYPE"`
+		Format string `env-required:"true" yaml:"format" env:"LOG_FORMAT"`
+		Level  string `env-required:"true" yaml:"level" env:"LOG_LEVEL"`
 	}
 )
 
