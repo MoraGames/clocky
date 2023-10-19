@@ -19,10 +19,11 @@ func main() {
 	}
 
 	//setup the logger
-	l := logger.NewLogger(conf.Log.Level, conf.Log.Type)
+	l := logger.NewLogger(conf.Log.Type, conf.Log.Format, conf.Log.Level)
 	l.WithFields(logrus.Fields{
 		"lvl": conf.Log.Level,
 		"typ": conf.Log.Type,
+		"frm": conf.Log.Format,
 	}).Debug("Logger initialized")
 
 	//link Telegram API
@@ -52,5 +53,5 @@ func main() {
 
 	updates := bot.GetUpdatesChan(u)
 
-	run(types.Utils{Config: conf, Logger: l}, types.Data{Bot: bot, Updates: updates})
+	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates})
 }

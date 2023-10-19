@@ -3,5 +3,6 @@ app:
   version: "0.0.1"
 
 logger:
-  level: "debug"
   type: "text"
+  format: "02-01-2006 15:04:05.000"
+  level: "debug"

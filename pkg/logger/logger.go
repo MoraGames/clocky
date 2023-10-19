@@ -4,19 +4,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewLogger(level, logType string) *logrus.Logger {
+func NewLogger(logType, logFormat, logLevel string) *logrus.Logger {
 	logger := logrus.New()
 
 	if logType == "text" {
 		logger.SetFormatter(&logrus.TextFormatter{
-			FullTimestamp: true,
-			ForceColors:   true,
+			TimestampFormat: logFormat,
+			FullTimestamp:   true,
+			ForceColors:     true,
 		})
 	} else {
-		logger.SetFormatter(&logrus.JSONFormatter{})
+		logger.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: logFormat,
+		})
 	}
 
-	switch level {
+	switch logLevel {
+	case "trace":
+		logger.SetLevel(logrus.TraceLevel)
 	case "debug":
 		logger.SetLevel(logrus.DebugLevel)
 	case "info":

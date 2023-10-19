@@ -6,6 +6,7 @@ import (
 )
 
 type Utils struct {
-	Config *config.Config
-	Logger *logrus.Logger
+	Config     *config.Config
+	Logger     *logrus.Logger
+	TimeFormat string
 }
