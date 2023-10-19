@@ -34,13 +34,15 @@ func (uc *UserController) CreateUser(userID int64, telegramUser *tgbotapi.User) 
 
 	//Create the user
 	user := &model.User{
-		TelegramUser:                     telegramUser,
-		TotalPoints:                      0,
-		MaxChampionshipPoints:            0,
-		TotalEventPartecipations:         0,
-		TotalEventWins:                   0,
-		TotalChampionshipsPartecipations: 0,
-		TotalChampionshipsWins:           0,
+		TelegramUser: telegramUser,
+		UserStats: &model.UserStats{
+			TotalPoints:                      0,
+			MaxChampionshipPoints:            0,
+			TotalEventPartecipations:         0,
+			TotalEventWins:                   0,
+			TotalChampionshipsPartecipations: 0,
+			TotalChampionshipsWins:           0,
+		},
 	}
 
 	return uc.repo.Create(user)
@@ -54,6 +56,16 @@ func (uc *UserController) GetAllUsers() []*model.User {
 	return uc.repo.GetAll()
 }
 
+func (uc *UserController) GetUserStats(userID int64) (*model.UserStats, error) {
+	//Check if the user already exists
+	user, err := uc.repo.Get(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user.UserStats, nil
+}
+
 func (uc *UserController) GetUserTotalPoints(userID int64) (int, error) {
 	//Check if the user already exists
 	user, err := uc.repo.Get(userID)
@@ -61,7 +73,7 @@ func (uc *UserController) GetUserTotalPoints(userID int64) (int, error) {
 		return 0, err
 	}
 
-	return user.TotalPoints, nil
+	return user.UserStats.TotalPoints, nil
 }
 
 func (uc *UserController) SetUserTotalPoints(userID int64, userPoints int) error {
@@ -81,7 +93,7 @@ func (uc *UserController) SetUserTotalPoints(userID int64, userPoints int) error
 	}
 
 	//Update the user
-	user.TotalPoints = userPoints
+	user.UserStats.TotalPoints = userPoints
 
 	return uc.repo.Update(userID, user)
 }
@@ -95,13 +107,15 @@ func (uc *UserController) ResetUser(userID int64) error {
 
 	//Reset the user
 	user = &model.User{
-		TelegramUser:                     user.TelegramUser,
-		TotalPoints:                      0,
-		MaxChampionshipPoints:            0,
-		TotalEventPartecipations:         0,
-		TotalEventWins:                   0,
-		TotalChampionshipsPartecipations: 0,
-		TotalChampionshipsWins:           0,
+		TelegramUser: user.TelegramUser,
+		UserStats: &model.UserStats{
+			TotalPoints:                      0,
+			MaxChampionshipPoints:            0,
+			TotalEventPartecipations:         0,
+			TotalEventWins:                   0,
+			TotalChampionshipsPartecipations: 0,
+			TotalChampionshipsWins:           0,
+		},
 	}
 
 	return nil
