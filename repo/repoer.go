@@ -3,7 +3,7 @@ package repo
 import "github.com/MoraGames/clockyuwu/model"
 
 type ChampionshipRepoer interface {
-	Create(*model.Championship) error
+	Create(*model.Championship) (int64, error)
 	Get(int64) (*model.Championship, error)
 	GetAll() []*model.Championship
 	Update(int64, *model.Championship) error
