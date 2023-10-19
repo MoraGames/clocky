@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
@@ -12,6 +13,11 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
+
+type Rank struct {
+	Username string
+	Points   int
+}
 
 var (
 	Users = make(map[int64]*structs.User)
@@ -50,11 +56,16 @@ func run(utils types.Utils, data types.Data) {
 			if update.Message.IsCommand() {
 				switch update.Message.Command() {
 				case "ranking":
-					var rankingString string
+					ranking := make([]Rank, 0)
 					for _, u := range Users {
-						rankingString += fmt.Sprintf("%v: %v\n", u.UserName, u.TotalPoints)
+						ranking = append(ranking, Rank{u.UserName, u.TotalPoints})
 					}
+					sort.Slice(ranking, func(i, j int) bool { return ranking[i].Points > ranking[j].Points })
 
+					rankingString := ""
+					for i, r := range ranking {
+						rankingString += fmt.Sprintf("%v] %v: %v\n", i+1, r.Username, r.Points)
+					}
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
 					msg.ReplyToMessageID = update.Message.MessageID
 					data.Bot.Send(msg)
