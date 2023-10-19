@@ -42,7 +42,6 @@ func run(utils types.Utils, data types.Data) {
 		if update.Message != nil {
 			//TODO: Rework better this timing system
 			eventKey := events.NewEventKey(update.Message.Time())
-			msgTime := time.Now()
 
 			utils.Logger.WithFields(logrus.Fields{
 				"msgTime": update.Message.Time().Format(utils.TimeFormat),
