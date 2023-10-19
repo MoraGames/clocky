@@ -118,7 +118,7 @@ func (uc *UserController) ResetUser(userID int64) error {
 		},
 	}
 
-	return nil
+	return uc.repo.Update(userID, user)
 }
 
 func (uc *UserController) DeleteUser(userID int64) error {
