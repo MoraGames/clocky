@@ -3,10 +3,11 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/MoraGames/clockyuwu/config"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
-	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/MoraGames/clockyuwu/pkg/util"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -19,7 +20,7 @@ func main() {
 	}
 
 	//setup the logger
-	l := logger.NewLogger(conf.Log.Level, conf.Log.Type)
+	l := logger.NewLogger(conf.Log.Type, conf.Log.Format, conf.Log.Level)
 	l.WithFields(logrus.Fields{
 		"lvl": conf.Log.Level,
 		"typ": conf.Log.Type,
@@ -51,6 +52,28 @@ func main() {
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
+	l.WithFields(logrus.Fields{
+		"updates": updates,
+	}).Debug("Updates channel initialized")
 
-	run(types.Utils{Config: conf, Logger: l}, types.Data{Bot: bot, Updates: updates})
+	appUtils := util.AppUtils{
+		Logger:     l,
+		TimeFormat: "15:04:05.000000 MST -07:00",
+	}
+
+	for update := range updates {
+		updateCurTime := time.Now()
+
+		if update.CallbackQuery != nil {
+			l.WithFields(logrus.Fields{}).Info("CallbackQuery received")
+			//TODO: Manage CallbackQuery
+		}
+		if update.Message != nil {
+			l.WithFields(logrus.Fields{
+				"msgTime": update.Message.Time().Format(appUtils.TimeFormat),
+				"curTime": updateCurTime.Format(appUtils.TimeFormat),
+			}).Info("Message received")
+			manageUpdate(appUtils, bot, update, updateCurTime)
+		}
+	}
 }
