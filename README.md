@@ -1,14 +1,14 @@
-- **Refactor:**
+**Refactor:**
 - [ ] Integrate with PlanetScale for persistency
 - [ ] Refactor events and timesets pkg organization
 - [ ] Add event message cooldown for users
-
-- **Feat:**
+  
+**Feat:**
 - [ ] Add custom timesets
 - [ ] Add timesets rotation
 - [ ] Add daily special event
 - [ ] Add event points random multiplier
 - [ ] Add event points special multiplier
-
-- **Docs:**
+  
+**Docs:**
 - [ ] Write a real README.md
