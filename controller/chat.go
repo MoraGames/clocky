@@ -23,7 +23,7 @@ func NewChatController(repoer repo.ChatRepoer, logger *logrus.Logger) *ChatContr
 func (cc *ChatController) CreateChat(chatID int64, telegramChat *tgbotapi.Chat) error {
 	//Check if the user already exists
 	if _, err := cc.repo.Get(chatID); err == nil {
-		return errorType.ErrChatAlreadyExists{
+		return errorType.ErrChatAlreadyExist{
 			ChatID:   chatID,
 			Message:  "cannot create chat that already exists",
 			Location: "ChatController.CreateChat()",

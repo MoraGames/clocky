@@ -23,7 +23,7 @@ func NewUserController(repoer repo.UserRepoer, logger *logrus.Logger) *UserContr
 func (uc *UserController) CreateUser(userID int64, telegramUser *tgbotapi.User) error {
 	//Check if the user already exists
 	if _, err := uc.repo.Get(userID); err == nil {
-		return errorType.ErrUserAlreadyExists{
+		return errorType.ErrUserAlreadyExist{
 			UserID:   userID,
 			Message:  "cannot create user that already exists",
 			Location: "UserController.CreateUser()",

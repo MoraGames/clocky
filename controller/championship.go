@@ -25,7 +25,7 @@ func NewChampionshipController(repoer repo.ChampionshipRepoer, logger *logrus.Lo
 func (cc *ChampionshipController) CreateChampionship(championshipID int64, title string, startDate time.Time, duration time.Duration) (int64, error) {
 	//Check if the championship already exists
 	if _, err := cc.repo.Get(championshipID); err == nil {
-		return 0, errorType.ErrChampionshipAlreadyExists{
+		return 0, errorType.ErrChampionshipAlreadyExist{
 			ChampionshipID: championshipID,
 			Message:        "cannot create championship that already exists",
 			Location:       "ChampionshipController.CreateChampionship()",

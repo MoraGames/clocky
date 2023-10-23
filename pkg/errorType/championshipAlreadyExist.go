@@ -3,13 +3,13 @@ package errorType
 import "fmt"
 
 type (
-	ErrChampionshipAlreadyExists struct {
+	ErrChampionshipAlreadyExist struct {
 		ChampionshipID int64
 		Message        string
 		Location       string
 	}
 )
 
-func (err ErrChampionshipAlreadyExists) Error() string {
+func (err ErrChampionshipAlreadyExist) Error() string {
 	return fmt.Sprintf("%v: %v {ChampionshipID=%v}", err.Location, err.Message, err.ChampionshipID)
 }

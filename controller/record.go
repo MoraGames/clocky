@@ -22,7 +22,7 @@ func NewRecordController(repoer repo.ChatRepoer, logger *logrus.Logger) *ChatCon
 func (rc *RecordController) CreateRecord(title string) error {
 	//Check if the user already exists
 	if _, err := rc.repo.Get(title); err == nil {
-		return errorType.ErrRecordAlreadyExists{
+		return errorType.ErrRecordAlreadyExist{
 			RecordTitle: title,
 			Message:     "cannot create record that already exists",
 			Location:    "RecordController.CreateRecord()",

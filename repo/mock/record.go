@@ -23,7 +23,7 @@ func NewRecordRepo() *RecordRepo {
 
 func (rr *RecordRepo) Create(record *model.Record) error {
 	if _, ok := rr.records[record.Title]; ok {
-		return errorType.ErrRecordAlreadyExists{
+		return errorType.ErrRecordAlreadyExist{
 			RecordTitle: record.Title,
 			Message:     "cannot create record that already exists",
 			Location:    "RecordRepo.Create()",
