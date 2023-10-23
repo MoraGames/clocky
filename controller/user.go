@@ -22,16 +22,27 @@ func NewUserController(repoer repo.UserRepoer, logger *logrus.Logger) *UserContr
 
 func (uc *UserController) CreateUser(userID int64, telegramUser *tgbotapi.User) error {
 	//Check if the user already exists
-	if _, err := uc.repo.Get(userID); err != nil {
+	if _, err := uc.repo.Get(userID); err == nil {
+		return errorType.ErrUserAlreadyExists{
+			UserID:   userID,
+			Message:  "cannot create user that already exists",
+			Location: "UserController.CreateUser()",
+		}
+	} else if err.Error() != "cannot get user not found" {
 		return err
 	}
 
 	//Create the user
 	user := &model.User{
-		TelegramUser:        telegramUser,
-		Points:              0,
-		EventPartecipations: 0,
-		EventWins:           0,
+		TelegramUser: telegramUser,
+		UserStats: &model.UserStats{
+			TotalPoints:                      0,
+			MaxChampionshipPoints:            0,
+			TotalEventPartecipations:         0,
+			TotalEventWins:                   0,
+			TotalChampionshipsPartecipations: 0,
+			TotalChampionshipsWins:           0,
+		},
 	}
 
 	return uc.repo.Create(user)
@@ -45,17 +56,27 @@ func (uc *UserController) GetAllUsers() []*model.User {
 	return uc.repo.GetAll()
 }
 
-func (uc *UserController) GetUserPoints(userID int64) (int, error) {
+func (uc *UserController) GetUserStats(userID int64) (*model.UserStats, error) {
+	//Check if the user already exists
+	user, err := uc.repo.Get(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user.UserStats, nil
+}
+
+func (uc *UserController) GetUserTotalPoints(userID int64) (int, error) {
 	//Check if the user already exists
 	user, err := uc.repo.Get(userID)
 	if err != nil {
 		return 0, err
 	}
 
-	return user.Points, nil
+	return user.UserStats.TotalPoints, nil
 }
 
-func (uc *UserController) SetUserPoints(userID int64, userPoints int) error {
+func (uc *UserController) SetUserTotalPoints(userID int64, userPoints int) error {
 	//Check if the user already exists
 	user, err := uc.repo.Get(userID)
 	if err != nil {
@@ -72,7 +93,7 @@ func (uc *UserController) SetUserPoints(userID int64, userPoints int) error {
 	}
 
 	//Update the user
-	user.Points = userPoints
+	user.UserStats.TotalPoints = userPoints
 
 	return uc.repo.Update(userID, user)
 }
@@ -86,13 +107,18 @@ func (uc *UserController) ResetUser(userID int64) error {
 
 	//Reset the user
 	user = &model.User{
-		TelegramUser:        user.TelegramUser,
-		Points:              0,
-		EventPartecipations: 0,
-		EventWins:           0,
+		TelegramUser: user.TelegramUser,
+		UserStats: &model.UserStats{
+			TotalPoints:                      0,
+			MaxChampionshipPoints:            0,
+			TotalEventPartecipations:         0,
+			TotalEventWins:                   0,
+			TotalChampionshipsPartecipations: 0,
+			TotalChampionshipsWins:           0,
+		},
 	}
 
-	return nil
+	return uc.repo.Update(userID, user)
 }
 
 func (uc *UserController) DeleteUser(userID int64) error {
