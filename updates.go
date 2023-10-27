@@ -82,7 +82,8 @@ func run(utils types.Utils, data types.Data) {
 					"evnt": update.Message.Text,
 					"user": update.Message.From.UserName,
 				}).Debug("Event validated")
-				if !event.Activated {
+				if events.LastEventKey != eventKey {
+					events.LastEventKey = eventKey
 					event.Activated = true
 					event.ActivatedBy = update.Message.From.UserName
 					event.ActivatedAt = curTime
