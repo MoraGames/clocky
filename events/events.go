@@ -2,6 +2,8 @@ package events
 
 import "time"
 
+var LastEventKey EventKey
+
 type EventsMap map[EventKey]*EventValue
 
 func NewEventsMap() EventsMap {
