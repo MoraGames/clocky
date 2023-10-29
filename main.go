@@ -1,12 +1,16 @@
 package main
 
 import (
+	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/MoraGames/clockyuwu/config"
+	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/go-co-op/gocron"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -26,6 +30,32 @@ func main() {
 		"frm": conf.Log.Format,
 	}).Debug("Logger initialized")
 
+	logFile, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Println(err)
+	}
+
+	mw := io.MultiWriter(os.Stdout, logFile)
+	l.SetOutput(mw)
+
+	//get current time location
+	timeLocation, err := time.LoadLocation("Local")
+	if err != nil {
+		l.WithFields(logrus.Fields{
+			"err": err,
+		}).Warn("Time location not get (using UTC)")
+	}
+
+	//set the gocron events reset
+	gcScheduler := gocron.NewScheduler(timeLocation)
+	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset)
+	if err != nil {
+		l.WithFields(logrus.Fields{
+			"gcJob": gcJob,
+			"error": err,
+		}).Error("GoCron job not set")
+	}
+
 	//link Telegram API
 	apiToken := os.Getenv("TelegramAPIToken")
 	if apiToken == "" {
@@ -41,17 +71,22 @@ func main() {
 			"err": err,
 		}).Panic("Error while getting bot API")
 	}
-
 	l.WithFields(logrus.Fields{
 		"id":       bot.Self.ID,
 		"username": bot.Self.UserName,
 	}).Info("Account authorized")
 
-	bot.Debug = true
+	bot.Debug = false
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 180
 
 	updates := bot.GetUpdatesChan(u)
+	l.WithFields(logrus.Fields{
+		"debugMode": bot.Debug,
+		"timeout":   u.Timeout,
+	}).Debug("Update channel retreived")
 
-	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates})
+	gcScheduler.StartAsync()
+	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates, Status: "online"})
+	gcScheduler.Stop()
 }

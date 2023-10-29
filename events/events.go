@@ -18,6 +18,7 @@ func (events EventsMap) Reset() {
 		event.ActivatedBy = ""
 		event.ActivatedAt = time.Time{}
 		event.ArrivedAt = time.Time{}
+		event.Partecipations = make(map[int64]bool)
 	}
 }
 

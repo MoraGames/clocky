@@ -7,4 +7,5 @@ import (
 type Data struct {
 	Bot     *tgbotapi.BotAPI
 	Updates tgbotapi.UpdatesChannel
+	Status  string
 }
