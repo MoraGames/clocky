@@ -156,7 +156,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			msg.ReplyToMessageID = update.Message.MessageID
 			data.Bot.Send(msg)
 			utils.Logger.Debug("Status getted")
-		} else if len(cmdArgs) == 2 && cmdArgs[0] == "get" {
+		} else if len(cmdArgs) == 2 && cmdArgs[0] == "set" {
 			if !isAdmin(update.Message.From, utils) {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
 				msg.ReplyToMessageID = update.Message.MessageID
@@ -167,8 +167,22 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				}).Debug("Unauthorized user")
 			} else if cmdArgs[1] == "online" {
 				data.Status = "online"
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "bot is currently: "+data.Status)
+				msg.ReplyToMessageID = update.Message.MessageID
+				data.Bot.Send(msg)
+				utils.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"sts": data.Status,
+				}).Info("Bot status set to online")
 			} else if cmdArgs[1] == "offline" {
 				data.Status = "offline"
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "bot is currently: "+data.Status)
+				msg.ReplyToMessageID = update.Message.MessageID
+				data.Bot.Send(msg)
+				utils.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"sts": data.Status,
+				}).Info("Bot status set to online")
 			}
 		} else {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /status <get|set <online|offline>> ")

@@ -55,6 +55,17 @@ func run(utils types.Utils, data types.Data) {
 				"msgTime": update.Message.Time().Format(utils.TimeFormat),
 				"curTime": curTime.Format(utils.TimeFormat),
 			}).Info("Message received")
+
+			if update.Message.IsCommand() && update.Message.Command() == "ping" {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "pong")
+				msg.ReplyToMessageID = update.Message.MessageID
+				data.Bot.Send(msg)
+				utils.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"msg": update.Message.Text,
+				}).Debug("Ping-Pong sent")
+			}
+
 			if data.Status == "online" {
 				if update.Message.IsCommand() {
 					manageCommands(update, utils, data, curTime, eventKey)
