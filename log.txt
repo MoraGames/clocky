@@ -2669,3 +2669,34 @@
 [37mDEBU[0m[29-10-2023 20:58:10.153] Ping-Pong sent                                [37mfields.msg[0m=/ping [37musr[0m=AleRinaldi
 [36mINFO[0m[29-10-2023 20:58:17.831] Message received                              [36mcurTime[0m="20:58:17.831386 CET +01:00" [36mmsgText[0m=/ping [36mmsgTime[0m="20:58:17.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
 [37mDEBU[0m[29-10-2023 20:58:17.929] Ping-Pong sent                                [37mfields.msg[0m=/ping [37musr[0m=AleRinaldi
+[36mINFO[0m[29-10-2023 21:00:51.038] Message received                              [36mcurTime[0m="21:00:51.038976 CET +01:00" [36mmsgText[0m="Non iniziamo eh xD" [36mmsgTime[0m="21:00:50.000000 CET +01:00" [36musrFrom[0m=MoraGames
+[36mINFO[0m[29-10-2023 21:01:21.674] Message received                              [36mcurTime[0m="21:01:21.674382 CET +01:00" [36mmsgText[0m=/ping [36mmsgTime[0m="21:01:21.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
+[37mDEBU[0m[29-10-2023 21:01:21.963] Ping-Pong sent                                [37mfields.msg[0m=/ping [37musr[0m=AleRinaldi
+[36mINFO[0m[29-10-2023 21:01:22.275] Message received                              [36mcurTime[0m="21:01:22.275287 CET +01:00" [36mmsgText[0m="@vano_0 finalmente ti ho accontentato" [36mmsgTime[0m="21:01:22.000000 CET +01:00" [36musrFrom[0m=MoraGames
+[36mINFO[0m[29-10-2023 21:01:31.940] Account authorized                            [36mid[0m=6657051994 [36musername[0m=clockyuwu_bot
+[37mDEBU[0m[29-10-2023 21:01:31.940] Update channel retreived                      [37mdebugMode[0m=false [37mtimeout[0m=180
+[36mINFO[0m[29-10-2023 21:01:40.388] Message received                              [36mcurTime[0m="21:01:40.387935 CET +01:00" [36mmsgText[0m="@AleRinaldi lo vuoi ostare giù o tengo su il mio?" [36mmsgTime[0m="21:01:40.000000 CET +01:00" [36musrFrom[0m=MoraGames
+[36mINFO[0m[29-10-2023 21:03:03.011] Message received                              [36mcurTime[0m="21:03:03.011851 CET +01:00" [36mmsgText[0m="Vedo se sono in condizione di farlo" [36mmsgTime[0m="21:03:02.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
+[36mINFO[0m[29-10-2023 21:11:00.208] Message received                              [36mcurTime[0m="21:11:00.208004 CET +01:00" [36mmsgText[0m="21:11" [36mmsgTime[0m="21:11:00.000000 CET +01:00" [36musrFrom[0m=xela92
+[37mDEBU[0m[29-10-2023 21:11:00.208] Event validated                               [37mevnt[0m="21:11" [37muser[0m=xela92
+[37mDEBU[0m[29-10-2023 21:11:00.330] Event activated                               [37mactAt[0m="21:11" [37mactBy[0m=xela92 [37mdelay[0m=208.0047ms [37mpoint[0m=1
+[36mINFO[0m[29-10-2023 21:11:00.334] Message received                              [36mcurTime[0m="21:11:00.334972 CET +01:00" [36mmsgText[0m="21:11" [36mmsgTime[0m="21:11:00.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
+[37mDEBU[0m[29-10-2023 21:11:00.347] Event validated                               [37mevnt[0m="21:11" [37muser[0m=AleRinaldi
+[37mDEBU[0m[29-10-2023 21:11:00.458] Event already activated                       [37mactAt[0m="2023-10-29 21:11:00.2080047 +0100 CET m=+568.531042901" [37mactBy[0m=xela92 [37mdelay[0m=334.9726ms [37mdelta[0m=126.9679ms
+[36mINFO[0m[29-10-2023 21:12:00.187] Message received                              [36mcurTime[0m="21:12:00.187299 CET +01:00" [36mmsgText[0m="21:12" [36mmsgTime[0m="21:12:00.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
+[37mDEBU[0m[29-10-2023 21:12:00.187] Event validated                               [37mevnt[0m="21:12" [37muser[0m=AleRinaldi
+[37mDEBU[0m[29-10-2023 21:12:00.429] Event activated                               [37mactAt[0m="21:12" [37mactBy[0m=AleRinaldi [37mdelay[0m=187.2992ms [37mpoint[0m=1
+[36mINFO[0m[29-10-2023 21:12:00.430] Message received                              [36mcurTime[0m="21:12:00.430566 CET +01:00" [36mmsgText[0m="21:12" [36mmsgTime[0m="21:12:00.000000 CET +01:00" [36musrFrom[0m=xela92
+[37mDEBU[0m[29-10-2023 21:12:00.444] Event validated                               [37mevnt[0m="21:12" [37muser[0m=xela92
+[37mDEBU[0m[29-10-2023 21:12:00.693] Event already activated                       [37mactAt[0m="2023-10-29 21:12:00.1872992 +0100 CET m=+628.510337401" [37mactBy[0m=AleRinaldi [37mdelay[0m=430.5661ms [37mdelta[0m=243.2669ms
+[36mINFO[0m[29-10-2023 21:13:08.403] Message received                              [36mcurTime[0m="21:13:08.403699 CET +01:00" [36mmsgText[0m="@MoraGames dovrei aver avviato" [36mmsgTime[0m="21:13:08.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
+[36mINFO[0m[29-10-2023 21:13:09.970] Message received                              [36mcurTime[0m="21:13:09.970009 CET +01:00" [36mmsgText[0m=/ping [36mmsgTime[0m="21:13:09.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
+[37mDEBU[0m[29-10-2023 21:13:10.128] Ping-Pong sent                                [37mfields.msg[0m=/ping [37musr[0m=AleRinaldi
+[36mINFO[0m[29-10-2023 21:13:33.952] Message received                              [36mcurTime[0m="21:13:33.952015 CET +01:00" [36mmsgText[0m="Non so se con la stessa api key puoi avere più pop" [36mmsgTime[0m="21:13:33.000000 CET +01:00" [36musrFrom[0m=AleRinaldi
+[36mINFO[0m[29-10-2023 21:13:45.140] Message received                              [36mcurTime[0m="21:13:45.140367 CET +01:00" [36mmsgText[0m=/ping [36mmsgTime[0m="21:13:45.000000 CET +01:00" [36musrFrom[0m=vano_0
+[37mDEBU[0m[29-10-2023 21:13:45.236] Ping-Pong sent                                [37mfields.msg[0m=/ping [37musr[0m=vano_0
+[36mINFO[0m[29-10-2023 21:13:49.772] Message received                              [36mcurTime[0m="21:13:49.772894 CET +01:00" [36mmsgText[0m=/ping [36mmsgTime[0m="21:13:49.000000 CET +01:00" [36musrFrom[0m=vano_0
+[37mDEBU[0m[29-10-2023 21:13:49.927] Ping-Pong sent                                [37mfields.msg[0m=/ping [37musr[0m=vano_0
+[36mINFO[0m[29-10-2023 21:13:51.006] Message received                              [36mcurTime[0m="21:13:51.006348 CET +01:00" [36mmsgText[0m=/ping [36mmsgTime[0m="21:13:50.000000 CET +01:00" [36musrFrom[0m=vano_0
+[37mDEBU[0m[29-10-2023 21:13:51.111] Ping-Pong sent                                [37mfields.msg[0m=/ping [37musr[0m=vano_0
+[36mINFO[0m[29-10-2023 21:19:43.517] Message received                              [36mcurTime[0m="21:19:43.517892 CET +01:00" [36mmsgText[0m="Se lo stai ostando tu io tiro giù il mio" [36mmsgTime[0m="21:19:43.000000 CET +01:00" [36musrFrom[0m=MoraGames
