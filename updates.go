@@ -13,16 +13,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Rank struct {
-	Username string
-	Points   int
-}
-
+// Users is the data structure that contains all the users and their informations
 var (
 	Users = make(map[int64]*structs.User)
 )
 
+// Run the core of the bot
 func run(utils types.Utils, data types.Data) {
+	// Read the users file and load in Users data structure
 	file, err := os.ReadFile("users.json")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
@@ -30,7 +28,6 @@ func run(utils types.Utils, data types.Data) {
 			"note": "preoccupati moderatamente",
 		}).Error("Error while reading data")
 	}
-
 	err = json.Unmarshal([]byte(file), &Users)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
@@ -39,100 +36,106 @@ func run(utils types.Utils, data types.Data) {
 		}).Error("Error while unmarshalling data")
 	}
 
+	// Loop over the updates
 	for update := range data.Updates {
+		// Save the time of the update reading (more precise than the time of the message)
 		curTime := time.Now()
+
+		// Check the type of the update
 		if update.CallbackQuery != nil {
 			utils.Logger.WithFields(logrus.Fields{}).Info("CallbackQuery received")
-			//TODO: Manage CallbackQuery
+			// TODO: Manage CallbackQuery
 		}
 		if update.Message != nil {
-			//TODO: Rework better this timing system
+			// TODO: Rework better this timing system
 			eventKey := events.NewEventKey(update.Message.Time())
 
-			utils.Logger.WithFields(logrus.Fields{
-				"usrFrom": update.Message.From.UserName,
-				"msgText": update.Message.Text,
-				"msgTime": update.Message.Time().Format(utils.TimeFormat),
-				"curTime": curTime.Format(utils.TimeFormat),
-			}).Info("Message received")
-
+			// Allow only commands if the bot status is offline
 			if update.Message.IsCommand() && update.Message.Command() == "ping" {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "pong")
-				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
-				utils.Logger.WithFields(logrus.Fields{
-					"usr": update.Message.From.UserName,
-					"msg": update.Message.Text,
-				}).Debug("Ping-Pong sent")
+				manageCommands(update, utils, data, curTime, eventKey)
 			}
 
-			if data.Status == "online" {
-				if update.Message.IsCommand() {
-					manageCommands(update, utils, data, curTime, eventKey)
-				} else if event, ok := events.Events[eventKey]; ok && string(eventKey) == update.Message.Text {
+			if data.Status == "online" || isAdmin(update.Message.From, utils) {
+				// Log Message
+				utils.Logger.WithFields(logrus.Fields{
+					"usrFrom": update.Message.From.UserName,
+					"msgText": update.Message.Text,
+					"msgTime": update.Message.Time().Format(utils.TimeFormat),
+					"curTime": curTime.Format(utils.TimeFormat),
+				}).Info("Message received")
+
+				// Check if the message is a valid event
+				if event, ok := events.Events[eventKey]; ok && string(eventKey) == update.Message.Text {
+					// Log Event message
 					utils.Logger.WithFields(logrus.Fields{
 						"evnt": update.Message.Text,
 						"user": update.Message.From.UserName,
 					}).Debug("Event validated")
+
+					// Check if the user has already partecipated
 					if !event.Activated {
+						// Activate the event amd calculate the delay from o' clock
 						event.Activated = true
 						event.ActivatedBy = update.Message.From.UserName
 						event.ActivatedAt = curTime
 						event.ArrivedAt = update.Message.Time()
 						delay := event.ActivatedAt.Sub(update.Message.Time())
+
+						// Respond to the user with event activated informations
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! +%v punti per te.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, delay.Seconds()))
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
-						// LOG IMPORTANTI PER VANO -----------------------------------------------
+
+						// Log Event activated
 						utils.Logger.WithFields(logrus.Fields{
 							"actBy": update.Message.From.UserName,
 							"actAt": update.Message.Text,
 							"point": event.Points,
-							"delay": delay,
 						}).Debug("Event activated")
 
-						//give points to the user
+						// Add the user to the data structure if they have never participated before
 						if _, ok := Users[update.Message.From.ID]; !ok {
 							Users[update.Message.From.ID] = structs.NewUser(update.Message.From.UserName)
 						}
+
+						// Add points to the user if they have never participated the event before
 						if !event.Partecipations[update.Message.From.ID] {
 							Users[update.Message.From.ID].TotalPoints += event.Points
 							Users[update.Message.From.ID].TotalEventPartecipations++
 							Users[update.Message.From.ID].TotalEventWins++
 						}
 					} else {
+						// Calculate the delay from o' clock and winner user
 						delay := curTime.Sub(event.ArrivedAt)
 						delta := curTime.Sub(event.ActivatedAt)
-						utils.Logger.WithFields(logrus.Fields{
-							"evTStr": string(eventKey) + ":00",
-							"evTime": event.ArrivedAt,
-							"dalay":  delay,
-							"dlySec": delay.Seconds(),
-							"dlyMil": delay.Milliseconds(),
-							"dlyMic": delay.Microseconds(),
-							"dlyNan": delay.Nanoseconds(),
-						}).Trace("Dalay calculated")
+
+						// Respond to the user with event already activated informations
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa.\nHai impiegato +%vs", event.ActivatedBy, delta.Seconds(), delay.Seconds()))
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
-						// LOG IMPORTANTI PER VANO -----------------------------------------------
+
+						// Log Event already activated
 						utils.Logger.WithFields(logrus.Fields{
 							"actBy": event.ActivatedBy,
-							"actAt": event.ActivatedAt,
+							"actAt": event.ActivatedAt.Format(utils.TimeFormat),
 							"delta": delta,
 							"delay": delay,
 						}).Debug("Event already activated")
+
+						// Add the user to the data structure if they have never participated before
 						if _, ok := Users[update.Message.From.ID]; !ok {
 							Users[update.Message.From.ID] = structs.NewUser(update.Message.From.UserName)
 						}
+						// Add partecipations to the user if they have never participated the event before
 						if !event.Partecipations[update.Message.From.ID] {
 							Users[update.Message.From.ID].TotalEventPartecipations++
 						}
 					}
 
-					//set that the user has already partecipated
+					// Set that the user has already partecipated
 					events.Events[eventKey].Partecipations[update.Message.From.ID] = true
 
+					// Save the users file with updated Users data structure
 					file, err := json.MarshalIndent(Users, "", " ")
 					if err != nil {
 						utils.Logger.WithFields(logrus.Fields{
