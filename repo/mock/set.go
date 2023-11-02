@@ -34,9 +34,9 @@ func (sr *SetRepo) Get(id int64) (*model.Set, error) {
 	bonus, ok := sr.sets[id]
 	if !ok {
 		return nil, errorType.ErrSetNotFound{
-			PartecipationID: id,
-			Message:         "cannot get set not found",
-			Location:        "SetRepo.Get()",
+			SetID:    id,
+			Message:  "cannot get set not found",
+			Location: "SetRepo.Get()",
 		}
 	}
 	return bonus, nil
@@ -75,7 +75,7 @@ func (sr *SetRepo) Delete(id int64) error {
 	_, ok := sr.sets[id]
 	if !ok {
 		return errorType.ErrSetNotFound{
-			BonusID:  id,
+			SetID:    id,
 			Message:  "cannot delete set not found",
 			Location: "SetRepo.Delete()",
 		}

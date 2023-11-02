@@ -54,16 +54,16 @@ func (pr *PartecipationRepo) Update(id int64, partecipation *model.Partecipation
 	_, ok := pr.partecipations[id]
 	if !ok {
 		return errorType.ErrPartecipationNotFound{
-			BonusID:  id,
-			Message:  "cannot get partecipation not found",
-			Location: "BonusRepo.Update()",
+			PartecipationID: id,
+			Message:         "cannot get partecipation not found",
+			Location:        "PartecipationRepo.Update()",
 		}
 	}
 	if id != partecipation.ID {
 		return errorType.ErrPartecipationNotValid{
-			BonusID:  id,
-			Message:  "cannot update partecipation when id mismatch",
-			Location: "BonusRepo.Update()",
+			PartecipationID: id,
+			Message:         "cannot update partecipation when id mismatch",
+			Location:        "PartecipationRepo.Update()",
 		}
 	}
 
@@ -75,9 +75,9 @@ func (pr *PartecipationRepo) Delete(id int64) error {
 	_, ok := pr.partecipations[id]
 	if !ok {
 		return errorType.ErrPartecipationNotFound{
-			BonusID:  id,
-			Message:  "cannot delete partecipation not found",
-			Location: "PartecipationRepo.Delete()",
+			PartecipationID: id,
+			Message:         "cannot delete partecipation not found",
+			Location:        "PartecipationRepo.Delete()",
 		}
 	}
 	delete(pr.partecipations, id)
