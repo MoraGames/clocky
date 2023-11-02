@@ -3,25 +3,11 @@ package controller
 import (
 	"github.com/MoraGames/clockyuwu/model"
 	"github.com/MoraGames/clockyuwu/pkg/errorType"
-	"github.com/MoraGames/clockyuwu/repo"
-	"github.com/sirupsen/logrus"
 )
 
-type RecordController struct {
-	repo repo.RecordRepoer
-	log  *logrus.Logger
-}
-
-func NewRecordController(repoer repo.ChatRepoer, logger *logrus.Logger) *ChatController {
-	return &ChatController{
-		repo: repoer,
-		log:  logger,
-	}
-}
-
-func (rc *RecordController) CreateRecord(title string) error {
+func (c *Controller) CreateRecord(title string) error {
 	//Check if the user already exists
-	if _, err := rc.repo.Get(title); err == nil {
+	if _, err := c.record.Get(title); err == nil {
 		return errorType.ErrRecordAlreadyExist{
 			RecordTitle: title,
 			Message:     "cannot create record that already exists",
@@ -39,24 +25,24 @@ func (rc *RecordController) CreateRecord(title string) error {
 		Championship: nil,
 	}
 
-	return rc.repo.Create(record)
+	return c.record.Create(record)
 }
 
-func (rc *RecordController) GetRecord(title string) (*model.Record, error) {
-	return rc.repo.Get(title)
+func (c *Controller) GetRecord(title string) (*model.Record, error) {
+	return c.record.Get(title)
 }
 
-func (rc *RecordController) GetAllRecords() []*model.Record {
-	return rc.repo.GetAll()
+func (c *Controller) GetAllRecords() []*model.Record {
+	return c.record.GetAll()
 }
 
-func (rc *RecordController) DeleteRecord(title string) error {
+func (c *Controller) DeleteRecord(title string) error {
 	//Check if the chat already exists
-	_, err := rc.repo.Get(title)
+	_, err := c.record.Get(title)
 	if err != nil {
 		return err
 	}
 
 	//Delete the chat
-	return rc.repo.Delete(title)
+	return c.record.Delete(title)
 }

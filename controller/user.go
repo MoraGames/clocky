@@ -3,26 +3,12 @@ package controller
 import (
 	"github.com/MoraGames/clockyuwu/model"
 	"github.com/MoraGames/clockyuwu/pkg/errorType"
-	"github.com/MoraGames/clockyuwu/repo"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/sirupsen/logrus"
 )
 
-type UserController struct {
-	repo repo.UserRepoer
-	log  *logrus.Logger
-}
-
-func NewUserController(repoer repo.UserRepoer, logger *logrus.Logger) *UserController {
-	return &UserController{
-		repo: repoer,
-		log:  logger,
-	}
-}
-
-func (uc *UserController) CreateUser(userID int64, telegramUser *tgbotapi.User) error {
+func (c *Controller) CreateUser(userID int64, telegramUser *tgbotapi.User) error {
 	//Check if the user already exists
-	if _, err := uc.repo.Get(userID); err == nil {
+	if _, err := c.user.Get(userID); err == nil {
 		return errorType.ErrUserAlreadyExist{
 			UserID:   userID,
 			Message:  "cannot create user that already exists",
@@ -45,20 +31,20 @@ func (uc *UserController) CreateUser(userID int64, telegramUser *tgbotapi.User) 
 		},
 	}
 
-	return uc.repo.Create(user)
+	return c.user.Create(user)
 }
 
-func (uc *UserController) GetUser(userID int64) (*model.User, error) {
-	return uc.repo.Get(userID)
+func (c *Controller) GetUser(userID int64) (*model.User, error) {
+	return c.user.Get(userID)
 }
 
-func (uc *UserController) GetAllUsers() []*model.User {
-	return uc.repo.GetAll()
+func (c *Controller) GetAllUsers() []*model.User {
+	return c.user.GetAll()
 }
 
-func (uc *UserController) GetUserStats(userID int64) (*model.UserStats, error) {
+func (c *Controller) GetUserStats(userID int64) (*model.UserStats, error) {
 	//Check if the user already exists
-	user, err := uc.repo.Get(userID)
+	user, err := c.user.Get(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +52,9 @@ func (uc *UserController) GetUserStats(userID int64) (*model.UserStats, error) {
 	return user.UserStats, nil
 }
 
-func (uc *UserController) GetUserTotalPoints(userID int64) (int, error) {
+func (c *Controller) GetUserTotalPoints(userID int64) (int, error) {
 	//Check if the user already exists
-	user, err := uc.repo.Get(userID)
+	user, err := c.user.Get(userID)
 	if err != nil {
 		return 0, err
 	}
@@ -76,9 +62,9 @@ func (uc *UserController) GetUserTotalPoints(userID int64) (int, error) {
 	return user.UserStats.TotalPoints, nil
 }
 
-func (uc *UserController) SetUserTotalPoints(userID int64, userPoints int) error {
+func (c *Controller) SetUserTotalPoints(userID int64, userPoints int) error {
 	//Check if the user already exists
-	user, err := uc.repo.Get(userID)
+	user, err := c.user.Get(userID)
 	if err != nil {
 		return err
 	}
@@ -95,12 +81,12 @@ func (uc *UserController) SetUserTotalPoints(userID int64, userPoints int) error
 	//Update the user
 	user.UserStats.TotalPoints = userPoints
 
-	return uc.repo.Update(userID, user)
+	return c.user.Update(userID, user)
 }
 
-func (uc *UserController) ResetUser(userID int64) error {
+func (c *Controller) ResetUser(userID int64) error {
 	//Check if the user already exists
-	user, err := uc.repo.Get(userID)
+	user, err := c.user.Get(userID)
 	if err != nil {
 		return err
 	}
@@ -118,16 +104,16 @@ func (uc *UserController) ResetUser(userID int64) error {
 		},
 	}
 
-	return uc.repo.Update(userID, user)
+	return c.user.Update(userID, user)
 }
 
-func (uc *UserController) DeleteUser(userID int64) error {
+func (c *Controller) DeleteUser(userID int64) error {
 	//Check if the user already exists
-	_, err := uc.repo.Get(userID)
+	_, err := c.user.Get(userID)
 	if err != nil {
 		return err
 	}
 
 	//Delete the user
-	return uc.repo.Delete(userID)
+	return c.user.Delete(userID)
 }

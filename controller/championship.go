@@ -6,25 +6,11 @@ import (
 
 	"github.com/MoraGames/clockyuwu/model"
 	"github.com/MoraGames/clockyuwu/pkg/errorType"
-	"github.com/MoraGames/clockyuwu/repo"
-	"github.com/sirupsen/logrus"
 )
 
-type ChampionshipController struct {
-	repo repo.ChampionshipRepoer
-	log  *logrus.Logger
-}
-
-func NewChampionshipController(repoer repo.ChampionshipRepoer, logger *logrus.Logger) *ChampionshipController {
-	return &ChampionshipController{
-		repo: repoer,
-		log:  logger,
-	}
-}
-
-func (cc *ChampionshipController) CreateChampionship(championshipID int64, title string, startDate time.Time, duration time.Duration) (int64, error) {
+func (c *Controller) CreateChampionship(championshipID int64, title string, startDate time.Time, duration time.Duration) (int64, error) {
 	//Check if the championship already exists
-	if _, err := cc.repo.Get(championshipID); err == nil {
+	if _, err := c.championship.Get(championshipID); err == nil {
 		return 0, errorType.ErrChampionshipAlreadyExist{
 			ChampionshipID: championshipID,
 			Message:        "cannot create championship that already exists",
@@ -43,24 +29,24 @@ func (cc *ChampionshipController) CreateChampionship(championshipID int64, title
 		Ranking:   make([]*model.ChampionshipPlacement, 0),
 	}
 
-	return cc.repo.Create(championship)
+	return c.championship.Create(championship)
 }
 
-func (cc *ChampionshipController) GetChampionship(championshipID int64) (*model.Championship, error) {
-	return cc.repo.Get(championshipID)
+func (c *Controller) GetChampionship(championshipID int64) (*model.Championship, error) {
+	return c.championship.Get(championshipID)
 }
 
-func (cc *ChampionshipController) GetAllChampionships() []*model.Championship {
-	return cc.repo.GetAll()
+func (c *Controller) GetAllChampionships() []*model.Championship {
+	return c.championship.GetAll()
 }
 
-func (cc *ChampionshipController) GetLastChampionship() (*model.Championship, error) {
-	return cc.repo.GetLast()
+func (c *Controller) GetLastChampionship() (*model.Championship, error) {
+	return c.championship.GetLast()
 }
 
-func (cc *ChampionshipController) GetChampionshipRanking(championshipID int64) ([]*model.ChampionshipPlacement, error) {
+func (c *Controller) GetChampionshipRanking(championshipID int64) ([]*model.ChampionshipPlacement, error) {
 	//Check if the championship already exists
-	championship, err := cc.repo.Get(championshipID)
+	championship, err := c.championship.Get(championshipID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,13 +55,13 @@ func (cc *ChampionshipController) GetChampionshipRanking(championshipID int64) (
 	return championship.Ranking, nil
 }
 
-func (cc *ChampionshipController) DeleteChampionship(championshipID int64) error {
+func (c *Controller) DeleteChampionship(championshipID int64) error {
 	//Check if the championship already exists
-	_, err := cc.repo.Get(championshipID)
+	_, err := c.championship.Get(championshipID)
 	if err != nil {
 		return err
 	}
 
 	//Delete the championship
-	return cc.repo.Delete(championshipID)
+	return c.championship.Delete(championshipID)
 }
