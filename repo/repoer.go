@@ -2,6 +2,13 @@ package repo
 
 import "github.com/MoraGames/clockyuwu/model"
 
+type BonusRepoer interface {
+	Create(*model.Bonus) (int64, error)
+	Get(int64) (*model.Bonus, error)
+	GetAll() []*model.Bonus
+	Update(int64, *model.Bonus) error
+	Delete(int64) error
+}
 type ChampionshipRepoer interface {
 	Create(*model.Championship) (int64, error)
 	Get(int64) (*model.Championship, error)
@@ -17,7 +24,20 @@ type ChatRepoer interface {
 	Update(int64, *model.Chat) error
 	Delete(int64) error
 }
-
+type EventRepo interface {
+	Create(*model.Event) error
+	Get(int64) (*model.Event, error)
+	GetAll() []*model.Event
+	Update(int64, *model.Event) error
+	Delete(int64) error
+}
+type PartecipationRepo interface {
+	Create(*model.Partecipation) (int64, error)
+	Get(int64) (*model.Partecipation, error)
+	GetAll() []*model.Partecipation
+	Update(int64, *model.Partecipation) error
+	Delete(int64) error
+}
 type RecordRepoer interface {
 	Create(*model.Record) error
 	Get(string) (*model.Record, error)
@@ -25,7 +45,13 @@ type RecordRepoer interface {
 	Update(string, *model.Record) error
 	Delete(string) error
 }
-
+type SetRepoer interface {
+	Create(*model.Set) (int64, error)
+	Get(int64) (*model.Set, error)
+	GetAll() []*model.Set
+	Update(int64, *model.Set) error
+	Delete(int64) error
+}
 type UserRepoer interface {
 	Create(*model.User) error
 	Get(int64) (*model.User, error)
