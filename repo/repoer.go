@@ -24,14 +24,14 @@ type ChatRepoer interface {
 	Update(int64, *model.Chat) error
 	Delete(int64) error
 }
-type EventRepo interface {
+type EventRepoer interface {
 	Create(*model.Event) error
-	Get(int64) (*model.Event, error)
+	Get(string) (*model.Event, error)
 	GetAll() []*model.Event
-	Update(int64, *model.Event) error
-	Delete(int64) error
+	Update(string, *model.Event) error
+	Delete(string) error
 }
-type PartecipationRepo interface {
+type PartecipationRepoer interface {
 	Create(*model.Partecipation) (int64, error)
 	Get(int64) (*model.Partecipation, error)
 	GetAll() []*model.Partecipation
