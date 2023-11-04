@@ -13,7 +13,6 @@ type ChampionshipRepoer interface {
 	Create(*model.Championship) (int64, error)
 	Get(int64) (*model.Championship, error)
 	GetAll() []*model.Championship
-	GetLast() (*model.Championship, error)
 	Update(int64, *model.Championship) error
 	Delete(int64) error
 }

@@ -50,18 +50,6 @@ func (cr *ChampionshipRepo) GetAll() []*model.Championship {
 	return championships
 }
 
-func (cr *ChampionshipRepo) GetLast() (*model.Championship, error) {
-	championship, ok := cr.championships[cr.lastID]
-	if !ok {
-		return nil, errorType.ErrChampionshipNotFound{
-			ChampionshipID: cr.lastID,
-			Message:        "cannot get championship not found",
-			Location:       "ChampionshipRepo.GetLast()",
-		}
-	}
-	return championship, nil
-}
-
 func (cr *ChampionshipRepo) Update(id int64, championship *model.Championship) error {
 	_, ok := cr.championships[id]
 	if !ok {
