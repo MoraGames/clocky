@@ -40,10 +40,6 @@ func (c *Controller) GetAllChampionships() []*model.Championship {
 	return c.championship.GetAll()
 }
 
-func (c *Controller) GetLastChampionship() (*model.Championship, error) {
-	return c.championship.GetLast()
-}
-
 func (c *Controller) GetChampionshipRanking(championshipID int64) ([]*model.ChampionshipPlacement, error) {
 	//Check if the championship already exists
 	championship, err := c.championship.Get(championshipID)
