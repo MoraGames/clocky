@@ -51,7 +51,7 @@ func run(utils types.Utils, data types.Data) {
 			eventKey := events.NewEventKey(update.Message.Time())
 
 			// Allow only commands if the bot status is offline
-			if update.Message.IsCommand() && update.Message.Command() == "ping" {
+			if update.Message.IsCommand() {
 				manageCommands(update, utils, data, curTime, eventKey)
 			}
 
