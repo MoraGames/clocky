@@ -6,19 +6,27 @@ import (
 )
 
 type Controller struct {
-	championship repo.ChampionshipRepoer
-	chat         repo.ChatRepoer
-	record       repo.RecordRepoer
-	user         repo.UserRepoer
-	log          *logrus.Logger
+	bonus         repo.BonusRepoer
+	championship  repo.ChampionshipRepoer
+	chat          repo.ChatRepoer
+	event         repo.EventRepoer
+	partecipation repo.PartecipationRepoer
+	record        repo.RecordRepoer
+	set           repo.SetRepoer
+	user          repo.UserRepoer
+	log           *logrus.Logger
 }
 
-func NewController(championship repo.ChampionshipRepoer, chat repo.ChatRepoer, record repo.RecordRepoer, user repo.UserRepoer, logger *logrus.Logger) *Controller {
+func NewController(bonus repo.BonusRepoer, championship repo.ChampionshipRepoer, chat repo.ChatRepoer, event repo.EventRepoer, partecipation repo.PartecipationRepoer, record repo.RecordRepoer, set repo.SetRepoer, user repo.UserRepoer, logger *logrus.Logger) *Controller {
 	return &Controller{
-		championship: championship,
-		chat:         chat,
-		record:       record,
-		user:         user,
-		log:          logger,
+		bonus:         bonus,
+		championship:  championship,
+		chat:          chat,
+		event:         event,
+		partecipation: partecipation,
+		record:        record,
+		set:           set,
+		user:          user,
+		log:           logger,
 	}
 }
