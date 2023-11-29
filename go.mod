@@ -1,6 +1,6 @@
 module github.com/MoraGames/clockyuwu
 
-go 1.21.1
+go 1.21.4
 
 require (
 	github.com/go-co-op/gocron v1.36.0
@@ -11,11 +11,11 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.3.2 // indirect
+	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
