@@ -80,9 +80,10 @@ func run(utils types.Utils, data types.Data) {
 						event.ActivatedAt = curTime
 						event.ArrivedAt = update.Message.Time()
 						delay := event.ActivatedAt.Sub(update.Message.Time())
+						delay2 := event.ActivatedAt.Sub(time.Parse(utils.TimeFormat, string(eventKey)))
 
 						// Respond to the user with event activated informations
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! +%v punti per te.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, delay.Seconds()))
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! +%v punti per te.\nHai impiegato +%vs (o forse +%v)", update.Message.From.UserName, event.Points, delay.Seconds(), delay2.Seconds()))
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
 
@@ -107,10 +108,11 @@ func run(utils types.Utils, data types.Data) {
 					} else {
 						// Calculate the delay from o' clock and winner user
 						delay := curTime.Sub(event.ArrivedAt)
+						delay2 := curTime.Sub(time.Parse(utils.TimeFormat, string(eventKey)))
 						delta := curTime.Sub(event.ActivatedAt)
 
 						// Respond to the user with event already activated informations
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa.\nHai impiegato +%vs", event.ActivatedBy, delta.Seconds(), delay.Seconds()))
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa (o forse %v).\nHai impiegato +%vs", event.ActivatedBy, delta.Seconds(), delay.Seconds()))
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
 
