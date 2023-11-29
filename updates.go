@@ -80,7 +80,13 @@ func run(utils types.Utils, data types.Data) {
 						event.ActivatedAt = curTime
 						event.ArrivedAt = update.Message.Time()
 						delay := event.ActivatedAt.Sub(update.Message.Time())
-						delay2 := event.ActivatedAt.Sub(time.Parse(utils.TimeFormat, string(eventKey)))
+						eventTime, err := time.Parse(utils.TimeFormat, string(eventKey))
+						if err != nil {
+							utils.Logger.WithFields(logrus.Fields{
+								"err": err,
+							}).Error("Error while parsing event time")
+						}
+						delay2 := event.ActivatedAt.Sub(eventTime)
 
 						// Respond to the user with event activated informations
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! +%v punti per te.\nHai impiegato +%vs (o forse +%v)", update.Message.From.UserName, event.Points, delay.Seconds(), delay2.Seconds()))
@@ -108,7 +114,13 @@ func run(utils types.Utils, data types.Data) {
 					} else {
 						// Calculate the delay from o' clock and winner user
 						delay := curTime.Sub(event.ArrivedAt)
-						delay2 := curTime.Sub(time.Parse(utils.TimeFormat, string(eventKey)))
+						eventTime, err := time.Parse(utils.TimeFormat, string(eventKey))
+						if err != nil {
+							utils.Logger.WithFields(logrus.Fields{
+								"err": err,
+							}).Error("Error while parsing event time")
+						}
+						delay2 := curTime.Sub(eventTime)
 						delta := curTime.Sub(event.ActivatedAt)
 
 						// Respond to the user with event already activated informations
