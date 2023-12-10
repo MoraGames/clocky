@@ -40,7 +40,9 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		// Generate the ranking
 		ranking := make([]Rank, 0)
 		for _, u := range Users {
-			ranking = append(ranking, Rank{u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+			if u != nil {
+				ranking = append(ranking, Rank{u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+			}
 		}
 
 		// Sort the ranking by points (and partecipations if points are equal)
@@ -55,14 +57,17 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		)
 
 		// Generate the string to send
-		leadersPoints := ranking[0].Points
-		rankingString := ""
-		for i, r := range ranking {
-			rankingString += fmt.Sprintf("%v] %v: %v (-%v)\n", i+1, r.Username, r.Points, leadersPoints-r.Points)
-		}
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ancora nessun utente ha partecipato agli eventi della season.")
+		if len(ranking) != 0 {
+			leadersPoints := ranking[0].Points
+			rankingString := ""
+			for i, r := range ranking {
+				rankingString += fmt.Sprintf("%v] %v: %v (-%v)\n", i+1, r.Username, r.Points, leadersPoints-r.Points)
+			}
 
-		// Send the message
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
+			// Send the message
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
+		}
 		msg.ReplyToMessageID = update.Message.MessageID
 		data.Bot.Send(msg)
 
