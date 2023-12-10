@@ -74,17 +74,74 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		// Log the /ranking command sent
 		utils.Logger.Debug("Ranking sent")
 	case "stats":
-		// Respond with the user's stats
-		// Get the user from the Users data structure
-		u := Users[update.Message.From.ID]
+		// Respond with the user's stats (or the specified user's stats)
 
-		// Send the message with user's stats
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
-		if u != nil {
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
+		// Check if the command has arguments
+		if update.Message.CommandArguments() == "" {
+			// Get the user from the Users data structure
+			u := Users[update.Message.From.ID]
+
+			// Send the message with user's stats
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
+			if u != nil {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
+			}
+			msg.ReplyToMessageID = update.Message.MessageID
+			data.Bot.Send(msg)
+
+			// Log the /stats command sent
+			utils.Logger.Debug("Stats sent")
+		} else {
+			// Split the command arguments
+			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+
+			if len(cmdArgs) != 1 {
+				// Respond with a message indicating that the command arguments are wrong
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /stats [user]")
+				msg.ReplyToMessageID = update.Message.MessageID
+				data.Bot.Send(msg)
+				utils.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"msg": update.Message.Text,
+				}).Debug("Wrong command")
+			} else {
+				// Get the id and check if the user exists
+				username := cmdArgs[0]
+				var userKey int64
+				var founded bool
+				for userID, user := range Users {
+					if user.UserName == username {
+						founded = true
+						userKey = userID
+					}
+				}
+
+				if !founded {
+					// Respond with a message indicating that the user does not exist
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
+					msg.ReplyToMessageID = update.Message.MessageID
+					data.Bot.Send(msg)
+					utils.Logger.WithFields(logrus.Fields{
+						"usr": update.Message.From.UserName,
+						"msg": update.Message.Text,
+					}).Debug("User not found")
+				} else {
+					// Get the user from the Users data structure
+					u := Users[userKey]
+
+					// Send the message with user's stats
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))
+					if u != nil {
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
+					}
+					msg.ReplyToMessageID = update.Message.MessageID
+					data.Bot.Send(msg)
+
+					// Log the /stats command sent
+					utils.Logger.Debug("Stats sent")
+				}
+			}
 		}
-		msg.ReplyToMessageID = update.Message.MessageID
-		data.Bot.Send(msg)
 
 		// Log the /stats command sent
 		utils.Logger.Debug("Stats sent")
