@@ -110,7 +110,7 @@ func run(utils types.Utils, data types.Data) {
 						delta := curTime.Sub(event.ActivatedAt)
 
 						// Respond to the user with event already activated informations
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa.\nHai impiegato +%vs", event.ActivatedBy, delta.Seconds()))
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa.\nHai impiegato +%vs", event.ActivatedBy, delta.Seconds(), delay.Seconds()))
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
 
