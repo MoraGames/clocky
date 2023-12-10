@@ -79,7 +79,10 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		u := Users[update.Message.From.ID]
 
 		// Send the message with user's stats
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
+		if u != nil {
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
+		}
 		msg.ReplyToMessageID = update.Message.MessageID
 		data.Bot.Send(msg)
 
