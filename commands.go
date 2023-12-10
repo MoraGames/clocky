@@ -187,10 +187,10 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Split the command arguments
 			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
 
-			// Check if the command arguments are in the form /update <event> <points>
-			if len(cmdArgs) != 2 {
+			// Check if the command arguments are in the form /update <event|user> <points>
+			if len(cmdArgs) != 3 {
 				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update <event> <points>")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update (<\"event\" event>|\"user\" <user>) <points>")
 				msg.ReplyToMessageID = update.Message.MessageID
 				data.Bot.Send(msg)
 				utils.Logger.WithFields(logrus.Fields{
@@ -199,39 +199,86 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				}).Debug("Wrong command")
 			} else {
 				// Get and check if the event exists
-				eventKeyString := cmdArgs[0]
-				if event, ok := events.Events[events.EventKey(eventKeyString)]; !ok {
-					// Respond with a message indicating that the event does not exist
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento non trovato")
-					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
-					utils.Logger.WithFields(logrus.Fields{
-						"usr": update.Message.From.UserName,
-						"msg": update.Message.Text,
-					}).Debug("Event not found")
-				} else {
-					// Get and check if the points value is a number
-					points, err := strconv.Atoi(cmdArgs[1])
-					if err != nil {
-						// Respond with a message indicating that the points value is not a number
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
+				targetType := cmdArgs[0]
+				switch targetType {
+				case "event":
+					eventKeyString := cmdArgs[1]
+					if event, ok := events.Events[events.EventKey(eventKeyString)]; !ok {
+						// Respond with a message indicating that the event does not exist
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento non trovato")
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
 						utils.Logger.WithFields(logrus.Fields{
 							"usr": update.Message.From.UserName,
 							"msg": update.Message.Text,
-						}).Debug("Wrong command")
+						}).Debug("Event not found")
 					} else {
-						// Update the event points value
-						events.Events[events.EventKey(eventKeyString)] = &events.EventValue{Points: points, Activated: event.Activated, ActivatedBy: event.ActivatedBy, ActivatedAt: event.ActivatedAt, ArrivedAt: event.ArrivedAt, Partecipations: event.Partecipations}
+						// Get and check if the points value is a number
+						points, err := strconv.Atoi(cmdArgs[2])
+						if err != nil {
+							// Respond with a message indicating that the points value is not a number
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+							utils.Logger.WithFields(logrus.Fields{
+								"usr": update.Message.From.UserName,
+								"msg": update.Message.Text,
+							}).Debug("Wrong command")
+						} else {
+							// Update the event points value
+							events.Events[events.EventKey(eventKeyString)] = &events.EventValue{Points: points, Activated: event.Activated, ActivatedBy: event.ActivatedBy, ActivatedAt: event.ActivatedAt, ArrivedAt: event.ArrivedAt, Partecipations: event.Partecipations}
 
-						// Respond with command executed successfully
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento aggiornato")
+							// Respond with command executed successfully
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento aggiornato")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+
+							// Log the /update command executed successfully
+							utils.Logger.Debug("Event updated")
+						}
+					}
+				case "user":
+					username := cmdArgs[1]
+					var userKey int64
+					for userID, user := range Users {
+						if user != nil && user.UserName == username {
+							userKey = userID
+						}
+					}
+
+					if user, ok := Users[userKey]; !ok {
+						// Respond with a message indicating that the event does not exist
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
+						utils.Logger.WithFields(logrus.Fields{
+							"usr": update.Message.From.UserName,
+							"msg": update.Message.Text,
+						}).Debug("Event not found")
+					} else {
+						// Get and check if the points value is a number
+						points, err := strconv.Atoi(cmdArgs[2])
+						if err != nil {
+							// Respond with a message indicating that the points value is not a number
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+							utils.Logger.WithFields(logrus.Fields{
+								"usr": update.Message.From.UserName,
+								"msg": update.Message.Text,
+							}).Debug("Wrong command")
+						} else {
+							// Update the user points value
+							Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: points, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
 
-						// Log the /update command executed successfully
-						utils.Logger.Debug("Event updated")
+							// Respond with command executed successfully
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente aggiornato")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+
+							// Log the /update command executed successfully
+							utils.Logger.Debug("Event updated")
+						}
 					}
 				}
 			}
