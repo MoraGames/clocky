@@ -6,7 +6,7 @@ import (
 )
 
 type Controller struct {
-	bonus         repo.BonusRepoer
+	effect        repo.EffectRepoer
 	championship  repo.ChampionshipRepoer
 	chat          repo.ChatRepoer
 	event         repo.EventRepoer
@@ -17,9 +17,9 @@ type Controller struct {
 	log           *logrus.Logger
 }
 
-func NewController(bonus repo.BonusRepoer, championship repo.ChampionshipRepoer, chat repo.ChatRepoer, event repo.EventRepoer, partecipation repo.PartecipationRepoer, record repo.RecordRepoer, set repo.SetRepoer, user repo.UserRepoer, logger *logrus.Logger) *Controller {
+func NewController(effect repo.EffectRepoer, championship repo.ChampionshipRepoer, chat repo.ChatRepoer, event repo.EventRepoer, partecipation repo.PartecipationRepoer, record repo.RecordRepoer, set repo.SetRepoer, user repo.UserRepoer, logger *logrus.Logger) *Controller {
 	return &Controller{
-		bonus:         bonus,
+		effect:        effect,
 		championship:  championship,
 		chat:          chat,
 		event:         event,
