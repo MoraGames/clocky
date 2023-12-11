@@ -2,13 +2,6 @@ package repo
 
 import "github.com/MoraGames/clockyuwu/model"
 
-type BonusRepoer interface {
-	Create(*model.Bonus) (int64, error)
-	Get(int64) (*model.Bonus, error)
-	GetAll() []*model.Bonus
-	Update(int64, *model.Bonus) error
-	Delete(int64) error
-}
 type ChampionshipRepoer interface {
 	Create(*model.Championship) (int64, error)
 	Get(int64) (*model.Championship, error)
@@ -22,6 +15,13 @@ type ChatRepoer interface {
 	GetAll() []*model.Chat
 	Update(int64, *model.Chat) error
 	Delete(int64) error
+}
+type EffectRepoer interface {
+	Create(*model.Effect) error
+	Get(string) (*model.Effect, error)
+	GetAll() []*model.Effect
+	Update(string, *model.Effect) error
+	Delete(string) error
 }
 type EventRepoer interface {
 	Create(*model.Event) error
