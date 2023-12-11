@@ -6,3 +6,7 @@ logger:
   type: "text"
   format: "02-01-2006 15:04:05.000"
   level: "debug"
+
+environments:
+  - "TELEGRAM_API_TOKEN"
+  - "TELEGRAM_ADMIN_ID"
