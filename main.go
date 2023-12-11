@@ -3,11 +3,12 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/MoraGames/clockyuwu/config"
+	"github.com/MoraGames/clockyuwu/controller"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	"github.com/MoraGames/clockyuwu/pkg/util"
+	"github.com/MoraGames/clockyuwu/repo/mock"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -47,33 +48,41 @@ func main() {
 		"username": bot.Self.UserName,
 	}).Info("Account authorized")
 
+	//setup the updates channel
 	bot.Debug = true
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 120
 
 	updates := bot.GetUpdatesChan(u)
 	l.WithFields(logrus.Fields{
 		"updates": updates,
 	}).Debug("Updates channel initialized")
 
+	//initialize the appUtils data struct
 	appUtils := util.AppUtils{
+		ConfigApp:  conf.App,
 		Logger:     l,
 		TimeFormat: "15:04:05.000000 MST -07:00",
 	}
 
-	for update := range updates {
-		updateCurTime := time.Now()
+	//initialize the controller data struct
+	controller := controller.NewController(
+		mock.NewBonusRepo(),
+		mock.NewChampionshipRepo(),
+		mock.NewChatRepo(),
+		mock.NewEventRepo(),
+		mock.NewPartecipationRepo(),
+		mock.NewRecordRepo(),
+		mock.NewSetRepo(),
+		mock.NewUserRepo(),
+		l,
+	)
 
-		if update.CallbackQuery != nil {
-			l.WithFields(logrus.Fields{}).Info("CallbackQuery received")
-			//TODO: Manage CallbackQuery
-		}
-		if update.Message != nil {
-			l.WithFields(logrus.Fields{
-				"msgTime": update.Message.Time().Format(appUtils.TimeFormat),
-				"curTime": updateCurTime.Format(appUtils.TimeFormat),
-			}).Info("Message received")
-			manageUpdate(appUtils, bot, update, updateCurTime)
-		}
+	//run the bot over the updates channel
+	err = manageUpdates(appUtils, controller, bot, updates)
+	if err != nil {
+		l.WithFields(logrus.Fields{
+			"err": err,
+		}).Panic("Error while managing updates")
 	}
 }
