@@ -43,7 +43,7 @@ func eventValid(appUtils util.AppUtils, ctrler *controller.Controller, bot *tgbo
 		instance.ActivatedBy = user
 		instance.ActivatedAt = updateCurTime
 		instance.ArrivedAt = update.Message.Time()
-		instance.Partecipations = append(instance.Partecipations, user)
+		instance.Partecipations = append(instance.Partecipations, model.EventPartecipation{User: user, Time: updateCurTime})
 
 		user.UserStats.TotalPoints += instance.Points
 		user.UserStats.TotalEventPartecipations++
@@ -58,7 +58,7 @@ func eventValid(appUtils util.AppUtils, ctrler *controller.Controller, bot *tgbo
 		//Check if the user has already partecipated to the event
 		alreadyPartecipated := false
 		for _, partecipant := range instance.Partecipations {
-			if partecipant.TelegramUser.ID == user.TelegramUser.ID {
+			if partecipant.User.TelegramUser.ID == user.TelegramUser.ID {
 				alreadyPartecipated = true
 				break
 			}
@@ -71,7 +71,7 @@ func eventValid(appUtils util.AppUtils, ctrler *controller.Controller, bot *tgbo
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v hai già partecipato a questo evento.", update.Message.From.UserName))
 		} else {
 			//Partecipate (without win) to the event
-			instance.Partecipations = append(instance.Partecipations, user)
+			instance.Partecipations = append(instance.Partecipations, model.EventPartecipation{User: user, Time: updateCurTime})
 
 			user.UserStats.TotalEventPartecipations++
 

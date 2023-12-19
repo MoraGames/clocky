@@ -19,6 +19,10 @@ type (
 		ActivatedBy    *User
 		ActivatedAt    time.Time
 		ArrivedAt      time.Time
-		Partecipations []*User
+		Partecipations []EventPartecipation
+	}
+	EventPartecipation struct {
+		User *User
+		Time time.Time
 	}
 )
