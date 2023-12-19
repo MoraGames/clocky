@@ -43,12 +43,12 @@ func manageUpdates(appUtils util.AppUtils, ctrler *controller.Controller, bot *t
 			}
 
 			//check if the message is an event
-			if test, eventType, err := ctrler.IsEvent(update.Message.Text); err != nil {
+			if test, event, err := ctrler.IsEvent(update.Message.Text); err != nil {
 				appUtils.Logger.WithFields(logrus.Fields{
 					"err": err,
 				}).Error("Error while checking if the message is an event")
-			} else if test {
-				manageEvent(appUtils, ctrler, bot, update, updateCurTime, eventType)
+			} else if test && event.Enabled {
+				manageEvent(appUtils, ctrler, bot, update, updateCurTime, event)
 				continue
 			}
 		}
