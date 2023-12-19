@@ -1,10 +1,24 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
-type Event struct {
-	Message string
-	Time    time.Time
-	Points  int
-	Effects []*Effect
-}
+type (
+	Event struct {
+		Message   string
+		Type      string
+		Time      time.Time
+		Enabled   bool
+		Instances []*EventIstance
+	}
+	EventIstance struct {
+		Points         int
+		Effects        []*Effect
+		Activated      bool
+		ActivatedBy    *User
+		ActivatedAt    time.Time
+		ArrivedAt      time.Time
+		Partecipations []*User
+	}
+)
