@@ -6,14 +6,16 @@ type (
 	User struct {
 		TelegramUser *tgbotapi.User
 		UserStats    *UserStats
+		Effects      []*Effect
 	}
 
 	UserStats struct {
 		TotalPoints                      int
 		MaxChampionshipPoints            int
+		MaxChampionshipWins              int
 		TotalEventPartecipations         int
-		TotalEventWins                   int
 		TotalChampionshipsPartecipations int
+		TotalEventWins                   int
 		TotalChampionshipsWins           int
 	}
 )
