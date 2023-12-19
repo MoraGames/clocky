@@ -84,6 +84,17 @@ func (c *Controller) SetUserTotalPoints(userID int64, userPoints int) error {
 	return c.user.Update(userID, user)
 }
 
+func (c *Controller) UpdateUser(userID int64, user *model.User) error {
+	//Check if the user already exists
+	_, err := c.user.Get(userID)
+	if err != nil {
+		return err
+	}
+
+	//Update the user
+	return c.user.Update(userID, user)
+}
+
 func (c *Controller) ResetUser(userID int64) error {
 	//Check if the user already exists
 	user, err := c.user.Get(userID)
