@@ -13,6 +13,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//TODO: Do an E/R diagram and change all models before integrating the planetScaleDB repository.
+//TODO: Update all mock repositories to use the new models. Implements planetScaleDB repository.
+//TODO: Refactor all controller module.
+
 func main() {
 	//get the configurations
 	conf, err := config.NewConfig()
@@ -28,10 +32,10 @@ func main() {
 	}).Debug("Logger initialized")
 
 	//link Telegram API
-	apiToken := os.Getenv("TelegramAPIToken")
+	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
 	if apiToken == "" {
 		l.WithFields(logrus.Fields{
-			"env": "TelegramAPIToken",
+			"env": "TELEGRAM_API_TOKEN",
 		}).Panic("Env not set")
 	}
 

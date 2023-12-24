@@ -60,7 +60,7 @@ func (cfg *Config) ReadEnv(mustExist Env) error {
 	for _, v := range mustExist {
 		_, exist := os.LookupEnv(v)
 		if !exist {
-			return fmt.Errorf("env variable %s is not set", v)
+			return fmt.Errorf("env variable %s must exist", v)
 		}
 	}
 
