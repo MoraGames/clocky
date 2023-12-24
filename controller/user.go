@@ -24,9 +24,10 @@ func (c *Controller) CreateUser(userID int64, telegramUser *tgbotapi.User) error
 		UserStats: &model.UserStats{
 			TotalPoints:                      0,
 			MaxChampionshipPoints:            0,
-			TotalEventPartecipations:         0,
-			TotalEventWins:                   0,
+			MaxChampionshipWins:              0,
+			TotalEventsPartecipations:        0,
 			TotalChampionshipsPartecipations: 0,
+			TotalEventsWins:                  0,
 			TotalChampionshipsWins:           0,
 		},
 	}
@@ -38,7 +39,7 @@ func (c *Controller) GetUser(userID int64) (*model.User, error) {
 	return c.user.Get(userID)
 }
 
-func (c *Controller) GetAllUsers() []*model.User {
+func (c *Controller) GetAllUsers() ([]*model.User, error) {
 	return c.user.GetAll()
 }
 
@@ -108,9 +109,10 @@ func (c *Controller) ResetUser(userID int64) error {
 		UserStats: &model.UserStats{
 			TotalPoints:                      0,
 			MaxChampionshipPoints:            0,
-			TotalEventPartecipations:         0,
-			TotalEventWins:                   0,
+			MaxChampionshipWins:              0,
+			TotalEventsPartecipations:        0,
 			TotalChampionshipsPartecipations: 0,
+			TotalEventsWins:                  0,
 			TotalChampionshipsWins:           0,
 		},
 	}
