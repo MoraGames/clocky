@@ -46,8 +46,8 @@ func eventValid(appUtils util.AppUtils, ctrler *controller.Controller, bot *tgbo
 		instance.Partecipations = append(instance.Partecipations, model.EventPartecipation{User: user, Time: updateCurTime})
 
 		user.UserStats.TotalPoints += instance.Points
-		user.UserStats.TotalEventPartecipations++
-		user.UserStats.TotalEventWins++
+		user.UserStats.TotalEventsPartecipations++
+		user.UserStats.TotalEventsWins++
 
 		//Retrieve the partecipations data for the response message
 		delay := updateCurTime.Sub(time.Date(instance.ArrivedAt.Year(), instance.ArrivedAt.Month(), instance.ArrivedAt.Day(), instance.ArrivedAt.Hour(), instance.ArrivedAt.Minute(), 0, 0, instance.ArrivedAt.Location()))
@@ -73,7 +73,7 @@ func eventValid(appUtils util.AppUtils, ctrler *controller.Controller, bot *tgbo
 			//Partecipate (without win) to the event
 			instance.Partecipations = append(instance.Partecipations, model.EventPartecipation{User: user, Time: updateCurTime})
 
-			user.UserStats.TotalEventPartecipations++
+			user.UserStats.TotalEventsPartecipations++
 
 			//Retrieve the partecipations data for the response message
 			delay := updateCurTime.Sub(time.Date(instance.ArrivedAt.Year(), instance.ArrivedAt.Month(), instance.ArrivedAt.Day(), instance.ArrivedAt.Hour(), instance.ArrivedAt.Minute(), 0, 0, instance.ArrivedAt.Location()))
