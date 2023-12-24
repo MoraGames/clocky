@@ -54,7 +54,7 @@ type SetRepoer interface {
 type UserRepoer interface {
 	Create(*model.User) error
 	Get(int64) (*model.User, error)
-	GetAll() []*model.User
+	GetAll() ([]*model.User, error)
 	Update(int64, *model.User) error
 	Delete(int64) error
 }

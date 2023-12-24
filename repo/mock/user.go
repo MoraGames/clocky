@@ -38,12 +38,12 @@ func (ur *UserRepo) Get(id int64) (*model.User, error) {
 	return user, nil
 }
 
-func (ur *UserRepo) GetAll() []*model.User {
+func (ur *UserRepo) GetAll() ([]*model.User, error) {
 	users := make([]*model.User, 0, len(ur.users))
 	for _, user := range ur.users {
 		users = append(users, user)
 	}
-	return users
+	return users, nil
 }
 
 func (ur *UserRepo) Update(id int64, user *model.User) error {

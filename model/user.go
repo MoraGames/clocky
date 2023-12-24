@@ -13,9 +13,9 @@ type (
 		TotalPoints                      int
 		MaxChampionshipPoints            int
 		MaxChampionshipWins              int
-		TotalEventPartecipations         int
+		TotalEventsPartecipations        int
 		TotalChampionshipsPartecipations int
-		TotalEventWins                   int
+		TotalEventsWins                  int
 		TotalChampionshipsWins           int
 	}
 )
