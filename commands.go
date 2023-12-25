@@ -81,6 +81,9 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Get the user from the Users data structure
 			u := Users[update.Message.From.ID]
 
+			// Check (and eventually update) the user effects
+			UpdateUserEffects(update.Message.From.ID)
+
 			// Send the message with user's stats
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
 			if u != nil {
@@ -128,6 +131,9 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				} else {
 					// Get the user from the Users data structure
 					u := Users[userKey]
+
+					// Check (and eventually update) the user effects
+					UpdateUserEffects(userKey)
 
 					// Send the message with user's stats
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))

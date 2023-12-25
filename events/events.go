@@ -67,7 +67,7 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 		eventIndex := rand.Intn(eventsNumber)
 		event := events[EventsKeys[eventIndex]]
 		if len(event.Effects) == 0 {
-			event.Effects = append(event.Effects, structs.Effect{Name: "Double Points", Key: "x", Value: 2})
+			event.Effects = append(event.Effects, structs.Effect{Name: "Double Points", Scope: "Event", Key: "x", Value: 2})
 			i++
 			eventsNumberEditable--
 		}
@@ -83,7 +83,7 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 		eventIndex := rand.Intn(eventsNumber)
 		event := events[EventsKeys[eventIndex]]
 		if len(event.Effects) == 0 {
-			event.Effects = append(event.Effects, structs.Effect{Name: "Triple Points", Key: "x", Value: 3})
+			event.Effects = append(event.Effects, structs.Effect{Name: "Triple Points", Scope: "Event", Key: "x", Value: 3})
 			i++
 			eventsNumberEditable--
 		}
@@ -99,7 +99,7 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 		eventIndex := rand.Intn(eventsNumber)
 		event := events[EventsKeys[eventIndex]]
 		if len(event.Effects) == 0 {
-			event.Effects = append(event.Effects, structs.Effect{Name: "Negative Points", Key: "x", Value: -1})
+			event.Effects = append(event.Effects, structs.Effect{Name: "Negative Points", Scope: "Event", Key: "x", Value: -1})
 			i++
 			eventsNumberEditable--
 		}
@@ -118,7 +118,7 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 			eventIndex := rand.Intn(eventsNumber)
 			event := events[EventsKeys[eventIndex]]
 			if len(event.Effects) == 0 {
-				event.Effects = append(event.Effects, structs.Effect{Name: "Quintuples Points", Key: "x", Value: 5})
+				event.Effects = append(event.Effects, structs.Effect{Name: "Quintuples Points", Scope: "Event", Key: "x", Value: 5})
 				i++
 				eventsNumberEditable--
 			}
@@ -138,7 +138,7 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 			eventIndex := rand.Intn(eventsNumber)
 			event := events[EventsKeys[eventIndex]]
 			if len(event.Effects) == 0 {
-				event.Effects = append(event.Effects, structs.Effect{Name: "Double Negative Points", Key: "x", Value: -2})
+				event.Effects = append(event.Effects, structs.Effect{Name: "Double Negative Points", Scope: "Event", Key: "x", Value: -2})
 				i++
 				eventsNumberEditable--
 			}

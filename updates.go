@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
@@ -81,24 +82,33 @@ func run(utils types.Utils, data types.Data) {
 						event.ArrivedAt = update.Message.Time()
 						delay := event.ActivatedAt.Sub(update.Message.Time())
 
+						// Add the user to the data structure if they have never participated before
+						if _, ok := Users[update.Message.From.ID]; !ok {
+							Users[update.Message.From.ID] = structs.NewUser(update.Message.From.UserName)
+						}
+
+						// Check (and eventually update) the user effects
+						UpdateUserEffects(update.Message.From.ID)
+
 						// Get Event effects
 						effectText := ""
-						if len(event.Effects) != 0 {
+						curEffects := append(event.Effects, Users[update.Message.From.ID].Effects...)
+						if len(curEffects) != 0 {
 							effectText += " grazie agli effetti: "
-							for i := 0; i < len(event.Effects); i++ {
-								if i != len(event.Effects)-1 {
-									effectText += fmt.Sprintf("%q, ", event.Effects[i].Name)
+							for i := 0; i < len(curEffects); i++ {
+								if i != len(curEffects)-1 {
+									effectText += fmt.Sprintf("%q, ", curEffects[i].Name)
 								} else {
-									effectText += fmt.Sprintf("%q", event.Effects[i].Name)
+									effectText += fmt.Sprintf("%q", curEffects[i].Name)
 								}
 
-								switch event.Effects[i].Key {
+								switch curEffects[i].Key {
 								case "x":
-									event.Points *= event.Effects[i].Value
+									event.Points *= curEffects[i].Value
 								case "+":
-									event.Points += event.Effects[i].Value
+									event.Points += curEffects[i].Value
 								case "-":
-									event.Points -= event.Effects[i].Value
+									event.Points -= curEffects[i].Value
 								}
 							}
 						}
@@ -127,11 +137,6 @@ func run(utils types.Utils, data types.Data) {
 							"actAt": update.Message.Text,
 							"point": event.Points,
 						}).Debug("Event activated")
-
-						// Add the user to the data structure if they have never participated before
-						if _, ok := Users[update.Message.From.ID]; !ok {
-							Users[update.Message.From.ID] = structs.NewUser(update.Message.From.UserName)
-						}
 
 						// Add points to the user if they have never participated the event before
 						if !event.Partecipations[update.Message.From.ID] {
@@ -191,4 +196,72 @@ func run(utils types.Utils, data types.Data) {
 			}
 		}
 	}
+}
+
+func UpdateUserEffects(userID int64) {
+	// Generate the ranking
+	ranking := make([]Rank, 0)
+	for _, u := range Users {
+		if u != nil {
+			ranking = append(ranking, Rank{u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+		}
+	}
+
+	// Sort the ranking by points (and partecipations if points are equal)
+	sort.Slice(
+		ranking,
+		func(i, j int) bool {
+			if ranking[i].Points == ranking[j].Points {
+				return ranking[i].Partecipations < ranking[j].Partecipations
+			}
+			return ranking[i].Points > ranking[j].Points
+		},
+	)
+
+	// Get interval from ranking leader
+	leaderPoints := ranking[0].Points
+	userPoints := 0
+	for _, rank := range ranking {
+		if rank.Username == Users[userID].UserName {
+			userPoints = rank.Points
+		}
+	}
+	interval := leaderPoints - userPoints
+
+	//Comeback Bonus
+	switch {
+	case interval < 20:
+		//Remove the Comeback effect
+		Users[userID].Effects = RemoveUserEffect(Users[userID].Effects, "Comeback Bonus")
+	case interval < 50:
+		//Add the +1 Comeback effect
+		Users[userID].Effects = AddUserEffect(Users[userID].Effects, structs.Effect{Name: "Comeback Bonus", Scope: "User", Key: "+", Value: 1})
+	case interval < 80:
+		//Add the +2 Comeback effect
+		Users[userID].Effects = AddUserEffect(Users[userID].Effects, structs.Effect{Name: "Comeback Bonus", Scope: "User", Key: "+", Value: 2})
+	case interval >= 80:
+		//Add the +3 Comeback effect
+		Users[userID].Effects = AddUserEffect(Users[userID].Effects, structs.Effect{Name: "Comeback Bonus", Scope: "User", Key: "+", Value: 3})
+	}
+}
+
+func RemoveUserEffect(userEffects []structs.Effect, effectName string) []structs.Effect {
+	var newUserEffects []structs.Effect
+	for _, e := range userEffects {
+		if e.Name != effectName {
+			newUserEffects = append(newUserEffects, e)
+		}
+	}
+	return newUserEffects
+}
+
+func AddUserEffect(userEffects []structs.Effect, effect structs.Effect) []structs.Effect {
+	var newUserEffects []structs.Effect
+	for _, e := range userEffects {
+		if e.Name != effect.Name {
+			newUserEffects = append(newUserEffects, e)
+		}
+	}
+	newUserEffects = append(newUserEffects, effect)
+	return newUserEffects
 }
