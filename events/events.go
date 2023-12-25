@@ -65,7 +65,7 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 	}
 	for i := 0; i < doublePtsEvents; {
 		eventIndex := rand.Intn(eventsNumber)
-		event := events[EventKey(eventIndex)]
+		event := events[EventsKeys[eventIndex]]
 		if len(event.Effects) == 0 {
 			event.Effects = append(event.Effects, structs.Effect{Name: "Double Points", Key: "x", Value: 2})
 			i++
@@ -81,9 +81,25 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 	}
 	for i := 0; i < triplePtsEvents; {
 		eventIndex := rand.Intn(eventsNumber)
-		event := events[EventKey(eventIndex)]
+		event := events[EventsKeys[eventIndex]]
 		if len(event.Effects) == 0 {
 			event.Effects = append(event.Effects, structs.Effect{Name: "Triple Points", Key: "x", Value: 3})
+			i++
+			eventsNumberEditable--
+		}
+	}
+
+	// 10% of events without other effects will have x-1pts effect.
+	negativePtsEvents := int(float64(eventsNumber) * 0.1)
+
+	if negativePtsEvents > eventsNumberEditable {
+		negativePtsEvents = eventsNumberEditable
+	}
+	for i := 0; i < negativePtsEvents; {
+		eventIndex := rand.Intn(eventsNumber)
+		event := events[EventsKeys[eventIndex]]
+		if len(event.Effects) == 0 {
+			event.Effects = append(event.Effects, structs.Effect{Name: "Negative Points", Key: "x", Value: -1})
 			i++
 			eventsNumberEditable--
 		}
@@ -100,7 +116,7 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 
 		for i := 0; i < quintuplesPtsEvents; {
 			eventIndex := rand.Intn(eventsNumber)
-			event := events[EventKey(eventIndex)]
+			event := events[EventsKeys[eventIndex]]
 			if len(event.Effects) == 0 {
 				event.Effects = append(event.Effects, structs.Effect{Name: "Quintuples Points", Key: "x", Value: 5})
 				i++
@@ -114,9 +130,10 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 		Active:     eventsNumber,
 		Uneffected: eventsNumberEditable,
 		Effected: map[string]int{
-			"x2": doublePtsEvents,
-			"x3": triplePtsEvents,
-			"x5": quintuplesPtsEvents,
+			"x(-1)": negativePtsEvents,
+			"x(+2)": doublePtsEvents,
+			"x(+3)": triplePtsEvents,
+			"x(+5)": quintuplesPtsEvents,
 		},
 	}
 }
@@ -228,4 +245,107 @@ var Events = EventsMap{
 	//"21:37": {0, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	//"21:38": {0, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	//"23:59": {0, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
+}
+
+var EventsKeys = []EventKey{
+	"00:00",
+	"00:12",
+	"00:24",
+	"01:01",
+	"01:10",
+	"01:11",
+	"01:23",
+	"01:35",
+	"02:02",
+	"02:10",
+	"02:20",
+	"02:22",
+	"02:34",
+	"02:46",
+	"03:03",
+	"03:21",
+	"03:30",
+	"03:33",
+	"03:45",
+	"03:57",
+	"04:04",
+	"04:20",
+	"04:32",
+	"04:40",
+	"04:44",
+	"04:56",
+	"05:05",
+	"05:31",
+	"05:43",
+	"05:50",
+	"05:55",
+	"06:06",
+	"06:42",
+	"06:54",
+	"07:07",
+	"07:53",
+	"08:08",
+	"09:09",
+	"10:00",
+	"10:01",
+	"10:10",
+	"10:12",
+	"10:24",
+	"11:11",
+	"11:23",
+	"11:35",
+	"12:10",
+	"12:12",
+	"12:21",
+	"12:22",
+	"12:34",
+	"12:46",
+	"13:13",
+	"13:21",
+	"13:31",
+	"13:33",
+	"13:45",
+	"13:57",
+	"14:14",
+	"14:20",
+	"14:32",
+	"14:41",
+	"14:44",
+	"14:56",
+	"15:15",
+	"15:31",
+	"15:43",
+	"15:51",
+	"15:55",
+	"16:16",
+	"16:42",
+	"16:54",
+	"17:17",
+	"17:53",
+	"18:18",
+	"19:19",
+	"20:00",
+	"20:02",
+	"20:12",
+	"20:20",
+	"20:24",
+	"21:11",
+	"21:12",
+	"21:21",
+	"21:23",
+	"21:35",
+	"22:10",
+	"22:22",
+	"22:34",
+	"22:46",
+	"23:21",
+	"23:23",
+	"23:32",
+	"23:33",
+	"23:45",
+	"23:57",
+	//TESTS: --------------------------------------------------------------
+	//"21:37",
+	//"21:38",
+	//"23:59",
 }
