@@ -1,3 +1,4 @@
 config/.env
 users.json
 log.txt
+log.json

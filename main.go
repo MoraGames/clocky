@@ -48,7 +48,7 @@ func main() {
 
 	//set the gocron events reset
 	gcScheduler := gocron.NewScheduler(timeLocation)
-	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset)
+	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset, false, types.WriteMessageData{})
 	if err != nil {
 		l.WithFields(logrus.Fields{
 			"gcJob": gcJob,
@@ -57,10 +57,10 @@ func main() {
 	}
 
 	//link Telegram API
-	apiToken := os.Getenv("TelegramAPIToken")
+	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
 	if apiToken == "" {
 		l.WithFields(logrus.Fields{
-			"env": "TelegramAPIToken",
+			"env": "TELEGRAM_API_TOKEN",
 		}).Panic("Env not set")
 	}
 
@@ -89,4 +89,12 @@ func main() {
 	gcScheduler.StartAsync()
 	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates, Status: "online"})
 	gcScheduler.Stop()
+}
+
+func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text string) {
+	msg := tgbotapi.NewMessage(chatID, text)
+	if replyMessageID != -1 {
+		msg.ReplyToMessageID = replyMessageID
+	}
+	bot.Send(msg)
 }

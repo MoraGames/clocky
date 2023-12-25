@@ -111,7 +111,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				switch cmdArgs[0] {
 				case "events":
 					// Reset the events data structure
-					events.Events.Reset()
+					events.Events.Reset(true, types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: update.Message.MessageID})
 
 					// Respond with command executed successfully
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Eventi resettati")
@@ -308,10 +308,10 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 
 // Check if a user is considered bot-admin (saved in .env file)
 func isAdmin(user *tgbotapi.User, utils types.Utils) bool {
-	adminUserIDStr := os.Getenv("AdminUserID")
+	adminUserIDStr := os.Getenv("TELEGRAM_ADMIN_ID")
 	if adminUserIDStr == "" {
 		utils.Logger.WithFields(logrus.Fields{
-			"env": "AdminUserID",
+			"env": "TELEGRAM_ADMIN_ID",
 		}).Panic("Env not set")
 	}
 	adminUserID, err := strconv.ParseInt(adminUserIDStr, 10, 64)
