@@ -234,6 +234,47 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				}
 			}
 		}
+	case "check":
+		// Check actual event infos
+		if !isAdmin(update.Message.From, utils) {
+			// Respond and log with a message indicating that the user is not authorized to use this command
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
+			msg.ReplyToMessageID = update.Message.MessageID
+			data.Bot.Send(msg)
+			utils.Logger.WithFields(logrus.Fields{
+				"usr": update.Message.From.UserName,
+				"cmd": update.Message.Command(),
+			}).Debug("Unauthorized user")
+		} else {
+			// Split the command arguments
+			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+
+			if len(cmdArgs) != 1 {
+				// Respond with a message indicating that the command arguments are wrong
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /check <events>")
+				msg.ReplyToMessageID = update.Message.MessageID
+				data.Bot.Send(msg)
+				utils.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"msg": update.Message.Text,
+				}).Debug("Wrong command")
+			} else {
+				// Check if the command argument is events
+				switch cmdArgs[0] {
+				case "events":
+					// Check the events data structure
+					eventsString := events.Events.ToString()
+
+					// Respond with command executed successfully
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Eventi controllati. Ecco lo stato attuale:\n\n"+eventsString)
+					msg.ReplyToMessageID = update.Message.MessageID
+					data.Bot.Send(msg)
+
+					// Log the /check command sent
+					utils.Logger.Debug("Events checked")
+				}
+			}
+		}
 	case "update":
 		// Update points value property of an event
 		// Check if the user is an bot-admin

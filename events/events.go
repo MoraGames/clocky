@@ -27,6 +27,15 @@ func (events EventsMap) Add(eventKey EventKey, eventValue *EventValue) {
 	events[eventKey] = eventValue
 }
 
+func (events EventsMap) ToString() string {
+	text := ""
+	for i := 0; i < len(EventsKeys); i++ {
+		key := EventsKeys[i]
+		text += fmt.Sprintf("%q = %+v\n", key, *(events[key]))
+	}
+	return text
+}
+
 func (events EventsMap) Reset(writeMessage bool, wrtMsgData types.WriteMessageData) {
 	for _, event := range events {
 		event.Activated = false
