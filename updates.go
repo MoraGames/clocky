@@ -82,11 +82,9 @@ func run(utils types.Utils, data types.Data) {
 						delay := event.ActivatedAt.Sub(update.Message.Time())
 
 						// Get Event effects
-						haveEffect := false
 						effectText := ""
 						if len(event.Effects) != 0 {
-							haveEffect = true
-							effectText += "Effetti = ["
+							effectText += " grazie agli effetti: "
 							for i := 0; i < len(event.Effects); i++ {
 								if i != len(event.Effects)-1 {
 									effectText += fmt.Sprintf("%q, ", event.Effects[i].Name)
@@ -103,14 +101,23 @@ func run(utils types.Utils, data types.Data) {
 									event.Points -= event.Effects[i].Value
 								}
 							}
-							effectText += "]"
 						}
 
 						// Respond to the user with event activated informations
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, delay.Seconds()))
-						if haveEffect {
-							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te (%v).\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
+						var msg tgbotapi.MessageConfig
+						switch {
+						case event.Points < -1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
+						case event.Points == -1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
+						case event.Points == 0:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
+						case event.Points == 1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
+						case event.Points > 1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
 						}
+
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
 

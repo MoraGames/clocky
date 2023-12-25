@@ -125,11 +125,32 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 		}
 	}
 
+	// With 30% of probability, one event without other effect will have x-2pts effect.
+	doubleNegativePtsEvents := 0
+	if rand.Float64() < 0.3 {
+		doubleNegativePtsEvents = 1
+
+		if doubleNegativePtsEvents > eventsNumberEditable {
+			doubleNegativePtsEvents = eventsNumberEditable
+		}
+
+		for i := 0; i < doubleNegativePtsEvents; {
+			eventIndex := rand.Intn(eventsNumber)
+			event := events[EventsKeys[eventIndex]]
+			if len(event.Effects) == 0 {
+				event.Effects = append(event.Effects, structs.Effect{Name: "Double Negative Points", Key: "x", Value: -2})
+				i++
+				eventsNumberEditable--
+			}
+		}
+	}
+
 	return EventsNumbers{
 		Total:      eventsNumber,
 		Active:     eventsNumber,
 		Uneffected: eventsNumberEditable,
 		Effected: map[string]int{
+			"x(-2)": doubleNegativePtsEvents,
 			"x(-1)": negativePtsEvents,
 			"x(+2)": doublePtsEvents,
 			"x(+3)": triplePtsEvents,
@@ -255,14 +276,14 @@ var Events = EventsMap{
 	"22:10": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"22:22": {2, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"22:34": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
-	"22:44": {2, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
+	"22:44": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"22:46": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"23:21": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"23:23": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"23:32": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"23:33": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"23:45": {2, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
-	"23:46": {2, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
+	"23:46": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"23:57": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	//TESTS: --------------------------------------------------------------
 	//"21:37": {0, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
