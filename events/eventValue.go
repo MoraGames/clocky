@@ -2,6 +2,8 @@ package events
 
 import (
 	"time"
+
+	"github.com/MoraGames/clockyuwu/structs"
 )
 
 type EventValue struct {
@@ -11,4 +13,5 @@ type EventValue struct {
 	ActivatedAt    time.Time
 	ArrivedAt      time.Time
 	Partecipations map[int64]bool
+	Effects        []structs.Effect
 }

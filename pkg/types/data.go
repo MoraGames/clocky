@@ -9,3 +9,10 @@ type Data struct {
 	Updates tgbotapi.UpdatesChannel
 	Status  string
 }
+
+type WriteMessageData struct {
+	Bot            *tgbotapi.BotAPI
+	ChatID         int64
+	ReplyMessageID int
+	Text           string
+}
