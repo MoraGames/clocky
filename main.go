@@ -87,7 +87,7 @@ func main() {
 	}).Debug("Update channel retreived")
 
 	gcScheduler.StartAsync()
-	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates, Status: "online"})
+	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates})
 	gcScheduler.Stop()
 }
 
