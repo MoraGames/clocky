@@ -42,12 +42,28 @@ func run(utils types.Utils, data types.Data) {
 		// Save the time of the update reading (more precise than the time of the message)
 		curTime := time.Now()
 
+		//Log Update
+		utils.Logger.WithFields(logrus.Fields{
+			"updID": update.UpdateID,
+			"updFr": update.FromChat().Title,
+			"updBy": update.SentFrom().UserName,
+			"updAt": curTime.Format(utils.TimeFormat),
+		}).Debug("Update received")
+
 		// Check the type of the update
 		if update.CallbackQuery != nil {
 			utils.Logger.WithFields(logrus.Fields{}).Info("CallbackQuery received")
 			// TODO: Manage CallbackQuery
 		}
 		if update.Message != nil {
+			// Log Message
+			utils.Logger.WithFields(logrus.Fields{
+				"usrFrom": update.Message.From.UserName,
+				"msgText": update.Message.Text,
+				"msgTime": update.Message.Time().Format(utils.TimeFormat),
+				"curTime": curTime.Format(utils.TimeFormat),
+			}).Info("Message received")
+
 			// TODO: Rework better this timing system
 			eventKey := events.NewEventKey(update.Message.Time())
 
@@ -57,14 +73,6 @@ func run(utils types.Utils, data types.Data) {
 			}
 
 			if data.Status == "online" || isAdmin(update.Message.From, utils) {
-				// Log Message
-				utils.Logger.WithFields(logrus.Fields{
-					"usrFrom": update.Message.From.UserName,
-					"msgText": update.Message.Text,
-					"msgTime": update.Message.Time().Format(utils.TimeFormat),
-					"curTime": curTime.Format(utils.TimeFormat),
-				}).Info("Message received")
-
 				// Check if the message is a valid event
 				if event, ok := events.Events[eventKey]; ok && string(eventKey) == update.Message.Text {
 					// Log Event message
