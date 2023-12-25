@@ -39,7 +39,7 @@ func (events EventsMap) Reset(writeMessage bool, wrtMsgData types.WriteMessageDa
 	evntsNums := events.RandomizeEffects()
 
 	if writeMessage {
-		text := "Gli eventi son stati resettati.\nEcco alcune informazioni:\n\nNumero eventi %v/%v (%v senza effetti).\n%v\n\nEffetti Attivi:\n"
+		text := fmt.Sprintf("Gli eventi son stati resettati.\nEcco alcune informazioni:\n\nNumero eventi %v/%v (%v senza effetti).\n\nEffetti Attivi:\n", evntsNums.Active, evntsNums.Total, evntsNums.Uneffected)
 		for key, value := range evntsNums.Effected {
 			text += fmt.Sprintf("  %v = %v\n", key, value)
 		}
