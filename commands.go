@@ -40,7 +40,9 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		// Generate the ranking
 		ranking := make([]Rank, 0)
 		for _, u := range Users {
-			ranking = append(ranking, Rank{u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+			if u != nil {
+				ranking = append(ranking, Rank{u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+			}
 		}
 
 		// Sort the ranking by points (and partecipations if points are equal)
@@ -55,28 +57,91 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		)
 
 		// Generate the string to send
-		leadersPoints := ranking[0].Points
-		rankingString := ""
-		for i, r := range ranking {
-			rankingString += fmt.Sprintf("%v] %v: %v (-%v)\n", i+1, r.Username, r.Points, leadersPoints-r.Points)
-		}
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ancora nessun utente ha partecipato agli eventi della season.")
+		if len(ranking) != 0 {
+			leadersPoints := ranking[0].Points
+			rankingString := ""
+			for i, r := range ranking {
+				rankingString += fmt.Sprintf("%v] %v: %v (-%v)\n", i+1, r.Username, r.Points, leadersPoints-r.Points)
+			}
 
-		// Send the message
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
+			// Send the message
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
+		}
 		msg.ReplyToMessageID = update.Message.MessageID
 		data.Bot.Send(msg)
 
 		// Log the /ranking command sent
 		utils.Logger.Debug("Ranking sent")
 	case "stats":
-		// Respond with the user's stats
-		// Get the user from the Users data structure
-		u := Users[update.Message.From.ID]
+		// Respond with the user's stats (or the specified user's stats)
 
-		// Send the message with user's stats
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
-		msg.ReplyToMessageID = update.Message.MessageID
-		data.Bot.Send(msg)
+		// Check if the command has arguments
+		if update.Message.CommandArguments() == "" {
+			// Get the user from the Users data structure
+			u := Users[update.Message.From.ID]
+
+			// Send the message with user's stats
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
+			if u != nil {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
+			}
+			msg.ReplyToMessageID = update.Message.MessageID
+			data.Bot.Send(msg)
+
+			// Log the /stats command sent
+			utils.Logger.Debug("Stats sent")
+		} else {
+			// Split the command arguments
+			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+
+			if len(cmdArgs) != 1 {
+				// Respond with a message indicating that the command arguments are wrong
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /stats [user]")
+				msg.ReplyToMessageID = update.Message.MessageID
+				data.Bot.Send(msg)
+				utils.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"msg": update.Message.Text,
+				}).Debug("Wrong command")
+			} else {
+				// Get the id and check if the user exists
+				username := cmdArgs[0]
+				var userKey int64
+				var founded bool
+				for userID, user := range Users {
+					if user.UserName == username {
+						founded = true
+						userKey = userID
+					}
+				}
+
+				if !founded {
+					// Respond with a message indicating that the user does not exist
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
+					msg.ReplyToMessageID = update.Message.MessageID
+					data.Bot.Send(msg)
+					utils.Logger.WithFields(logrus.Fields{
+						"usr": update.Message.From.UserName,
+						"msg": update.Message.Text,
+					}).Debug("User not found")
+				} else {
+					// Get the user from the Users data structure
+					u := Users[userKey]
+
+					// Send the message with user's stats
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))
+					if u != nil {
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le statistiche di %v sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v", u.UserName, u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins))
+					}
+					msg.ReplyToMessageID = update.Message.MessageID
+					data.Bot.Send(msg)
+
+					// Log the /stats command sent
+					utils.Logger.Debug("Stats sent")
+				}
+			}
+		}
 
 		// Log the /stats command sent
 		utils.Logger.Debug("Stats sent")
@@ -179,10 +244,10 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Split the command arguments
 			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
 
-			// Check if the command arguments are in the form /update <event> <points>
-			if len(cmdArgs) != 2 {
+			// Check if the command arguments are in the form /update <event|user> <points>
+			if len(cmdArgs) != 3 {
 				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update <event> <points>")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update (<\"event\" event>|\"user\" <user>) <points>")
 				msg.ReplyToMessageID = update.Message.MessageID
 				data.Bot.Send(msg)
 				utils.Logger.WithFields(logrus.Fields{
@@ -191,117 +256,89 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				}).Debug("Wrong command")
 			} else {
 				// Get and check if the event exists
-				eventKeyString := cmdArgs[0]
-				if event, ok := events.Events[events.EventKey(eventKeyString)]; !ok {
-					// Respond with a message indicating that the event does not exist
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento non trovato")
-					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
-					utils.Logger.WithFields(logrus.Fields{
-						"usr": update.Message.From.UserName,
-						"msg": update.Message.Text,
-					}).Debug("Event not found")
-				} else {
-					// Get and check if the points value is a number
-					points, err := strconv.Atoi(cmdArgs[1])
-					if err != nil {
-						// Respond with a message indicating that the points value is not a number
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
+				targetType := cmdArgs[0]
+				switch targetType {
+				case "event":
+					eventKeyString := cmdArgs[1]
+					if event, ok := events.Events[events.EventKey(eventKeyString)]; !ok {
+						// Respond with a message indicating that the event does not exist
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento non trovato")
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
 						utils.Logger.WithFields(logrus.Fields{
 							"usr": update.Message.From.UserName,
 							"msg": update.Message.Text,
-						}).Debug("Wrong command")
+						}).Debug("Event not found")
 					} else {
-						// Update the event points value
-						events.Events[events.EventKey(eventKeyString)] = &events.EventValue{Points: points, Activated: event.Activated, ActivatedBy: event.ActivatedBy, ActivatedAt: event.ActivatedAt, ArrivedAt: event.ArrivedAt, Partecipations: event.Partecipations}
+						// Get and check if the points value is a number
+						points, err := strconv.Atoi(cmdArgs[2])
+						if err != nil {
+							// Respond with a message indicating that the points value is not a number
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+							utils.Logger.WithFields(logrus.Fields{
+								"usr": update.Message.From.UserName,
+								"msg": update.Message.Text,
+							}).Debug("Wrong command")
+						} else {
+							// Update the event points value
+							events.Events[events.EventKey(eventKeyString)] = &events.EventValue{Points: points, Activated: event.Activated, ActivatedBy: event.ActivatedBy, ActivatedAt: event.ActivatedAt, ArrivedAt: event.ArrivedAt, Partecipations: event.Partecipations}
 
-						// Respond with command executed successfully
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento aggiornato")
+							// Respond with command executed successfully
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento aggiornato")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+
+							// Log the /update command executed successfully
+							utils.Logger.Debug("Event updated")
+						}
+					}
+				case "user":
+					username := cmdArgs[1]
+					var userKey int64
+					for userID, user := range Users {
+						if user != nil && user.UserName == username {
+							userKey = userID
+						}
+					}
+
+					if user, ok := Users[userKey]; !ok {
+						// Respond with a message indicating that the event does not exist
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
 						msg.ReplyToMessageID = update.Message.MessageID
 						data.Bot.Send(msg)
+						utils.Logger.WithFields(logrus.Fields{
+							"usr": update.Message.From.UserName,
+							"msg": update.Message.Text,
+						}).Debug("Event not found")
+					} else {
+						// Get and check if the points value is a number
+						points, err := strconv.Atoi(cmdArgs[2])
+						if err != nil {
+							// Respond with a message indicating that the points value is not a number
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+							utils.Logger.WithFields(logrus.Fields{
+								"usr": update.Message.From.UserName,
+								"msg": update.Message.Text,
+							}).Debug("Wrong command")
+						} else {
+							// Update the user points value
+							Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: points, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
 
-						// Log the /update command executed successfully
-						utils.Logger.Debug("Event updated")
+							// Respond with command executed successfully
+							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente aggiornato")
+							msg.ReplyToMessageID = update.Message.MessageID
+							data.Bot.Send(msg)
+
+							// Log the /update command executed successfully
+							utils.Logger.Debug("Event updated")
+						}
 					}
 				}
 			}
-		}
-	case "status":
-		// Manage the "features status" of the bot. This isn't a check for the bot status
-		// Split the command arguments
-		cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
-
-		// Check if the command arguments are in the form /status get or /status set <online|offline>
-		if len(cmdArgs) == 1 && cmdArgs[0] == "get" {
-			// Respond with the bot features' status
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "bot is currently: "+data.Status)
-			msg.ReplyToMessageID = update.Message.MessageID
-			data.Bot.Send(msg)
-
-			// Log the /status command sent
-			utils.Logger.Debug("Status getted")
-		} else if len(cmdArgs) == 2 && cmdArgs[0] == "set" {
-			// Check if the user is an bot-admin
-			if !isAdmin(update.Message.From, utils) {
-				// Respond and log with a message indicating that the user is not authorized to use this command
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
-				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
-				utils.Logger.WithFields(logrus.Fields{
-					"usr": update.Message.From.UserName,
-					"cmd": update.Message.Command(),
-				}).Debug("Unauthorized user")
-			} else if cmdArgs[1] == "online" {
-				// Update the status variable
-				data.Status = "online"
-
-				// Respond with command executed successfully
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Bot status set to: "+data.Status)
-				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
-
-				// Log the /status command executed successfully
-				utils.Logger.WithFields(logrus.Fields{
-					"usr": update.Message.From.UserName,
-					"sts": data.Status,
-				}).Info("Bot status set to online")
-			} else if cmdArgs[1] == "offline" {
-				// Update the status variable
-				data.Status = "offline"
-
-				// Respond with command executed successfully
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Bot status set to: "+data.Status)
-				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
-
-				// Log the /status command executed successfully
-				utils.Logger.WithFields(logrus.Fields{
-					"usr": update.Message.From.UserName,
-					"sts": data.Status,
-				}).Info("Bot status set to offline")
-			} else {
-				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /status <get|set <online|offline>> ")
-				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
-
-				// Log the /status command executed in a wrong form
-				utils.Logger.WithFields(logrus.Fields{
-					"usr": update.Message.From.UserName,
-					"msg": update.Message.Text,
-				}).Debug("Wrong command")
-			}
-		} else {
-			// Respond with a message indicating that the command arguments are wrong
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /status <get|set <online|offline>> ")
-			msg.ReplyToMessageID = update.Message.MessageID
-			data.Bot.Send(msg)
-			utils.Logger.WithFields(logrus.Fields{
-				"usr": update.Message.From.UserName,
-				"msg": update.Message.Text,
-			}).Debug("Wrong command")
 		}
 	}
 }
