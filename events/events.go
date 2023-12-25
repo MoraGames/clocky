@@ -41,7 +41,7 @@ func (events EventsMap) Reset(writeMessage bool, wrtMsgData types.WriteMessageDa
 	if writeMessage {
 		text := "Gli eventi son stati resettati.\nEcco alcune informazioni:\n\nNumero eventi %v/%v (%v senza effetti).\n%v\n\nEffetti Attivi:\n"
 		for key, value := range evntsNums.Effected {
-			text = fmt.Sprintf("  %v = %v\n", key, value)
+			text += fmt.Sprintf("  %v = %v\n", key, value)
 		}
 		text += "\nBuona fortuna!"
 
