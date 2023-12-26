@@ -180,7 +180,7 @@ func run(utils types.Utils, data types.Data) {
 					}).Error("Error while marshalling data")
 					utils.Logger.Error(Users)
 				}
-				err = os.WriteFile("./users.json", file, 0644)
+				err = os.WriteFile("files/users.json", file, 0644)
 				if err != nil {
 					utils.Logger.WithFields(logrus.Fields{
 						"err":  err,

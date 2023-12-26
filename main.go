@@ -31,7 +31,7 @@ func main() {
 		"frm": conf.Log.Format,
 	}).Debug("Logger initialized")
 
-	logFile, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("files/log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Println(err)
 	}
@@ -88,7 +88,7 @@ func main() {
 	}).Debug("Update channel retreived")
 
 	// Read from specified files and reload the data into the structs
-	ReloadStatus([]types.Reload{{FileName: "events.json", DataStruct: &events.Events}, {FileName: "users.json", DataStruct: &Users}}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
+	ReloadStatus([]types.Reload{{FileName: "files/events.json", DataStruct: &events.Events}, {FileName: "files/users.json", DataStruct: &Users}}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
 
 	gcScheduler.StartAsync()
 	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates})
@@ -101,7 +101,7 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 	}).Debug("Reloading status")
 
 	for _, reload := range reloads {
-		file, err := os.ReadFile("files/" + reload.FileName)
+		file, err := os.ReadFile(reload.FileName)
 		if err != nil {
 			utils.Logger.WithFields(logrus.Fields{
 				"file": reload.FileName,

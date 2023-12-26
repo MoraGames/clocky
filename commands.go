@@ -67,11 +67,11 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				switch cmdArgs[0] {
 				case "logs":
 					// Check the logs data structure
-					logTxt, err := os.ReadFile("log/log.txt")
+					logTxt, err := os.ReadFile("files/log.txt")
 					if err != nil {
 						utils.Logger.WithFields(logrus.Fields{
 							"err": err,
-						}).Error("Error while reading log/log.txt")
+						}).Error("Error while reading files/log.txt")
 					}
 
 					// Respond with command executed successfully
@@ -90,11 +90,11 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					utils.Logger.Debug("Logs checked")
 				case "users":
 					// Check the logs data structure
-					usersJson, err := os.ReadFile("users.json")
+					usersJson, err := os.ReadFile("files/users.json")
 					if err != nil {
 						utils.Logger.WithFields(logrus.Fields{
 							"err": err,
-						}).Error("Error while reading users.json")
+						}).Error("Error while reading files/users.json")
 					}
 
 					// Respond with command executed successfully
@@ -304,7 +304,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Reset the users data structure
 					Users = make(map[int64]*structs.User)
 
-					// Overwrite the users.json file with the new (and empty) data structure
+					// Overwrite the files/users.json file with the new (and empty) data structure
 					file, err := json.MarshalIndent(Users, "", " ")
 					if err != nil {
 						utils.Logger.WithFields(logrus.Fields{
@@ -313,7 +313,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						}).Error("Error while marshalling data")
 						utils.Logger.Error(Users)
 					}
-					err = os.WriteFile("./users.json", file, 0644)
+					err = os.WriteFile("files/users.json", file, 0644)
 					if err != nil {
 						utils.Logger.WithFields(logrus.Fields{
 							"err":  err,
