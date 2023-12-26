@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/config"
@@ -39,24 +40,6 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, logFile)
 	l.SetOutput(mw)
 
-	//get current time location
-	timeLocation, err := time.LoadLocation("Local")
-	if err != nil {
-		l.WithFields(logrus.Fields{
-			"err": err,
-		}).Warn("Time location not get (using UTC)")
-	}
-
-	//set the gocron events reset
-	gcScheduler := gocron.NewScheduler(timeLocation)
-	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset, false, types.WriteMessageData{}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
-	if err != nil {
-		l.WithFields(logrus.Fields{
-			"gcJob": gcJob,
-			"error": err,
-		}).Error("GoCron job not set")
-	}
-
 	//link Telegram API
 	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
 	if apiToken == "" {
@@ -80,6 +63,41 @@ func main() {
 	bot.Debug = false
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 180
+
+	//get current time location
+	timeLocation, err := time.LoadLocation("Local")
+	if err != nil {
+		l.WithFields(logrus.Fields{
+			"err": err,
+		}).Warn("Time location not get (using UTC)")
+	}
+
+	//set the gocron events reset
+	defChatIDstr := os.Getenv("TELEGRAM_DEFAULT_CHAT_ID")
+	if defChatIDstr == "" {
+		l.WithFields(logrus.Fields{
+			"env": "TELEGRAM_DEFAULT_CHAT_ID",
+		}).Warn("Env not set")
+	}
+
+	var defChatID int64
+	if defChatIDstr != "" {
+		defChatID, err = strconv.ParseInt(defChatIDstr, 10, 64)
+		if err != nil {
+			l.WithFields(logrus.Fields{
+				"err": err,
+			}).Warn("Env not set")
+		}
+	}
+
+	gcScheduler := gocron.NewScheduler(timeLocation)
+	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset, defChatIDstr != "", types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
+	if err != nil {
+		l.WithFields(logrus.Fields{
+			"gcJob": gcJob,
+			"error": err,
+		}).Error("GoCron job not set")
+	}
 
 	updates := bot.GetUpdatesChan(u)
 	l.WithFields(logrus.Fields{
