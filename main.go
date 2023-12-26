@@ -49,7 +49,7 @@ func main() {
 
 	//set the gocron events reset
 	gcScheduler := gocron.NewScheduler(timeLocation)
-	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset, false, types.WriteMessageData{})
+	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset, false, types.WriteMessageData{}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
 	if err != nil {
 		l.WithFields(logrus.Fields{
 			"gcJob": gcJob,
@@ -109,12 +109,18 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 			}).Error("Error while reading file")
 		}
 
-		err = json.Unmarshal(file, reload.DataStruct)
-		if err != nil {
+		if len(file) != 0 {
+			err = json.Unmarshal(file, reload.DataStruct)
+			if err != nil {
+				utils.Logger.WithFields(logrus.Fields{
+					"data": reload.DataStruct,
+					"err":  err,
+				}).Error("Error while unmarshalling data")
+			}
+		} else {
 			utils.Logger.WithFields(logrus.Fields{
-				"data": reload.DataStruct,
-				"err":  err,
-			}).Error("Error while unmarshalling data")
+				"file": reload.FileName,
+			}).Warn("File is empty")
 		}
 	}
 }
