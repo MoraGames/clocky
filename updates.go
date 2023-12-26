@@ -21,22 +21,6 @@ var (
 
 // Run the core of the bot
 func run(utils types.Utils, data types.Data) {
-	// Read the users file and load in Users data structure
-	file, err := os.ReadFile("users.json")
-	if err != nil {
-		utils.Logger.WithFields(logrus.Fields{
-			"err":  err,
-			"note": "preoccupati moderatamente",
-		}).Error("Error while reading data")
-	}
-	err = json.Unmarshal([]byte(file), &Users)
-	if err != nil {
-		utils.Logger.WithFields(logrus.Fields{
-			"err":  err,
-			"note": "preoccupati ma poco",
-		}).Error("Error while unmarshalling data")
-	}
-
 	// Loop over the updates
 	for update := range data.Updates {
 		// Save the time of the update reading (more precise than the time of the message)

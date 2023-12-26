@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"os"
@@ -86,9 +87,36 @@ func main() {
 		"timeout":   u.Timeout,
 	}).Debug("Update channel retreived")
 
+	// Read from specified files and reload the data into the structs
+	ReloadStatus([]types.Reload{{FileName: "events.json", DataStruct: &events.Events}, {FileName: "users.json", DataStruct: &Users}}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
+
 	gcScheduler.StartAsync()
 	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates})
 	gcScheduler.Stop()
+}
+
+func ReloadStatus(reloads []types.Reload, utils types.Utils) {
+	utils.Logger.WithFields(logrus.Fields{
+		"reloads": reloads,
+	}).Debug("Reloading status")
+
+	for _, reload := range reloads {
+		file, err := os.ReadFile("files/" + reload.FileName)
+		if err != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"file": reload.FileName,
+				"err":  err,
+			}).Error("Error while reading file")
+		}
+
+		err = json.Unmarshal(file, reload.DataStruct)
+		if err != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"data": reload.DataStruct,
+				"err":  err,
+			}).Error("Error while unmarshalling data")
+		}
+	}
 }
 
 func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text string) {

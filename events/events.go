@@ -1,13 +1,16 @@
 package events
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/MoraGames/clockyuwu/structs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/sirupsen/logrus"
 )
 
 type EventsMap map[EventKey]*EventValue
@@ -36,7 +39,7 @@ func (events EventsMap) ToString() string {
 	return text
 }
 
-func (events EventsMap) Reset(writeMessage bool, wrtMsgData types.WriteMessageData) {
+func (events EventsMap) Reset(writeMessage bool, wrtMsgData types.WriteMessageData, utils types.Utils) {
 	for _, event := range events {
 		event.Activated = false
 		event.ActivatedBy = ""
@@ -47,8 +50,22 @@ func (events EventsMap) Reset(writeMessage bool, wrtMsgData types.WriteMessageDa
 	}
 	evntsNums := events.RandomizeEffects()
 
+	//Save the new events data struct into the file
+	file, err := json.MarshalIndent(Events, "", " ")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while marshalling data")
+	}
+	err = os.WriteFile("files/events.json", file, 0644)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while writing data")
+	}
+
 	if writeMessage {
-		text := fmt.Sprintf("Gli eventi son stati resettati.\nEcco alcune informazioni:\n\nNumero eventi %v/%v (%v senza effetti).\n\nEffetti Attivi:\n", evntsNums.Active, evntsNums.Total, evntsNums.Uneffected)
+		text := fmt.Sprintf("Gli eventi son stati resettati.\nEcco alcune informazioni:\n\nNumero eventi %v/%v (%v senza effetti).\n\nEffetti Attivi (%v):\n", evntsNums.Active, evntsNums.Total, evntsNums.Uneffected, evntsNums.Active-evntsNums.Uneffected)
 		for key, value := range evntsNums.Effected {
 			text += fmt.Sprintf("  %v = %v\n", key, value)
 		}
