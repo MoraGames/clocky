@@ -30,7 +30,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		// Respond with a "pong" message. Useful for checking if the bot is online
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "pong")
 		msg.ReplyToMessageID = update.Message.MessageID
-		data.Bot.Send(msg)
+		message, error := data.Bot.Send(msg)
+		if error != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"err": error,
+				"msg": message,
+			}).Error("Error while sending message")
+		}
 		utils.Logger.WithFields(logrus.Fields{
 			"usr": update.Message.From.UserName,
 			"msg": update.Message.Text,
@@ -69,7 +75,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
 		}
 		msg.ReplyToMessageID = update.Message.MessageID
-		data.Bot.Send(msg)
+		message, error := data.Bot.Send(msg)
+		if error != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"err": error,
+				"msg": message,
+			}).Error("Error while sending message")
+		}
 
 		// Log the /ranking command sent
 		utils.Logger.Debug("Ranking sent")
@@ -90,7 +102,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nEffetti attivi: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.Effects))
 			}
 			msg.ReplyToMessageID = update.Message.MessageID
-			data.Bot.Send(msg)
+			message, error := data.Bot.Send(msg)
+			if error != nil {
+				utils.Logger.WithFields(logrus.Fields{
+					"err": error,
+					"msg": message,
+				}).Error("Error while sending message")
+			}
 
 			// Log the /stats command sent
 			utils.Logger.Debug("Stats sent")
@@ -102,7 +120,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				// Respond with a message indicating that the command arguments are wrong
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /stats [user]")
 				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
+				message, error := data.Bot.Send(msg)
+				if error != nil {
+					utils.Logger.WithFields(logrus.Fields{
+						"err": error,
+						"msg": message,
+					}).Error("Error while sending message")
+				}
 				utils.Logger.WithFields(logrus.Fields{
 					"usr": update.Message.From.UserName,
 					"msg": update.Message.Text,
@@ -123,7 +147,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Respond with a message indicating that the user does not exist
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
 					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
 					utils.Logger.WithFields(logrus.Fields{
 						"usr": update.Message.From.UserName,
 						"msg": update.Message.Text,
@@ -141,7 +171,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nEffetti attivi: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.Effects))
 					}
 					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
 
 					// Log the /stats command sent
 					utils.Logger.Debug("Stats sent")
@@ -158,7 +194,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Respond and log with a message indicating that the user is not authorized to use this command
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
 			msg.ReplyToMessageID = update.Message.MessageID
-			data.Bot.Send(msg)
+			message, error := data.Bot.Send(msg)
+			if error != nil {
+				utils.Logger.WithFields(logrus.Fields{
+					"err": error,
+					"msg": message,
+				}).Error("Error while sending message")
+			}
 			utils.Logger.WithFields(logrus.Fields{
 				"usr": update.Message.From.UserName,
 				"cmd": update.Message.Command(),
@@ -172,7 +214,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				// Respond with a message indicating that the command arguments are wrong
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /reset <events|users>")
 				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
+				message, error := data.Bot.Send(msg)
+				if error != nil {
+					utils.Logger.WithFields(logrus.Fields{
+						"err": error,
+						"msg": message,
+					}).Error("Error while sending message")
+				}
 				utils.Logger.WithFields(logrus.Fields{
 					"usr": update.Message.From.UserName,
 					"msg": update.Message.Text,
@@ -187,7 +235,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Respond with command executed successfully
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Eventi resettati")
 					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
 
 					// Log the /reset command sent
 					utils.Logger.Debug("Events resetted")
@@ -216,7 +270,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Respond with command executed successfully
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utenti resettati")
 					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
 
 					// Log the /reset command sent
 					utils.Logger.Debug("Users resetted")
@@ -224,7 +284,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Respond with a message indicating that the command arguments are wrong
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /reset <events|users>")
 					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
 
 					// Log the /reset command executed in a wrong form
 					utils.Logger.WithFields(logrus.Fields{
@@ -240,7 +306,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Respond and log with a message indicating that the user is not authorized to use this command
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
 			msg.ReplyToMessageID = update.Message.MessageID
-			data.Bot.Send(msg)
+			message, error := data.Bot.Send(msg)
+			if error != nil {
+				utils.Logger.WithFields(logrus.Fields{
+					"err": error,
+					"msg": message,
+				}).Error("Error while sending message")
+			}
 			utils.Logger.WithFields(logrus.Fields{
 				"usr": update.Message.From.UserName,
 				"cmd": update.Message.Command(),
@@ -253,7 +325,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				// Respond with a message indicating that the command arguments are wrong
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /check <events>")
 				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
+				message, error := data.Bot.Send(msg)
+				if error != nil {
+					utils.Logger.WithFields(logrus.Fields{
+						"err": error,
+						"msg": message,
+					}).Error("Error while sending message")
+				}
 				utils.Logger.WithFields(logrus.Fields{
 					"usr": update.Message.From.UserName,
 					"msg": update.Message.Text,
@@ -268,10 +346,31 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Respond with command executed successfully
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Eventi controllati. Ecco lo stato attuale:\n\n"+eventsString)
 					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
 
 					// Log the /check command sent
 					utils.Logger.Debug("Events checked")
+				default:
+					// Respond with a message indicating that the command arguments are wrong
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /check <events>")
+					msg.ReplyToMessageID = update.Message.MessageID
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
+					utils.Logger.WithFields(logrus.Fields{
+						"usr": update.Message.From.UserName,
+						"msg": update.Message.Text,
+					}).Debug("Wrong command")
 				}
 			}
 		}
@@ -282,7 +381,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Respond and log with a message indicating that the user is not authorized to use this command
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
 			msg.ReplyToMessageID = update.Message.MessageID
-			data.Bot.Send(msg)
+			message, error := data.Bot.Send(msg)
+			if error != nil {
+				utils.Logger.WithFields(logrus.Fields{
+					"err": error,
+					"msg": message,
+				}).Error("Error while sending message")
+			}
 			utils.Logger.WithFields(logrus.Fields{
 				"usr": update.Message.From.UserName,
 				"cmd": update.Message.Command(),
@@ -296,7 +401,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				// Respond with a message indicating that the command arguments are wrong
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update (<\"event\" event>|\"user\" <user>) <points>")
 				msg.ReplyToMessageID = update.Message.MessageID
-				data.Bot.Send(msg)
+				message, error := data.Bot.Send(msg)
+				if error != nil {
+					utils.Logger.WithFields(logrus.Fields{
+						"err": error,
+						"msg": message,
+					}).Error("Error while sending message")
+				}
 				utils.Logger.WithFields(logrus.Fields{
 					"usr": update.Message.From.UserName,
 					"msg": update.Message.Text,
@@ -311,7 +422,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						// Respond with a message indicating that the event does not exist
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento non trovato")
 						msg.ReplyToMessageID = update.Message.MessageID
-						data.Bot.Send(msg)
+						message, error := data.Bot.Send(msg)
+						if error != nil {
+							utils.Logger.WithFields(logrus.Fields{
+								"err": error,
+								"msg": message,
+							}).Error("Error while sending message")
+						}
 						utils.Logger.WithFields(logrus.Fields{
 							"usr": update.Message.From.UserName,
 							"msg": update.Message.Text,
@@ -323,7 +440,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							// Respond with a message indicating that the points value is not a number
 							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
 							msg.ReplyToMessageID = update.Message.MessageID
-							data.Bot.Send(msg)
+							message, error := data.Bot.Send(msg)
+							if error != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err": error,
+									"msg": message,
+								}).Error("Error while sending message")
+							}
 							utils.Logger.WithFields(logrus.Fields{
 								"usr": update.Message.From.UserName,
 								"msg": update.Message.Text,
@@ -335,7 +458,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							// Respond with command executed successfully
 							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento aggiornato")
 							msg.ReplyToMessageID = update.Message.MessageID
-							data.Bot.Send(msg)
+							message, error := data.Bot.Send(msg)
+							if error != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err": error,
+									"msg": message,
+								}).Error("Error while sending message")
+							}
 
 							// Log the /update command executed successfully
 							utils.Logger.Debug("Event updated")
@@ -354,7 +483,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						// Respond with a message indicating that the event does not exist
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
 						msg.ReplyToMessageID = update.Message.MessageID
-						data.Bot.Send(msg)
+						message, error := data.Bot.Send(msg)
+						if error != nil {
+							utils.Logger.WithFields(logrus.Fields{
+								"err": error,
+								"msg": message,
+							}).Error("Error while sending message")
+						}
 						utils.Logger.WithFields(logrus.Fields{
 							"usr": update.Message.From.UserName,
 							"msg": update.Message.Text,
@@ -366,7 +501,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							// Respond with a message indicating that the points value is not a number
 							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
 							msg.ReplyToMessageID = update.Message.MessageID
-							data.Bot.Send(msg)
+							message, error := data.Bot.Send(msg)
+							if error != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err": error,
+									"msg": message,
+								}).Error("Error while sending message")
+							}
 							utils.Logger.WithFields(logrus.Fields{
 								"usr": update.Message.From.UserName,
 								"msg": update.Message.Text,
@@ -378,7 +519,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							// Respond with command executed successfully
 							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente aggiornato")
 							msg.ReplyToMessageID = update.Message.MessageID
-							data.Bot.Send(msg)
+							message, error := data.Bot.Send(msg)
+							if error != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err": error,
+									"msg": message,
+								}).Error("Error while sending message")
+							}
 
 							// Log the /update command executed successfully
 							utils.Logger.Debug("Event updated")
