@@ -88,7 +88,7 @@ func run(utils types.Utils, data types.Data) {
 					event.ActivatedBy = update.Message.From.UserName
 					event.ActivatedAt = curTime
 					event.ArrivedAt = update.Message.Time()
-					delay := event.ActivatedAt.Sub(update.Message.Time())
+					delay := curTime.Sub(time.Date(event.ArrivedAt.Year(), event.ArrivedAt.Month(), event.ArrivedAt.Day(), event.ArrivedAt.Hour(), event.ArrivedAt.Minute(), 0, 0, event.ArrivedAt.Location()))
 
 					if event.ArrivedAt.Second() == 59 {
 						event.Effects = append(event.Effects, structs.Effect{Name: "Last Chance", Scope: "Event", Key: "+", Value: 2})
