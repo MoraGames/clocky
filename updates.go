@@ -90,6 +90,10 @@ func run(utils types.Utils, data types.Data) {
 					event.ArrivedAt = update.Message.Time()
 					delay := event.ActivatedAt.Sub(update.Message.Time())
 
+					if event.ArrivedAt.Second() == 59 {
+						event.Effects = append(event.Effects, structs.Effect{Name: "Last Chance", Scope: "Event", Key: "+", Value: 2})
+					}
+
 					// Add the user to the data structure if they have never participated before
 					if _, ok := Users[update.Message.From.ID]; !ok {
 						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.UserName)
@@ -98,7 +102,7 @@ func run(utils types.Utils, data types.Data) {
 					// Check (and eventually update) the user effects
 					UpdateUserEffects(update.Message.From.ID)
 
-					// Get Event effects
+					// Apply all effects
 					effectText := ""
 					curEffects := append(event.Effects, Users[update.Message.From.ID].Effects...)
 					if len(curEffects) != 0 {
