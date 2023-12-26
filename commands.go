@@ -323,7 +323,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 
 			if len(cmdArgs) != 1 {
 				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /check <events>")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /check <events|users|logs>")
 				msg.ReplyToMessageID = update.Message.MessageID
 				message, error := data.Bot.Send(msg)
 				if error != nil {
@@ -339,12 +339,59 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			} else {
 				// Check if the command argument is events
 				switch cmdArgs[0] {
+				case "logs":
+					// Check the logs data structure
+					logTxt, err := os.ReadFile("log/log.txt")
+					if err != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": err,
+						}).Error("Error while reading log/log.txt")
+					}
+
+					// Respond with command executed successfully
+					msg := tgbotapi.NewDocument(update.Message.Chat.ID, tgbotapi.FileBytes{Name: "log.txt", Bytes: logTxt})
+					msg.Caption = "Log controllati. Ecco lo stato attuale:\n\n"
+					msg.ReplyToMessageID = update.Message.MessageID
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
+
+					// Log the /check command sent
+					utils.Logger.Debug("Logs checked")
+				case "users":
+					// Check the logs data structure
+					usersJson, err := os.ReadFile("users.json")
+					if err != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": err,
+						}).Error("Error while reading users.json")
+					}
+
+					// Respond with command executed successfully
+					msg := tgbotapi.NewDocument(update.Message.Chat.ID, tgbotapi.FileBytes{Name: "users.json", Bytes: usersJson})
+					msg.Caption = "Log controllati. Ecco lo stato attuale:\n\n"
+					msg.ReplyToMessageID = update.Message.MessageID
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
+
+					// Log the /check command sent
+					utils.Logger.Debug("Users checked")
 				case "events":
 					// Check the events data structure
 					eventsString := events.Events.ToString()
 
 					// Respond with command executed successfully
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Eventi controllati. Ecco lo stato attuale:\n\n"+eventsString)
+					msg := tgbotapi.NewDocument(update.Message.Chat.ID, tgbotapi.FileBytes{Name: "events.txt", Bytes: []byte(eventsString)})
+					msg.Caption = "Eventi controllati. Ecco lo stato attuale:\n\n"
 					msg.ReplyToMessageID = update.Message.MessageID
 					message, error := data.Bot.Send(msg)
 					if error != nil {
@@ -358,7 +405,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					utils.Logger.Debug("Events checked")
 				default:
 					// Respond with a message indicating that the command arguments are wrong
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /check <events>")
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /check <events|users|logs>")
 					msg.ReplyToMessageID = update.Message.MessageID
 					message, error := data.Bot.Send(msg)
 					if error != nil {
