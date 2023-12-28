@@ -49,7 +49,7 @@ func run(utils types.Utils, data types.Data) {
 			}).Info("Message received")
 
 			// TODO: Rework better this timing system
-			eventKey := events.NewEventKey(update.Message.Time())
+			eventKey := update.Message.Time().Format("15:04")
 
 			// Check if the message is a command (and ignore other actions)
 			if update.Message.IsCommand() {
@@ -58,7 +58,7 @@ func run(utils types.Utils, data types.Data) {
 			}
 
 			// Check if the message is a valid event
-			if event, ok := events.Events[eventKey]; ok && string(eventKey) == update.Message.Text {
+			if event, ok := events.Events.Map[eventKey]; ok && string(eventKey) == update.Message.Text {
 				// Log Event message
 				utils.Logger.WithFields(logrus.Fields{
 					"evnt": update.Message.Text,
@@ -66,32 +66,28 @@ func run(utils types.Utils, data types.Data) {
 				}).Debug("Event validated")
 
 				// Check if the user has already partecipated
-				if !event.Activated {
-					// Activate the event amd calculate the delay from o' clock
-					event.Activated = true
-					event.ActivatedBy = update.Message.From.UserName
-					event.ActivatedAt = curTime
-					event.ArrivedAt = update.Message.Time()
-					delay := curTime.Sub(time.Date(event.ArrivedAt.Year(), event.ArrivedAt.Month(), event.ArrivedAt.Day(), event.ArrivedAt.Hour(), event.ArrivedAt.Minute(), 0, 0, event.ArrivedAt.Location()))
-
-					if event.ArrivedAt.Second() == 59 {
-						event.Effects = append(event.Effects, structs.Effect{Name: "Last Chance", Scope: "Event", Key: "+", Value: 2})
-					}
-
+				if event.Activation == nil {
 					// Add the user to the data structure if they have never participated before
 					if _, ok := Users[update.Message.From.ID]; !ok {
-						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.UserName)
+						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
 					}
 
 					// Check (and eventually update) the user effects
 					UpdateUserEffects(update.Message.From.ID)
 
+					// Activate the event and calculate the delay from o' clock
+					event.Activate(Users[update.Message.From.ID], curTime, update.Message.Time(), event.Points)
+					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
+
+					if event.Activation.ArrivedAt.Second() == 59 {
+						event.AddEffect(structs.LastChanceBonus)
+					}
+
 					// Apply all effects
-					effectedPoints := event.Points
 					effectText := ""
 					curEffects := append(event.Effects, Users[update.Message.From.ID].Effects...)
 					if len(curEffects) != 0 {
-						effectText += " grazie agli effetti: "
+						effectText += " grazie agli effetti:\n"
 						for i := 0; i < len(curEffects); i++ {
 							if i != len(curEffects)-1 {
 								effectText += fmt.Sprintf("%q, ", curEffects[i].Name)
@@ -100,12 +96,12 @@ func run(utils types.Utils, data types.Data) {
 							}
 
 							switch curEffects[i].Key {
-							case "x":
-								effectedPoints *= curEffects[i].Value
+							case "*":
+								event.Activation.EarnedPoints *= curEffects[i].Value
 							case "+":
-								effectedPoints += curEffects[i].Value
+								event.Activation.EarnedPoints += curEffects[i].Value
 							case "-":
-								effectedPoints -= curEffects[i].Value
+								event.Activation.EarnedPoints -= curEffects[i].Value
 							}
 						}
 					}
@@ -113,16 +109,16 @@ func run(utils types.Utils, data types.Data) {
 					// Respond to the user with event activated informations
 					var msg tgbotapi.MessageConfig
 					switch {
-					case effectedPoints < -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
-					case effectedPoints == -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
-					case effectedPoints == 0:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
-					case effectedPoints == 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
-					case effectedPoints > 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
+					case event.Activation.EarnedPoints < -1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Seconds()))
+					case event.Activation.EarnedPoints == -1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Seconds()))
+					case event.Activation.EarnedPoints == 0:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Seconds()))
+					case event.Activation.EarnedPoints == 1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Seconds()))
+					case event.Activation.EarnedPoints > 1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Seconds()))
 					}
 
 					msg.ReplyToMessageID = update.Message.MessageID
@@ -133,45 +129,44 @@ func run(utils types.Utils, data types.Data) {
 						"actBy": update.Message.From.UserName,
 						"actAt": update.Message.Text,
 						"dfPts": event.Points,
-						"efPts": effectedPoints,
+						"efPts": event.Activation.EarnedPoints,
 					}).Debug("Event activated")
 
 					// Add points to the user if they have never participated the event before
-					if !event.Partecipations[update.Message.From.ID] {
-						Users[update.Message.From.ID].TotalPoints += effectedPoints
+					if event.HasPartecipated(update.Message.From.ID) {
+						event.Partecipate(Users[update.Message.From.ID], curTime)
+						Users[update.Message.From.ID].TotalPoints += event.Activation.EarnedPoints
 						Users[update.Message.From.ID].TotalEventPartecipations++
 						Users[update.Message.From.ID].TotalEventWins++
 					}
 				} else {
 					// Calculate the delay from o' clock and winner user
-					delay := curTime.Sub(time.Date(event.ArrivedAt.Year(), event.ArrivedAt.Month(), event.ArrivedAt.Day(), event.ArrivedAt.Hour(), event.ArrivedAt.Minute(), 0, 0, event.ArrivedAt.Location()))
-					delta := curTime.Sub(event.ActivatedAt)
+					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
+					delta := curTime.Sub(event.Activation.ActivatedAt)
 
 					// Respond to the user with event already activated informations
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa.\nHai impiegato +%vs.", event.ActivatedBy, delta.Seconds(), delay.Seconds()))
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("L'evento è già stato attivato da %v +%vs fa.\nHai impiegato +%vs.", event.Activation.ActivatedBy, delta.Seconds(), delay.Seconds()))
 					msg.ReplyToMessageID = update.Message.MessageID
 					data.Bot.Send(msg)
 
 					// Log Event already activated
 					utils.Logger.WithFields(logrus.Fields{
-						"actBy": event.ActivatedBy,
-						"actAt": event.ActivatedAt.Format(utils.TimeFormat),
+						"actBy": event.Activation.ActivatedBy,
+						"actAt": event.Activation.ActivatedAt.Format(utils.TimeFormat),
 						"delta": delta,
 						"delay": delay,
 					}).Debug("Event already activated")
 
 					// Add the user to the data structure if they have never participated before
 					if _, ok := Users[update.Message.From.ID]; !ok {
-						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.UserName)
+						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
 					}
 					// Add partecipations to the user if they have never participated the event before
-					if !event.Partecipations[update.Message.From.ID] {
+					if event.HasPartecipated(update.Message.From.ID) {
+						event.Partecipate(Users[update.Message.From.ID], curTime)
 						Users[update.Message.From.ID].TotalEventPartecipations++
 					}
 				}
-
-				// Set that the user has already partecipated
-				events.Events[eventKey].Partecipations[update.Message.From.ID] = true
 
 				// Save the users file with updated Users data structure
 				file, err := json.MarshalIndent(Users, "", " ")
@@ -225,40 +220,17 @@ func UpdateUserEffects(userID int64) {
 	}
 	interval := leaderPoints - userPoints
 
-	//Comeback Bonus
+	//Remove the Comeback effect
+	Users[userID].RemoveEffects(structs.ComebackBonus1, structs.ComebackBonus2, structs.ComebackBonus3)
 	switch {
-	case interval < 20:
-		//Remove the Comeback effect
-		Users[userID].Effects = RemoveUserEffect(Users[userID].Effects, "Comeback Bonus")
-	case interval < 50:
+	case interval >= 20 && interval < 50:
 		//Add the +1 Comeback effect
-		Users[userID].Effects = AddUserEffect(Users[userID].Effects, structs.Effect{Name: "Comeback Bonus", Scope: "User", Key: "+", Value: 1})
-	case interval < 80:
+		Users[userID].AddEffects(structs.ComebackBonus1)
+	case interval >= 50 && interval < 80:
 		//Add the +2 Comeback effect
-		Users[userID].Effects = AddUserEffect(Users[userID].Effects, structs.Effect{Name: "Comeback Bonus", Scope: "User", Key: "+", Value: 2})
+		Users[userID].AddEffects(structs.ComebackBonus2)
 	case interval >= 80:
 		//Add the +3 Comeback effect
-		Users[userID].Effects = AddUserEffect(Users[userID].Effects, structs.Effect{Name: "Comeback Bonus", Scope: "User", Key: "+", Value: 3})
+		Users[userID].AddEffects(structs.ComebackBonus3)
 	}
-}
-
-func RemoveUserEffect(userEffects []structs.Effect, effectName string) []structs.Effect {
-	var newUserEffects []structs.Effect
-	for _, e := range userEffects {
-		if e.Name != effectName {
-			newUserEffects = append(newUserEffects, e)
-		}
-	}
-	return newUserEffects
-}
-
-func AddUserEffect(userEffects []structs.Effect, effect structs.Effect) []structs.Effect {
-	var newUserEffects []structs.Effect
-	for _, e := range userEffects {
-		if e.Name != effect.Name {
-			newUserEffects = append(newUserEffects, e)
-		}
-	}
-	newUserEffects = append(newUserEffects, effect)
-	return newUserEffects
 }

@@ -24,7 +24,7 @@ type Rank struct {
 }
 
 // switch for all the commands that the bot can receive
-func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, curTime time.Time, eventKey events.EventKey) {
+func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, curTime time.Time, eventKey string) {
 	switch update.Message.Command() {
 	case "check":
 		// Check actual event infos
@@ -113,10 +113,17 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					utils.Logger.Debug("Users checked")
 				case "events":
 					// Check the events data structure
-					eventsString := events.Events.ToString()
+					eventsJson, err := json.MarshalIndent(events.Events, "", " ")
+					if err != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err":  err,
+							"note": "preoccupati",
+						}).Error("Error while marshalling Events data")
+						utils.Logger.Error(Users)
+					}
 
 					// Respond with command executed successfully
-					msg := tgbotapi.NewDocument(update.Message.Chat.ID, tgbotapi.FileBytes{Name: "events.txt", Bytes: []byte(eventsString)})
+					msg := tgbotapi.NewDocument(update.Message.Chat.ID, tgbotapi.FileBytes{Name: "events.json", Bytes: eventsJson})
 					msg.Caption = "Eventi controllati. Ecco lo stato attuale:\n\n"
 					msg.ReplyToMessageID = update.Message.MessageID
 					message, error := data.Bot.Send(msg)
@@ -285,7 +292,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				switch cmdArgs[0] {
 				case "events":
 					// Reset the events data structure
-					events.Events.Reset(true, types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: update.Message.MessageID}, utils)
+					events.Events.Reset(true, &types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: update.Message.MessageID}, utils)
 
 					// Respond with command executed successfully
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Eventi resettati")
@@ -455,7 +462,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Send the message with user's stats
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))
 					if u != nil {
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nEffetti attivi: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.Effects))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le statistiche di %v sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nEffetti attivi: %v", u.UserName, u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.Effects))
 					}
 					msg.ReplyToMessageID = update.Message.MessageID
 					message, error := data.Bot.Send(msg)
@@ -517,8 +524,8 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				targetType := cmdArgs[0]
 				switch targetType {
 				case "event":
-					eventKeyString := cmdArgs[1]
-					if event, ok := events.Events[events.EventKey(eventKeyString)]; !ok {
+					eventKey := cmdArgs[1]
+					if event, ok := events.Events.Map[eventKey]; !ok {
 						// Respond with a message indicating that the event does not exist
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento non trovato")
 						msg.ReplyToMessageID = update.Message.MessageID
@@ -553,7 +560,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							}).Debug("Wrong command")
 						} else {
 							// Update the event points value
-							events.Events[events.EventKey(eventKeyString)] = &events.EventValue{Points: points, Activated: event.Activated, ActivatedBy: event.ActivatedBy, ActivatedAt: event.ActivatedAt, ArrivedAt: event.ArrivedAt, Partecipations: event.Partecipations}
+							events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: points, Enabled: event.Enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
 
 							// Respond with command executed successfully
 							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento aggiornato")

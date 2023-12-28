@@ -72,7 +72,7 @@ func main() {
 		}).Warn("Time location not get (using UTC)")
 	}
 
-	//set the gocron events reset
+	//set the default chat ID
 	defChatIDstr := os.Getenv("TELEGRAM_DEFAULT_CHAT_ID")
 	if defChatIDstr == "" {
 		l.WithFields(logrus.Fields{
@@ -80,18 +80,17 @@ func main() {
 		}).Warn("Env not set")
 	}
 
-	var defChatID int64
-	if defChatIDstr != "" {
-		defChatID, err = strconv.ParseInt(defChatIDstr, 10, 64)
-		if err != nil {
-			l.WithFields(logrus.Fields{
-				"err": err,
-			}).Warn("Env not set")
-		}
+	defChatID, err := strconv.ParseInt(defChatIDstr, 10, 64)
+	if err != nil {
+		l.WithFields(logrus.Fields{
+			"err": err,
+		}).Warn("Error while parsing TELEGRAM_DEFAULT_CHAT_ID to int64")
 	}
 
+	//set the gocron events reset
 	gcScheduler := gocron.NewScheduler(timeLocation)
-	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(events.Events.Reset, defChatIDstr != "", types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
+	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(
+		events.Events.Reset, defChatIDstr != "", &types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
 	if err != nil {
 		l.WithFields(logrus.Fields{
 			"gcJob": gcJob,
@@ -106,7 +105,14 @@ func main() {
 	}).Debug("Update channel retreived")
 
 	// Read from specified files and reload the data into the structs
-	ReloadStatus([]types.Reload{{FileName: "files/events.json", DataStruct: &events.Events}, {FileName: "files/users.json", DataStruct: &Users}}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
+	ReloadStatus(
+		[]types.Reload{
+			{FileName: "files/sets.json", DataStruct: &events.Sets},
+			{FileName: "files/events.json", DataStruct: &events.Events},
+			{FileName: "files/users.json", DataStruct: &Users},
+		},
+		types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+	)
 
 	gcScheduler.StartAsync()
 	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates})
