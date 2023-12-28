@@ -87,6 +87,7 @@ func run(utils types.Utils, data types.Data) {
 					UpdateUserEffects(update.Message.From.ID)
 
 					// Apply all effects
+					effectedPoints := event.Points
 					effectText := ""
 					curEffects := append(event.Effects, Users[update.Message.From.ID].Effects...)
 					if len(curEffects) != 0 {
@@ -100,11 +101,11 @@ func run(utils types.Utils, data types.Data) {
 
 							switch curEffects[i].Key {
 							case "x":
-								event.Points *= curEffects[i].Value
+								effectedPoints *= curEffects[i].Value
 							case "+":
-								event.Points += curEffects[i].Value
+								effectedPoints += curEffects[i].Value
 							case "-":
-								event.Points -= curEffects[i].Value
+								effectedPoints -= curEffects[i].Value
 							}
 						}
 					}
@@ -112,16 +113,16 @@ func run(utils types.Utils, data types.Data) {
 					// Respond to the user with event activated informations
 					var msg tgbotapi.MessageConfig
 					switch {
-					case event.Points < -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
-					case event.Points == -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
-					case event.Points == 0:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
-					case event.Points == 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
-					case event.Points > 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, event.Points, effectText, delay.Seconds()))
+					case effectedPoints < -1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
+					case effectedPoints == -1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
+					case effectedPoints == 0:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
+					case effectedPoints == 1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
+					case effectedPoints > 1:
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%vs", update.Message.From.UserName, effectedPoints, effectText, delay.Seconds()))
 					}
 
 					msg.ReplyToMessageID = update.Message.MessageID
@@ -131,12 +132,13 @@ func run(utils types.Utils, data types.Data) {
 					utils.Logger.WithFields(logrus.Fields{
 						"actBy": update.Message.From.UserName,
 						"actAt": update.Message.Text,
-						"point": event.Points,
+						"dfPts": event.Points,
+						"efPts": effectedPoints,
 					}).Debug("Event activated")
 
 					// Add points to the user if they have never participated the event before
 					if !event.Partecipations[update.Message.From.ID] {
-						Users[update.Message.From.ID].TotalPoints += event.Points
+						Users[update.Message.From.ID].TotalPoints += effectedPoints
 						Users[update.Message.From.ID].TotalEventPartecipations++
 						Users[update.Message.From.ID].TotalEventWins++
 					}

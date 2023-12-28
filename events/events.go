@@ -16,10 +16,11 @@ import (
 type EventsMap map[EventKey]*EventValue
 
 type EventsNumbers struct {
-	Total      int
-	Active     int
-	Uneffected int
-	Effected   map[string]int
+	Total       int
+	Active      int
+	TotalPoints int
+	Uneffected  int
+	Effected    map[string]int
 }
 
 func NewEventsMap() EventsMap {
@@ -65,7 +66,7 @@ func (events EventsMap) Reset(writeMessage bool, wrtMsgData types.WriteMessageDa
 	}
 
 	if writeMessage {
-		text := fmt.Sprintf("Gli eventi son stati resettati.\nEcco alcune informazioni:\n\nNumero eventi %v/%v (%v senza effetti).\n\nEffetti Attivi (%v):\n", evntsNums.Active, evntsNums.Total, evntsNums.Uneffected, evntsNums.Active-evntsNums.Uneffected)
+		text := fmt.Sprintf("Gli eventi son stati resettati.\nEcco alcune informazioni:\n\nNumero eventi %v/%v\nPunti totali: %v.\n\nEffetti Attivi (%v):\n", evntsNums.Active, evntsNums.Total, evntsNums.TotalPoints, evntsNums.Active-evntsNums.Uneffected)
 		for key, value := range evntsNums.Effected {
 			text += fmt.Sprintf("  %v = %v\n", key, value)
 		}
@@ -171,10 +172,28 @@ func (events EventsMap) RandomizeEffects() EventsNumbers {
 		}
 	}
 
+	//Calculate total points
+	totalPoints := 0
+	for _, event := range events {
+		evntPts := 0
+		for _, effect := range event.Effects {
+			switch effect.Key {
+			case "x":
+				evntPts = event.Points * effect.Value
+			case "+":
+				evntPts = event.Points + effect.Value
+			case "-":
+				evntPts = event.Points - effect.Value
+			}
+		}
+		totalPoints += evntPts
+	}
+
 	return EventsNumbers{
-		Total:      eventsNumber,
-		Active:     eventsNumber,
-		Uneffected: eventsNumberEditable,
+		Total:       eventsNumber,
+		Active:      eventsNumber,
+		TotalPoints: totalPoints,
+		Uneffected:  eventsNumberEditable,
 		Effected: map[string]int{
 			"x(-2)": doubleNegativePtsEvents,
 			"x(-1)": negativePtsEvents,
@@ -246,7 +265,7 @@ var Events = EventsMap{
 	"10:20": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"10:24": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"11:11": {2, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
-	"11:22": {2, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
+	"11:22": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"11:23": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"11:35": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
 	"12:10": {1, false, "", time.Time{}, time.Time{}, make(map[int64]bool), make([]structs.Effect, 0)},
