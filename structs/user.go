@@ -1,5 +1,7 @@
 package structs
 
+import "fmt"
+
 type User struct {
 	TelegramID                      int64
 	UserName                        string
@@ -29,4 +31,16 @@ func (u *User) RemoveEffects(effects ...*Effect) {
 		}
 	}
 	u.Effects = newUserEffect
+}
+
+func (u *User) StringifyEffects() string {
+	stringifiedEffects := ""
+	for i, e := range u.Effects {
+		if i != len(u.Effects)-1 {
+			stringifiedEffects += fmt.Sprintf("%q, ", e.Name)
+		} else {
+			stringifiedEffects += fmt.Sprintf("%q", e.Name)
+		}
+	}
+	return "[" + stringifiedEffects + "]"
 }
