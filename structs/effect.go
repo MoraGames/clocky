@@ -36,4 +36,23 @@ var (
 	ComebackBonus2  = &Effect{"Comeback 2", "User", "+", 2}
 	ComebackBonus3  = &Effect{"Comeback 3", "User", "+", 3}
 	LastChanceBonus = &Effect{"Last Chance", "User", "+", 2}
+
+	// Map of all the effects
+	Effects = map[string]*Effect{
+		"Mul -3":      TripleNegativePoints,
+		"Mul -2":      DoubleNegativePoints,
+		"Mul -1":      SingleNegativePoints,
+		"Mul +2":      DoublePositivePoints,
+		"Mul +3":      TriplePositivePoints,
+		"Mul +5":      QuintuplePositivePoints,
+		"Sub 2":       SubTwoPoints,
+		"Sub 1":       SubOnePoint,
+		"Add 1":       AddOnePoint,
+		"Add 2":       AddTwoPoints,
+		"Add 3":       AddThreePoints,
+		"Comeback 1":  ComebackBonus1,
+		"Comeback 2":  ComebackBonus2,
+		"Comeback 3":  ComebackBonus3,
+		"Last Chance": LastChanceBonus,
+	}
 )

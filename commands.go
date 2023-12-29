@@ -503,10 +503,19 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Split the command arguments
 			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
 
+			/*
+				/update event <event> points <points>
+				/update event <event> enabled <enabled>
+				/update event <event> effects <effects>
+				/update user <user> points <points>
+				/update user <user> partecipations <partecipations>
+				/update user <user> wins <wins>
+			*/
+
 			// Check if the command arguments are in the form /update <event|user> <points>
-			if len(cmdArgs) != 3 {
+			if len(cmdArgs) != 4 {
 				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update (<\"event\" event>|\"user\" <user>) <points>")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>")
 				msg.ReplyToMessageID = update.Message.MessageID
 				message, error := data.Bot.Send(msg)
 				if error != nil {
@@ -542,39 +551,117 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						}).Debug("Event not found")
 					} else {
 						// Get and check if the points value is a number
-						points, err := strconv.Atoi(cmdArgs[2])
-						if err != nil {
-							// Respond with a message indicating that the points value is not a number
-							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
-							msg.ReplyToMessageID = update.Message.MessageID
-							message, error := data.Bot.Send(msg)
-							if error != nil {
+						targetProperty := cmdArgs[2]
+						switch targetProperty {
+						case "points":
+							points, err := strconv.Atoi(cmdArgs[3])
+							if err != nil {
+								// Respond with a message indicating that the points value is not an int
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un intero.")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
 								utils.Logger.WithFields(logrus.Fields{
-									"err": error,
-									"msg": message,
-								}).Error("Error while sending message")
-							}
-							utils.Logger.WithFields(logrus.Fields{
-								"usr": update.Message.From.UserName,
-								"msg": update.Message.Text,
-							}).Debug("Wrong command")
-						} else {
-							// Update the event points value
-							events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: points, Enabled: event.Enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
+									"usr": update.Message.From.UserName,
+									"msg": update.Message.Text,
+								}).Debug("Wrong command")
+							} else {
+								// Update the event points value
+								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: points, Enabled: event.Enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
 
-							// Respond with command executed successfully
-							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento aggiornato")
-							msg.ReplyToMessageID = update.Message.MessageID
-							message, error := data.Bot.Send(msg)
-							if error != nil {
+								// Respond with command executed successfully
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Points aggiornato")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+
+								// Log the /update command executed successfully
+								utils.Logger.Debug("Event.Points updated")
+							}
+						case "enabled":
+							enabled, err := strconv.ParseBool(cmdArgs[3])
+							if err != nil {
+								// Respond with a message indicating that the enabled value is not a boolean
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro enabled deve essere un booleano.")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
 								utils.Logger.WithFields(logrus.Fields{
-									"err": error,
-									"msg": message,
-								}).Error("Error while sending message")
-							}
+									"usr": update.Message.From.UserName,
+									"msg": update.Message.Text,
+								}).Debug("Wrong command")
+							} else {
+								// Update the event enabled value
+								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
 
-							// Log the /update command executed successfully
-							utils.Logger.Debug("Event updated")
+								// Respond with command executed successfully
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Enabled aggiornato")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+
+								// Log the /update command executed successfully
+								utils.Logger.Debug("Event.Enabled updated")
+							}
+						case "effects":
+							effectsNames, err := types.ParseSlice(cmdArgs[3])
+							if err != nil {
+								// Respond with a message indicating that the effects value is not a slice
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro effects deve essere una slice.")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+								utils.Logger.WithFields(logrus.Fields{
+									"usr": update.Message.From.UserName,
+									"msg": update.Message.Text,
+								}).Debug("Wrong command")
+							} else {
+								// Update the event effects value
+								effects := make([]*structs.Effect, 0)
+								for _, effectName := range effectsNames {
+									effects = append(effects, structs.Effects[effectName])
+								}
+								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: event.Enabled, Effects: effects, Activation: event.Activation, Partecipations: event.Partecipations}
+
+								// Respond with command executed successfully
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Effects aggiornato")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+
+								// Log the /update command executed successfully
+								utils.Logger.Debug("Event.Effects updated")
+							}
 						}
 					}
 				case "user":
@@ -600,42 +687,118 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						utils.Logger.WithFields(logrus.Fields{
 							"usr": update.Message.From.UserName,
 							"msg": update.Message.Text,
-						}).Debug("Event not found")
+						}).Debug("User not found")
 					} else {
-						// Get and check if the points value is a number
-						points, err := strconv.Atoi(cmdArgs[2])
-						if err != nil {
-							// Respond with a message indicating that the points value is not a number
-							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero.")
-							msg.ReplyToMessageID = update.Message.MessageID
-							message, error := data.Bot.Send(msg)
-							if error != nil {
+						targetProperty := cmdArgs[2]
+						switch targetProperty {
+						case "points":
+							// Get and check if the points value is a number
+							points, err := strconv.Atoi(cmdArgs[3])
+							if err != nil {
+								// Respond with a message indicating that the points value is not a number
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero intero.")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
 								utils.Logger.WithFields(logrus.Fields{
-									"err": error,
-									"msg": message,
-								}).Error("Error while sending message")
-							}
-							utils.Logger.WithFields(logrus.Fields{
-								"usr": update.Message.From.UserName,
-								"msg": update.Message.Text,
-							}).Debug("Wrong command")
-						} else {
-							// Update the user points value
-							Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: points, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
+									"usr": update.Message.From.UserName,
+									"msg": update.Message.Text,
+								}).Debug("Wrong command")
+							} else {
+								// Update the user points value
+								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: points, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
 
-							// Respond with command executed successfully
-							msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente aggiornato")
-							msg.ReplyToMessageID = update.Message.MessageID
-							message, error := data.Bot.Send(msg)
-							if error != nil {
+								// Respond with command executed successfully
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "User.Points aggiornato")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+
+								// Log the /update command executed successfully
+								utils.Logger.Debug("User.Points updated")
+							}
+						case "partecipations":
+							// Get and check if the partecipations value is a number
+							partecipations, err := strconv.Atoi(cmdArgs[3])
+							if err != nil || partecipations < 0 {
+								// Respond with a message indicating that the partecipations value is not a number
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro partecipations deve essere un numero intero positivo.")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
 								utils.Logger.WithFields(logrus.Fields{
-									"err": error,
-									"msg": message,
-								}).Error("Error while sending message")
-							}
+									"usr": update.Message.From.UserName,
+									"msg": update.Message.Text,
+								}).Debug("Wrong command")
+							} else {
+								// Update the user partecipations value
+								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: partecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
 
-							// Log the /update command executed successfully
-							utils.Logger.Debug("Event updated")
+								// Respond with command executed successfully
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "User.Partecipations aggiornato")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+
+								// Log the /update command executed successfully
+								utils.Logger.Debug("User.Partecipations updated")
+							}
+						case "wins":
+							// Get and check if the wins value is a number
+							wins, err := strconv.Atoi(cmdArgs[3])
+							if err != nil || wins < 0 {
+								// Respond with a message indicating that the wins value is not a number
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro wins deve essere un numero intero positivo.")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+								utils.Logger.WithFields(logrus.Fields{
+									"usr": update.Message.From.UserName,
+									"msg": update.Message.Text,
+								}).Debug("Wrong command")
+							} else {
+								// Update the user wins value
+								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: wins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
+
+								// Respond with command executed successfully
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "User.Wins aggiornato")
+								msg.ReplyToMessageID = update.Message.MessageID
+								message, error := data.Bot.Send(msg)
+								if error != nil {
+									utils.Logger.WithFields(logrus.Fields{
+										"err": error,
+										"msg": message,
+									}).Error("Error while sending message")
+								}
+
+								// Log the /update command executed successfully
+								utils.Logger.Debug("User.Wins updated")
+							}
 						}
 					}
 				}
