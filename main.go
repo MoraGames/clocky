@@ -90,7 +90,10 @@ func main() {
 	//set the gocron events reset
 	gcScheduler := gocron.NewScheduler(timeLocation)
 	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(
-		events.Events.Reset, defChatIDstr != "", &types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1}, types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"})
+		events.Events.Reset, true,
+		&types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1},
+		types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+	)
 	if err != nil {
 		l.WithFields(logrus.Fields{
 			"gcJob": gcJob,
@@ -107,9 +110,9 @@ func main() {
 	// Read from specified files and reload the data into the structs
 	ReloadStatus(
 		[]types.Reload{
-			{FileName: "files/sets.json", DataStruct: &events.Sets},
-			{FileName: "files/events.json", DataStruct: &events.Events},
-			{FileName: "files/users.json", DataStruct: &Users},
+			{FileName: "files/sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
+			{FileName: "files/events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
+			{FileName: "files/users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
 		},
 		types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
@@ -122,11 +125,20 @@ func main() {
 func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 	utils.Logger.WithFields(logrus.Fields{
 		"reloads": reloads,
-	}).Debug("Reloading status")
+	}).Info("Reloading data")
 
+	numOfFail, numOfFailFunc, numOfOkay, numOfOkayFunc := 0, 0, 0, 0
 	for _, reload := range reloads {
+		hasFailed := false
+
+		utils.Logger.WithFields(logrus.Fields{
+			"IfFail() exist": reload.IfFail != nil,
+			"IfOkay() exist": reload.IfOkay != nil,
+		}).Debug("Reloading " + reload.FileName)
+
 		file, err := os.ReadFile(reload.FileName)
 		if err != nil {
+			hasFailed = true
 			utils.Logger.WithFields(logrus.Fields{
 				"file": reload.FileName,
 				"err":  err,
@@ -136,17 +148,56 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 		if len(file) != 0 {
 			err = json.Unmarshal(file, reload.DataStruct)
 			if err != nil {
+				hasFailed = true
 				utils.Logger.WithFields(logrus.Fields{
 					"data": reload.DataStruct,
 					"err":  err,
 				}).Error("Error while unmarshalling data")
 			}
 		} else {
+			hasFailed = true
 			utils.Logger.WithFields(logrus.Fields{
 				"file": reload.FileName,
-			}).Warn("File is empty")
+			}).Error("File is empty")
+		}
+
+		if hasFailed {
+			numOfFail++
+
+			utils.Logger.WithFields(logrus.Fields{
+				"file": reload.FileName,
+			}).Warn("Reloading has failed")
+
+			if reload.IfFail != nil {
+				numOfFailFunc++
+				reload.IfFail(utils)
+				utils.Logger.WithFields(logrus.Fields{
+					"file": reload.FileName,
+				}).Info("Reload.IfFail() executed")
+			}
+		} else {
+			numOfOkay++
+			utils.Logger.WithFields(logrus.Fields{
+				"file": reload.FileName,
+			}).Debug("Reloading has succeed")
+
+			if reload.IfOkay != nil {
+				numOfOkayFunc++
+				reload.IfOkay(utils)
+				utils.Logger.WithFields(logrus.Fields{
+					"file": reload.FileName,
+				}).Info("Reload.IfOkay() executed")
+			}
 		}
 	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"fails":     numOfFail,
+		"failsFunc": numOfFailFunc,
+		"okays":     numOfOkay,
+		"okaysFunc": numOfOkayFunc,
+		"totat":     len(reloads),
+	}).Info("Reloading data completed")
 }
 
 func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text string) {

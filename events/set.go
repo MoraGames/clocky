@@ -1,26 +1,97 @@
 package events
 
+import "github.com/MoraGames/clockyuwu/pkg/types"
+
 type SetSlice []*Set
+type SetJsonSlice []*SetJson
+type FuncMap map[string]func(h1, h2, m1, m2 int) bool
 type Set struct {
 	Name     string
 	Typology string
 	Enabled  bool
 	Verify   func(h1, h2, m1, m2 int) bool
 }
+type SetJson struct {
+	Name     string
+	Typology string
+	Enabled  bool
+}
 
-var Sets = SetSlice{
-	{"aa:aa", "standard", false, aaaa},
-	{"xa:aa", "standard", false, xaaa},
-	{"ab:ab", "standard", false, abab},
-	{"ab:ba", "standard", false, abba},
-	{"ab:cd", "standard", false, abcd},
-	{"xa:bc", "standard", false, xabc},
-	{"dc:ba", "standard", false, dcba},
-	{"xc:ba", "standard", false, xcba},
-	{"ac:eg", "standard", false, aceg},
-	{"xa:ce", "standard", false, xace},
-	{"xe:ca", "standard", false, xeca},
-	{"n:2*n", "standard", false, n2n},
+var (
+	SetsFunctions = FuncMap{
+		"aa:aa": aaaa,
+		"xa:aa": xaaa,
+		"ab:ab": abab,
+		"ab:ba": abba,
+		"ab:cd": abcd,
+		"xa:bc": xabc,
+		"dc:ba": dcba,
+		"xc:ba": xcba,
+		"ac:eg": aceg,
+		"xa:ce": xace,
+		"xe:ca": xeca,
+		"n:2*n": n2n,
+	}
+	Sets = SetSlice{
+		{"aa:aa", "standard", false, aaaa},
+		{"xa:aa", "standard", false, xaaa},
+		{"ab:ab", "standard", false, abab},
+		{"ab:ba", "standard", false, abba},
+		{"ab:cd", "standard", false, abcd},
+		{"xa:bc", "standard", false, xabc},
+		{"dc:ba", "standard", false, dcba},
+		{"xc:ba", "standard", false, xcba},
+		{"ac:eg", "standard", false, aceg},
+		{"xa:ce", "standard", false, xace},
+		{"xe:ca", "standard", false, xeca},
+		{"n:2*n", "standard", false, n2n},
+	}
+	SetsJson = SetJsonSlice{}
+
+	AssignSetsFromSetsJson = func(utils types.Utils) {
+		Sets = SetsJson.ToSlice()
+	}
+	AssignSetsWithDefault = func(utils types.Utils) {
+		Sets = SetSlice{
+			{"aa:aa", "standard", false, aaaa},
+			{"xa:aa", "standard", false, xaaa},
+			{"ab:ab", "standard", false, abab},
+			{"ab:ba", "standard", false, abba},
+			{"ab:cd", "standard", false, abcd},
+			{"xa:bc", "standard", false, xabc},
+			{"dc:ba", "standard", false, dcba},
+			{"xc:ba", "standard", false, xcba},
+			{"ac:eg", "standard", false, aceg},
+			{"xa:ce", "standard", false, xace},
+			{"xe:ca", "standard", false, xeca},
+			{"n:2*n", "standard", false, n2n},
+		}
+	}
+)
+
+func (s SetSlice) ToJsonSlice() SetJsonSlice {
+	jsonSlice := make(SetJsonSlice, 0)
+	for _, set := range s {
+		jsonSlice = append(jsonSlice, &SetJson{
+			Name:     set.Name,
+			Typology: set.Typology,
+			Enabled:  set.Enabled,
+		})
+	}
+	return jsonSlice
+}
+
+func (sj SetJsonSlice) ToSlice() SetSlice {
+	slice := make(SetSlice, 0)
+	for _, setjson := range sj {
+		slice = append(slice, &Set{
+			Name:     setjson.Name,
+			Typology: setjson.Typology,
+			Enabled:  setjson.Enabled,
+			Verify:   SetsFunctions[setjson.Name],
+		})
+	}
+	return slice
 }
 
 // aa:aa
@@ -82,50 +153,3 @@ func xeca(_, b, c, d int) bool {
 func n2n(a, b, c, d int) bool {
 	return 2*((a*10)+b) == (c*10)+d
 }
-
-/* func points(time time.Time) int {
- hour := time.Hour()
- hour1 := hour / 10
- hour2 := hour % 10
- minute := time.Minute()
- minute1 := minute / 10
- minute2 := minute % 10
- points := 0
- if aaaa(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if xaaa(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if abab(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if abba(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if abcd(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if xabc(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if dcba(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if xcba(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if aceg(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if xace(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if xeca(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- if ab2ab(hour1, hour2, minute1, minute2) {
-  points += 1
- }
- return points
-} */

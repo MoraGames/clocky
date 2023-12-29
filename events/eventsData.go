@@ -34,18 +34,19 @@ type (
 	}
 )
 
-var (
-	Events *EventsData = NewEventsData(true)
-)
+var Events *EventsData
+var AssignEventsWithDefault = func(utils types.Utils) {
+	Events = NewEventsData(true, utils)
+}
 
-func NewEventsData(newEffects bool) *EventsData {
+func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 	ed := &EventsData{
 		make(EventsMap),
 		make(EventsKeys, 0),
 		EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)},
 	}
 
-	ed.EnabledRandomSets(types.Interval{Min: 0.6, Max: 1.0})
+	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
 
 	for i := 0; i < 24*60; i++ {
 		now := time.Now()
@@ -66,17 +67,18 @@ func NewEventsData(newEffects bool) *EventsData {
 
 	if newEffects {
 		ed.AssignRandomEffects(
+			utils,
 			structs.EffectPresence{Effect: structs.TripleNegativePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},    //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 0.20, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  20% of 01-03 effects.  |  119E ->  20% of 02-05 effects.
-			structs.EffectPresence{Effect: structs.SingleNegativePoints, Possible: 0.90, Amount: types.Interval{Min: 0.05, Max: 0.15}},    //71E ->  90% of 03-10 effects.  |  119E ->  90% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 0.90, Amount: types.Interval{Min: 0.15, Max: 0.25}},    //71E ->  90% of 10-17 effects.  |  119E ->  90% of 17-29 effects.
-			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.20, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  20% of 01-03 effects.  |  119E ->  20% of 02-05 effects.
+			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 0.30, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  30% of 01-03 effects.  |  119E ->  30% of 02-05 effects.
+			structs.EffectPresence{Effect: structs.SingleNegativePoints, Possible: 1.00, Amount: types.Interval{Min: 0.05, Max: 0.15}},    //71E -> 100% of 03-10 effects.  |  119E -> 100% of 05-17 effects.
+			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},    //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.25, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  25% of 01-03 effects.  |  119E ->  25% of 02-05 effects.
 			structs.EffectPresence{Effect: structs.QuintuplePositivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 0.50, Amount: types.Interval{Min: 0.10, Max: 0.20}},            //71E ->  50% of 07-14 effects.  |  119E ->  50% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.SubOnePoint, Possible: 0.90, Amount: types.Interval{Min: 0.15, Max: 0.25}},             //71E ->  90% of 10-17 effects.  |  119E ->  90% of 17-29 effects.
-			structs.EffectPresence{Effect: structs.AddOnePoint, Possible: 1.00, Amount: types.Interval{Min: 0.15, Max: 0.30}},             //71E -> 100% of 10-21 effects.  |  119E -> 100% of 17-35 effects.
-			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 0.90, Amount: types.Interval{Min: 0.15, Max: 0.25}},            //71E ->  90% of 10-17 effects.  |  119E ->  90% of 17-29 effects.
-			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.10, Max: 0.20}},          //71E ->  60% of 07-14 effects.  |  119E ->  50% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},            //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
+			structs.EffectPresence{Effect: structs.SubOnePoint, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},             //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.AddOnePoint, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.25}},             //71E -> 100% of 07-17 effects.  |  119E -> 100% of 11-29 effects.
+			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},            //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},          //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
 		)
 	}
 
@@ -84,25 +86,33 @@ func NewEventsData(newEffects bool) *EventsData {
 }
 
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
-	ed.EnabledRandomSets(types.Interval{Min: 0.6, Max: 1.0})
+	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
+	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, utils)
 
 	for eventName := range ed.Map {
 		ed.Map[eventName].Reset()
+
+		ed.Stats.TotalEventsNum++
+		if ed.Map[eventName].Enabled {
+			ed.Stats.EnabledEventsNum++
+			ed.Stats.EnabledPointsSum += ed.Map[eventName].Points
+		}
 	}
 
 	if newEffects {
 		ed.AssignRandomEffects(
+			utils,
 			structs.EffectPresence{Effect: structs.TripleNegativePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},    //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 0.20, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  20% of 01-03 effects.  |  119E ->  20% of 02-05 effects.
-			structs.EffectPresence{Effect: structs.SingleNegativePoints, Possible: 0.90, Amount: types.Interval{Min: 0.05, Max: 0.15}},    //71E ->  90% of 03-10 effects.  |  119E ->  90% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 0.90, Amount: types.Interval{Min: 0.15, Max: 0.25}},    //71E ->  90% of 10-17 effects.  |  119E ->  90% of 17-29 effects.
-			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.20, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  20% of 01-03 effects.  |  119E ->  20% of 02-05 effects.
+			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 0.30, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  30% of 01-03 effects.  |  119E ->  30% of 02-05 effects.
+			structs.EffectPresence{Effect: structs.SingleNegativePoints, Possible: 1.00, Amount: types.Interval{Min: 0.05, Max: 0.15}},    //71E -> 100% of 03-10 effects.  |  119E -> 100% of 05-17 effects.
+			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},    //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.25, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  25% of 01-03 effects.  |  119E ->  25% of 02-05 effects.
 			structs.EffectPresence{Effect: structs.QuintuplePositivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 0.50, Amount: types.Interval{Min: 0.10, Max: 0.20}},            //71E ->  50% of 07-14 effects.  |  119E ->  50% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.SubOnePoint, Possible: 0.90, Amount: types.Interval{Min: 0.15, Max: 0.25}},             //71E ->  90% of 10-17 effects.  |  119E ->  90% of 17-29 effects.
-			structs.EffectPresence{Effect: structs.AddOnePoint, Possible: 1.00, Amount: types.Interval{Min: 0.15, Max: 0.30}},             //71E -> 100% of 10-21 effects.  |  119E -> 100% of 17-35 effects.
-			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 0.90, Amount: types.Interval{Min: 0.15, Max: 0.25}},            //71E ->  90% of 10-17 effects.  |  119E ->  90% of 17-29 effects.
-			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.10, Max: 0.20}},          //71E ->  60% of 07-14 effects.  |  119E ->  50% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},            //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
+			structs.EffectPresence{Effect: structs.SubOnePoint, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},             //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.AddOnePoint, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.25}},             //71E -> 100% of 07-17 effects.  |  119E -> 100% of 11-29 effects.
+			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},            //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
+			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},          //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
 		)
 	}
 
@@ -115,7 +125,7 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	}
 }
 
-func (ed *EventsData) EnabledRandomSets(percentage types.Interval) error {
+func (ed *EventsData) EnabledRandomSets(percentage types.Interval, utils types.Utils) error {
 	if percentage.Min < 0 {
 		return fmt.Errorf("minPercentage must be >= 0")
 	} else if percentage.Max > 1 {
@@ -144,10 +154,16 @@ func (ed *EventsData) EnabledRandomSets(percentage types.Interval) error {
 		}
 	}
 
+	utils.Logger.WithFields(logrus.Fields{
+		"tot": ed.Stats.TotalSetsNum,
+		"num": ed.Stats.EnabledSetsNum,
+		"set": ed.Stats.EnabledSets,
+	}).Debug("EnabledSets")
+
 	return nil
 }
 
-func (ed *EventsData) AssignRandomEffects(effects ...structs.EffectPresence) {
+func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.EffectPresence) {
 	var r *rand.Rand
 	multiplierEffectsNames, additiveEffectsNames := make([]string, 0), make([]string, 0)
 	effectsAmountToApply, effectsToApply, multiplierToApplyNum, additiveToApplyNum := make(map[string]int), make(map[string]*structs.Effect), 0, 0
@@ -157,6 +173,10 @@ func (ed *EventsData) AssignRandomEffects(effects ...structs.EffectPresence) {
 		if r.Float64() < effect.Possible {
 			// Effects will be assigned
 			minEventsEffected, maxEventsEffected := int(effect.Amount.Min*float64(ed.Stats.EnabledEventsNum)), int(effect.Amount.Max*float64(ed.Stats.EnabledEventsNum))
+			if minEventsEffected == maxEventsEffected {
+				maxEventsEffected++
+			}
+
 			eventsEffected := r.Intn(maxEventsEffected-minEventsEffected) + minEventsEffected
 			effectsAmountToApply[effect.Effect.Name] += eventsEffected
 			effectsToApply[effect.Effect.Name] = effect.Effect
@@ -191,6 +211,10 @@ func (ed *EventsData) AssignRandomEffects(effects ...structs.EffectPresence) {
 		}
 	}
 
+	utils.Logger.WithFields(logrus.Fields{
+		"toApp": effectsAmountToApply,
+	}).Debug("Effects to enable")
+
 	// Apply all effects (multiplier before, additive after)
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	for _, effectName := range multiplierEffectsNames {
@@ -208,14 +232,28 @@ func (ed *EventsData) AssignRandomEffects(effects ...structs.EffectPresence) {
 	for _, effectName := range additiveEffectsNames {
 		for i := 0; i < effectsAmountToApply[effectName]; {
 			eventName := ed.Keys[r.Intn(len(ed.Keys))]
-			if ed.Map[eventName].Enabled && len(ed.Map[eventName].Effects) < 2 {
-				ed.Map[eventName].AddEffect(effectsToApply[effectName])
-				ed.Stats.EnabledEffectsNum++
-				ed.Stats.EnabledEffects[effectName]++
-				i++
+			if ed.Map[eventName].Enabled {
+				if len(ed.Map[eventName].Effects) == 0 {
+					//Apply effect if there are no other effects
+					ed.Map[eventName].AddEffect(effectsToApply[effectName])
+					ed.Stats.EnabledEffectsNum++
+					ed.Stats.EnabledEffects[effectName]++
+					i++
+				} else if len(ed.Map[eventName].Effects) == 1 && ed.Map[eventName].Effects[0].Key != "+" && ed.Map[eventName].Effects[0].Key != "-" {
+					//Apply effect if there is only one effects and it's a multiplier
+					ed.Map[eventName].AddEffect(effectsToApply[effectName])
+					ed.Stats.EnabledEffectsNum++
+					ed.Stats.EnabledEffects[effectName]++
+					i++
+				}
 			}
 		}
 	}
+
+	utils.Logger.WithFields(logrus.Fields{
+		"num": ed.Stats.EnabledEffectsNum,
+		"map": ed.Stats.EnabledEffects,
+	}).Debug("EnabledEffects")
 }
 
 func RemoveValue(s []string, value string) []string {
@@ -230,7 +268,8 @@ func RemoveValue(s []string, value string) []string {
 
 func (ed *EventsData) SaveOnFile(utils types.Utils) {
 	//Save Sets
-	setsFile, err := json.MarshalIndent(Sets, "", " ")
+	SetsJson = Sets.ToJsonSlice()
+	setsFile, err := json.MarshalIndent(SetsJson, "", " ")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
 			"err": err,

@@ -92,6 +92,7 @@ func CalculateStatus(time time.Time) (bool, int) {
 	enabled := false
 	points := 0
 	for _, set := range Sets {
+
 		if set.Enabled && set.Verify(hour1, hour2, minute1, minute2) {
 			enabled = true
 			points += 1
