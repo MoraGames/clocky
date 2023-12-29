@@ -364,69 +364,53 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		}
 	case "start":
 		// Respond with an introduction message for the users of the bot
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v is a bot that allows you to play a time-wasting game with one or more groups of friends within Telegram groups. Once the bot is added, the game mainly (but not exclusively) involves sending messages in the \"hh:mm\" format at certain times of the day, in exchange for valuable points. The person who has earned the most points at the end of the championship will be the new Clocky Champion!\nUse /help to get a list of all commands or /credits for more information about the project.\n\n- %v, a bot from @MoraGames.", utils.Config.App.Name, utils.Config.App.Name))
-		msg.ReplyToMessageID = update.Message.MessageID
-		message, error := data.Bot.Send(msg)
-		if error != nil {
-			utils.Logger.WithFields(logrus.Fields{
-				"err": error,
-				"msg": message,
-			}).Error("Error while sending message")
-		}
-
-		utils.Logger.WithFields(logrus.Fields{
-			"message": update.Message.Text,
-			"sender":  update.Message.From.UserName,
-			"chat":    update.Message.Chat.Title,
-		}).Debug("Response to \"/start\" command sent successfully")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+			ComposeMessage([]string{
+				"%v is a bot that allows you to play a time-wasting game with one or more groups of friends within Telegram groups.",
+				"Once the bot is added, the game mainly (but not exclusively) involves sending messages in the \"hh:mm\" format at certain times of the day, in exchange for valuable points.",
+				"The person who has earned the most points at the end of the championship will be the new Clocky Champion!\n",
+				"Use /help to get a list of all commands or /credits for more information about the project.\n\n- %v, a bot from @MoraGames.",
+			}, utils.Config.App.Name, utils.Config.App.Name),
+		)
+		SendMessage(msg, update, data, utils)
+		// Log the command executed successfully
+		FinalCommandLog("\"start message sent", update, utils)
+		SuccessResponseLog(update, utils)
 	case "stats":
-		// Respond with the user's stats (or the specified user's stats)
+		/*
+			Description:
+				Get the stats of the user who sent the command or of the user specified in the command arguments.
 
+			Forms:
+				/stats
+				/stats [user]
+		*/
 		// Check if the command has arguments
 		if update.Message.CommandArguments() == "" {
 			// Get the user from the Users data structure
 			u := Users[update.Message.From.ID]
-
 			// Check (and eventually update) the user effects
 			UpdateUserEffects(update.Message.From.ID)
-
 			// Send the message with user's stats
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
 			if u != nil {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nPunti/Partecipazioni: %.2f\nPunti/Vittorie: %.2f\nVittorie/Partecipazioni: %.2f\nVittorie/Sconfitte: %.2f\nEffetti attivi: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins), u.StringifyEffects()))
 			}
-			msg.ReplyToMessageID = update.Message.MessageID
-			message, error := data.Bot.Send(msg)
-			if error != nil {
-				utils.Logger.WithFields(logrus.Fields{
-					"err": error,
-					"msg": message,
-				}).Error("Error while sending message")
-			}
-
-			// Log the /stats command sent
-			utils.Logger.Debug("Stats sent")
+			SendMessage(msg, update, data, utils)
+			// Log the command executed successfully
+			FinalCommandLog("User.Stats sent", update, utils)
+			SuccessResponseLog(update, utils)
 		} else {
 			// Split the command arguments
 			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
-
 			if len(cmdArgs) != 1 {
 				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /stats [user]")
-				msg.ReplyToMessageID = update.Message.MessageID
-				message, error := data.Bot.Send(msg)
-				if error != nil {
-					utils.Logger.WithFields(logrus.Fields{
-						"err": error,
-						"msg": message,
-					}).Error("Error while sending message")
-				}
-				utils.Logger.WithFields(logrus.Fields{
-					"usr": update.Message.From.UserName,
-					"msg": update.Message.Text,
-				}).Debug("Wrong command")
+				cmdSyntax := "/stats [user]"
+				SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
+				// Log the command failed execution
+				FinalCommandLog("Wrong command syntax", update, utils)
 			} else {
-				// Get the id and check if the user exists
+				// Get and check if the user exists
 				username := cmdArgs[0]
 				var userKey int64
 				var founded bool
@@ -436,51 +420,28 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						userKey = userID
 					}
 				}
-
 				if !founded {
 					// Respond with a message indicating that the user does not exist
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
-					msg.ReplyToMessageID = update.Message.MessageID
-					message, error := data.Bot.Send(msg)
-					if error != nil {
-						utils.Logger.WithFields(logrus.Fields{
-							"err": error,
-							"msg": message,
-						}).Error("Error while sending message")
-					}
-					utils.Logger.WithFields(logrus.Fields{
-						"usr": update.Message.From.UserName,
-						"msg": update.Message.Text,
-					}).Debug("User not found")
+					SendEntityNotFoundMessage("Utente", update, data, utils)
+					// Log the command failed execution
+					FinalCommandLog("User not found", update, utils)
 				} else {
 					// Get the user from the Users data structure
 					u := Users[userKey]
-
 					// Check (and eventually update) the user effects
 					UpdateUserEffects(userKey)
-
 					// Send the message with user's stats
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))
 					if u != nil {
 						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le statistiche di %v sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nEffetti attivi: %v", u.UserName, u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.Effects))
 					}
-					msg.ReplyToMessageID = update.Message.MessageID
-					message, error := data.Bot.Send(msg)
-					if error != nil {
-						utils.Logger.WithFields(logrus.Fields{
-							"err": error,
-							"msg": message,
-						}).Error("Error while sending message")
-					}
-
-					// Log the /stats command sent
-					utils.Logger.Debug("Stats sent")
+					SendMessage(msg, update, data, utils)
+					// Log the command executed successfully
+					FinalCommandLog("User.Stats sent", update, utils)
+					SuccessResponseLog(update, utils)
 				}
 			}
 		}
-
-		// Log the /stats command sent
-		utils.Logger.Debug("Stats sent")
 	case "update":
 		/*
 			Description:
@@ -539,6 +500,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								SendPropertyUpdatedMessage("Event.Points", update, data, utils)
 								// Log the /update command executed successfully
 								FinalCommandLog("Event.Points updated", update, utils)
+								SuccessResponseLog(update, utils)
 							}
 						case "enabled":
 							// Get and check if the enabled value is a boolean
@@ -555,6 +517,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								SendPropertyUpdatedMessage("Event.Enabled", update, data, utils)
 								// Log the command executed successfully
 								FinalCommandLog("Event.Enabled updated", update, utils)
+								SuccessResponseLog(update, utils)
 							}
 						case "effects":
 							// Get and check if the effects value is a slice of strings
@@ -582,6 +545,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 									SendPropertyUpdatedMessage("Event.Effects", update, data, utils)
 									// Log the command executed successfully
 									FinalCommandLog("Event.Effects updated", update, utils)
+									SuccessResponseLog(update, utils)
 								} else {
 									// Respond with a message indicating that the effect does not exist
 									SendEntityNotFoundMessage("Effetto", update, data, utils)
@@ -629,6 +593,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								SendPropertyUpdatedMessage("TotalPoints", update, data, utils)
 								// Log the command executed successfully
 								FinalCommandLog("User.TotalPoints updated", update, utils)
+								SuccessResponseLog(update, utils)
 							}
 						case "partecipations":
 							// Get and check if the partecipations value is an integer number >= 0
@@ -645,6 +610,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								SendPropertyUpdatedMessage("TotalEventPartecipations", update, data, utils)
 								// Log the command executed successfully
 								FinalCommandLog("User.TotalEventPartecipations updated", update, utils)
+								SuccessResponseLog(update, utils)
 							}
 						case "wins":
 							// Get and check if the wins value is an integer number >= 0
@@ -662,6 +628,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								SendPropertyUpdatedMessage("TotalEventWins", update, data, utils)
 								// Log the command executed successfully
 								FinalCommandLog("User.TotalEventWins updated", update, utils)
+								SuccessResponseLog(update, utils)
 							}
 						default:
 							// Respond with a message indicating that the command arguments are wrong
@@ -740,7 +707,21 @@ func SendEntityNotFoundMessage(entity string, update tgbotapi.Update, data types
 
 func FinalCommandLog(msg string, update tgbotapi.Update, utils types.Utils) {
 	utils.Logger.WithFields(logrus.Fields{
-		"usr": update.Message.From.UserName,
-		"msg": update.Message.Text,
+		"message": update.Message.Text,
+		"sender":  update.Message.From.UserName,
+		"chat":    update.Message.Chat.Title,
 	}).Debug(msg)
+}
+
+func SuccessResponseLog(update tgbotapi.Update, utils types.Utils) {
+	msg := fmt.Sprintf("Response to \"/%v\" command sent successfully", update.Message.Command())
+	utils.Logger.Debug(msg)
+}
+
+func ComposeMessage(subMessages []string, args ...any) string {
+	msg := ""
+	for _, subMessage := range subMessages {
+		msg += subMessage
+	}
+	return fmt.Sprintf(msg, args...)
 }
