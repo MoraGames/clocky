@@ -482,166 +482,90 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		// Log the /stats command sent
 		utils.Logger.Debug("Stats sent")
 	case "update":
-		// Update points value property of an event
-		// Check if the user is an bot-admin
-		if !isAdmin(update.Message.From, utils) {
-			// Respond and log with a message indicating that the user is not authorized to use this command
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
-			msg.ReplyToMessageID = update.Message.MessageID
-			message, error := data.Bot.Send(msg)
-			if error != nil {
-				utils.Logger.WithFields(logrus.Fields{
-					"err": error,
-					"msg": message,
-				}).Error("Error while sending message")
-			}
-			utils.Logger.WithFields(logrus.Fields{
-				"usr": update.Message.From.UserName,
-				"cmd": update.Message.Command(),
-			}).Debug("Unauthorized user")
-		} else {
-			// Split the command arguments
-			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+		/*
+			Description:
+				Update an event (points, enabled, effects) or user (points, partecipations, wins) property.
 
-			/*
+			Forms:
 				/update event <event> points <points>
 				/update event <event> enabled <enabled>
 				/update event <event> effects <effects>
 				/update user <user> points <points>
 				/update user <user> partecipations <partecipations>
 				/update user <user> wins <wins>
-			*/
-
-			// Check if the command arguments are in the form /update <event|user> <points>
+		*/
+		// Check if the user is an bot-admin
+		if !isAdmin(update.Message.From, utils) {
+			// Respond and log with a message indicating that the user is not authorized to use this command
+			SendUserNotAuthorizedMessage(update, data, utils)
+			// Log the command failed execution
+			FinalCommandLog("Unauthorized user", update, utils)
+		} else {
+			// Split the command arguments
+			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+			// Check if the command arguments are in one of the above forms
 			if len(cmdArgs) != 4 {
 				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>")
-				msg.ReplyToMessageID = update.Message.MessageID
-				message, error := data.Bot.Send(msg)
-				if error != nil {
-					utils.Logger.WithFields(logrus.Fields{
-						"err": error,
-						"msg": message,
-					}).Error("Error while sending message")
-				}
-				utils.Logger.WithFields(logrus.Fields{
-					"usr": update.Message.From.UserName,
-					"msg": update.Message.Text,
-				}).Debug("Wrong command")
+				cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+				SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
+				// Log the command failed execution
+				FinalCommandLog("Wrong command syntax", update, utils)
 			} else {
-				// Get and check if the event exists
 				targetType := cmdArgs[0]
 				switch targetType {
 				case "event":
+					// Get and check if the event exists
 					eventKey := cmdArgs[1]
 					if event, ok := events.Events.Map[eventKey]; !ok {
 						// Respond with a message indicating that the event does not exist
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Evento non trovato")
-						msg.ReplyToMessageID = update.Message.MessageID
-						message, error := data.Bot.Send(msg)
-						if error != nil {
-							utils.Logger.WithFields(logrus.Fields{
-								"err": error,
-								"msg": message,
-							}).Error("Error while sending message")
-						}
-						utils.Logger.WithFields(logrus.Fields{
-							"usr": update.Message.From.UserName,
-							"msg": update.Message.Text,
-						}).Debug("Event not found")
+						SendEntityNotFoundMessage("Evento", update, data, utils)
+						// Log the command failed execution
+						FinalCommandLog("Event not found", update, utils)
 					} else {
-						// Get and check if the points value is a number
 						targetProperty := cmdArgs[2]
 						switch targetProperty {
 						case "points":
+							// Get and check if the points value is an integer number
 							points, err := strconv.Atoi(cmdArgs[3])
 							if err != nil {
-								// Respond with a message indicating that the points value is not an int
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un intero.")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-								utils.Logger.WithFields(logrus.Fields{
-									"usr": update.Message.From.UserName,
-									"msg": update.Message.Text,
-								}).Debug("Wrong command")
+								// Respond with a message indicating that the points value is not valid
+								SendParameterNotValidMessage("points", "un numero intero", update, data, utils)
+								// Log the command failed execution
+								FinalCommandLog("Wrong command syntax", update, utils)
 							} else {
-								// Update the event points value
+								// Update the Event.Points value
 								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: points, Enabled: event.Enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
-
 								// Respond with command executed successfully
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Points aggiornato")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-
+								SendPropertyUpdatedMessage("Event.Points", update, data, utils)
 								// Log the /update command executed successfully
-								utils.Logger.Debug("Event.Points updated")
+								FinalCommandLog("Event.Points updated", update, utils)
 							}
 						case "enabled":
+							// Get and check if the enabled value is a boolean
 							enabled, err := strconv.ParseBool(cmdArgs[3])
 							if err != nil {
-								// Respond with a message indicating that the enabled value is not a boolean
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro enabled deve essere un booleano.")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-								utils.Logger.WithFields(logrus.Fields{
-									"usr": update.Message.From.UserName,
-									"msg": update.Message.Text,
-								}).Debug("Wrong command")
+								// Respond with a message indicating that the enabled value is not valid
+								SendParameterNotValidMessage("enabled", "un booleano", update, data, utils)
+								// Log the command failed execution
+								FinalCommandLog("Wrong command syntax", update, utils)
 							} else {
-								// Update the event enabled value
+								// Update the Event.Enabled value
 								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
-
 								// Respond with command executed successfully
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Enabled aggiornato")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-
-								// Log the /update command executed successfully
-								utils.Logger.Debug("Event.Enabled updated")
+								SendPropertyUpdatedMessage("Event.Enabled", update, data, utils)
+								// Log the command executed successfully
+								FinalCommandLog("Event.Enabled updated", update, utils)
 							}
 						case "effects":
+							// Get and check if the effects value is a slice of strings
 							effectsNames, err := types.ParseSlice(cmdArgs[3])
 							if err != nil {
-								// Respond with a message indicating that the effects value is not a slice
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro effects deve essere una slice.")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-								utils.Logger.WithFields(logrus.Fields{
-									"usr": update.Message.From.UserName,
-									"msg": update.Message.Text,
-								}).Debug("Wrong command")
+								// Respond with a message indicating that the effects value is not valid
+								SendParameterNotValidMessage("effects", "una lista di effetti validi", update, data, utils)
+								// Log the command failed execution
+								FinalCommandLog("Wrong command syntax", update, utils)
 							} else {
-								// Update the event effects value
+								// Get and check if the effects value is a slice of existing effects
 								effects := make([]*structs.Effect, 0)
 								wrongEffect := ""
 								for _, effectName := range effectsNames {
@@ -652,41 +576,29 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 									effects = append(effects, structs.Effects[effectName])
 								}
 								if wrongEffect == "" {
+									// Update the Event.Effects value
 									events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: event.Enabled, Effects: effects, Activation: event.Activation, Partecipations: event.Partecipations}
-
 									// Respond with command executed successfully
-									msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Effects aggiornato")
-									msg.ReplyToMessageID = update.Message.MessageID
-									message, error := data.Bot.Send(msg)
-									if error != nil {
-										utils.Logger.WithFields(logrus.Fields{
-											"err": error,
-											"msg": message,
-										}).Error("Error while sending message")
-									}
-
-									// Log the /update command executed successfully
-									utils.Logger.Debug("Event.Effects updated")
+									SendPropertyUpdatedMessage("Event.Effects", update, data, utils)
+									// Log the command executed successfully
+									FinalCommandLog("Event.Effects updated", update, utils)
 								} else {
 									// Respond with a message indicating that the effect does not exist
-									msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Effetto %q non trovato", wrongEffect))
-									msg.ReplyToMessageID = update.Message.MessageID
-									message, error := data.Bot.Send(msg)
-									if error != nil {
-										utils.Logger.WithFields(logrus.Fields{
-											"err": error,
-											"msg": message,
-										}).Error("Error while sending message")
-									}
-									utils.Logger.WithFields(logrus.Fields{
-										"usr": update.Message.From.UserName,
-										"msg": update.Message.Text,
-									}).Debug("Effect not found")
+									SendEntityNotFoundMessage("Effetto", update, data, utils)
+									// Log the command failed execution
+									FinalCommandLog("Effect not found", update, utils)
 								}
 							}
+						default:
+							// Respond with a message indicating that the command arguments are wrong
+							cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+							SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
+							// Log the command failed execution
+							FinalCommandLog("Wrong command syntax", update, utils)
 						}
 					}
 				case "user":
+					// Get and check if the user exists
 					username := cmdArgs[1]
 					var userKey int64
 					for userID, user := range Users {
@@ -694,135 +606,77 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							userKey = userID
 						}
 					}
-
 					if user, ok := Users[userKey]; !ok {
-						// Respond with a message indicating that the event does not exist
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Utente non trovato")
-						msg.ReplyToMessageID = update.Message.MessageID
-						message, error := data.Bot.Send(msg)
-						if error != nil {
-							utils.Logger.WithFields(logrus.Fields{
-								"err": error,
-								"msg": message,
-							}).Error("Error while sending message")
-						}
-						utils.Logger.WithFields(logrus.Fields{
-							"usr": update.Message.From.UserName,
-							"msg": update.Message.Text,
-						}).Debug("User not found")
+						// Respond with a message indicating that the user does not exist
+						SendEntityNotFoundMessage("Utente", update, data, utils)
+						// Log the command failed execution
+						FinalCommandLog("User not found", update, utils)
 					} else {
 						targetProperty := cmdArgs[2]
 						switch targetProperty {
 						case "points":
-							// Get and check if the points value is a number
+							// Get and check if the points value is an integer number
 							points, err := strconv.Atoi(cmdArgs[3])
 							if err != nil {
-								// Respond with a message indicating that the points value is not a number
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro points deve essere un numero intero.")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-								utils.Logger.WithFields(logrus.Fields{
-									"usr": update.Message.From.UserName,
-									"msg": update.Message.Text,
-								}).Debug("Wrong command")
+								// Respond with a message indicating that the points value is not valid
+								SendParameterNotValidMessage("points", "un numero intero", update, data, utils)
+								// Log the command failed execution
+								FinalCommandLog("Wrong command syntax", update, utils)
 							} else {
-								// Update the user points value
+								// Update the User.TotalPoints value
 								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: points, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
-
 								// Respond with command executed successfully
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "User.Points aggiornato")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-
-								// Log the /update command executed successfully
-								utils.Logger.Debug("User.Points updated")
+								SendPropertyUpdatedMessage("TotalPoints", update, data, utils)
+								// Log the command executed successfully
+								FinalCommandLog("User.TotalPoints updated", update, utils)
 							}
 						case "partecipations":
-							// Get and check if the partecipations value is a number
+							// Get and check if the partecipations value is an integer number >= 0
 							partecipations, err := strconv.Atoi(cmdArgs[3])
 							if err != nil || partecipations < 0 {
-								// Respond with a message indicating that the partecipations value is not a number
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro partecipations deve essere un numero intero positivo.")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-								utils.Logger.WithFields(logrus.Fields{
-									"usr": update.Message.From.UserName,
-									"msg": update.Message.Text,
-								}).Debug("Wrong command")
+								// Respond with a message indicating that the partecipations value is not valid
+								SendParameterNotValidMessage("partecipations", "un numero intero positivo", update, data, utils)
+								// Log the command failed execution
+								FinalCommandLog("Wrong command syntax", update, utils)
 							} else {
-								// Update the user partecipations value
+								// Update the User.TotalEventPartecipations value
 								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: partecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
-
 								// Respond with command executed successfully
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "User.Partecipations aggiornato")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-
-								// Log the /update command executed successfully
-								utils.Logger.Debug("User.Partecipations updated")
+								SendPropertyUpdatedMessage("TotalEventPartecipations", update, data, utils)
+								// Log the command executed successfully
+								FinalCommandLog("User.TotalEventPartecipations updated", update, utils)
 							}
 						case "wins":
-							// Get and check if the wins value is a number
+							// Get and check if the wins value is an integer number >= 0
 							wins, err := strconv.Atoi(cmdArgs[3])
 							if err != nil || wins < 0 {
-								// Respond with a message indicating that the wins value is not a number
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "parametro wins deve essere un numero intero positivo.")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-								utils.Logger.WithFields(logrus.Fields{
-									"usr": update.Message.From.UserName,
-									"msg": update.Message.Text,
-								}).Debug("Wrong command")
+								// Respond with a message indicating that the wins value is not valid
+								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Parametro <wins> deve essere un numero intero positivo.")
+								SendMessage(msg, update, data, utils)
+								// Log the command failed execution
+								FinalCommandLog("Wrong command syntax", update, utils)
 							} else {
-								// Update the user wins value
+								// Update the User.TotalEventWins value
 								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: wins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
-
 								// Respond with command executed successfully
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "User.Wins aggiornato")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
-									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
-								}
-
-								// Log the /update command executed successfully
-								utils.Logger.Debug("User.Wins updated")
+								SendPropertyUpdatedMessage("TotalEventWins", update, data, utils)
+								// Log the command executed successfully
+								FinalCommandLog("User.TotalEventWins updated", update, utils)
 							}
+						default:
+							// Respond with a message indicating that the command arguments are wrong
+							cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+							SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
+							// Log the command failed execution
+							FinalCommandLog("Wrong command syntax", update, utils)
 						}
 					}
+				default:
+					// Respond with a message indicating that the command arguments are wrong
+					cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+					SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
+					// Log the command failed execution
+					FinalCommandLog("Wrong command syntax", update, utils)
 				}
 			}
 		}
@@ -845,4 +699,48 @@ func isAdmin(user *tgbotapi.User, utils types.Utils) bool {
 	}
 
 	return user.ID == adminUserID
+}
+
+// Send a message
+func SendMessage(msg tgbotapi.MessageConfig, update tgbotapi.Update, data types.Data, utils types.Utils) {
+	msg.ReplyToMessageID = update.Message.MessageID
+	message, err := data.Bot.Send(msg)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": message,
+		}).Error("Error while sending message")
+	}
+}
+
+func SendUserNotAuthorizedMessage(update tgbotapi.Update, data types.Data, utils types.Utils) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
+	SendMessage(msg, update, data, utils)
+}
+
+func SendWrongCommandSyntaxMessage(cmdSyntax string, update tgbotapi.Update, data types.Data, utils types.Utils) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è: "+cmdSyntax)
+	SendMessage(msg, update, data, utils)
+}
+
+func SendPropertyUpdatedMessage(property string, update tgbotapi.Update, data types.Data, utils types.Utils) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Proprietà '%v' aggiornata.", property))
+	SendMessage(msg, update, data, utils)
+}
+
+func SendParameterNotValidMessage(parameter, expected string, update tgbotapi.Update, data types.Data, utils types.Utils) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Parametro <%v> non valido. Deve essere %v.", parameter, expected))
+	SendMessage(msg, update, data, utils)
+}
+
+func SendEntityNotFoundMessage(entity string, update tgbotapi.Update, data types.Data, utils types.Utils) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non trovato.", entity))
+	SendMessage(msg, update, data, utils)
+}
+
+func FinalCommandLog(msg string, update tgbotapi.Update, utils types.Utils) {
+	utils.Logger.WithFields(logrus.Fields{
+		"usr": update.Message.From.UserName,
+		"msg": update.Message.Text,
+	}).Debug(msg)
 }
