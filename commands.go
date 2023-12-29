@@ -643,24 +643,46 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							} else {
 								// Update the event effects value
 								effects := make([]*structs.Effect, 0)
+								wrongEffect := ""
 								for _, effectName := range effectsNames {
+									if _, ok := structs.Effects[effectName]; !ok {
+										wrongEffect = effectName
+										break
+									}
 									effects = append(effects, structs.Effects[effectName])
 								}
-								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: event.Enabled, Effects: effects, Activation: event.Activation, Partecipations: event.Partecipations}
+								if wrongEffect == "" {
+									events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: event.Enabled, Effects: effects, Activation: event.Activation, Partecipations: event.Partecipations}
 
-								// Respond with command executed successfully
-								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Effects aggiornato")
-								msg.ReplyToMessageID = update.Message.MessageID
-								message, error := data.Bot.Send(msg)
-								if error != nil {
+									// Respond with command executed successfully
+									msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Event.Effects aggiornato")
+									msg.ReplyToMessageID = update.Message.MessageID
+									message, error := data.Bot.Send(msg)
+									if error != nil {
+										utils.Logger.WithFields(logrus.Fields{
+											"err": error,
+											"msg": message,
+										}).Error("Error while sending message")
+									}
+
+									// Log the /update command executed successfully
+									utils.Logger.Debug("Event.Effects updated")
+								} else {
+									// Respond with a message indicating that the effect does not exist
+									msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Effetto %q non trovato", wrongEffect))
+									msg.ReplyToMessageID = update.Message.MessageID
+									message, error := data.Bot.Send(msg)
+									if error != nil {
+										utils.Logger.WithFields(logrus.Fields{
+											"err": error,
+											"msg": message,
+										}).Error("Error while sending message")
+									}
 									utils.Logger.WithFields(logrus.Fields{
-										"err": error,
-										"msg": message,
-									}).Error("Error while sending message")
+										"usr": update.Message.From.UserName,
+										"msg": update.Message.Text,
+									}).Debug("Effect not found")
 								}
-
-								// Log the /update command executed successfully
-								utils.Logger.Debug("Event.Effects updated")
 							}
 						}
 					}
