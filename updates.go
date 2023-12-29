@@ -57,8 +57,8 @@ func run(utils types.Utils, data types.Data) {
 				continue
 			}
 
-			// Check if the message is a valid event
-			if event, ok := events.Events.Map[eventKey]; ok && string(eventKey) == update.Message.Text {
+			// Check if the message is a valid event and if it is enabled
+			if event, ok := events.Events.Map[eventKey]; ok && string(eventKey) == update.Message.Text && event.Enabled {
 				// Log Event message
 				utils.Logger.WithFields(logrus.Fields{
 					"evnt": update.Message.Text,
