@@ -47,7 +47,7 @@ func (e *Event) Reset() {
 	e.Enabled, e.Points = CalculateStatus(e.Time)
 	e.Effects = nil
 	e.Activation = nil
-	e.Partecipations = nil
+	e.Partecipations = make(map[int64]*EventPartecipation)
 }
 
 func (e *Event) AddEffect(effect *structs.Effect) {
