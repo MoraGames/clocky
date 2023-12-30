@@ -59,7 +59,6 @@ var (
 			{"ab:ba", "standard", false, abba},
 			{"ab:cd", "standard", false, abcd},
 			{"xa:bc", "standard", false, xabc},
-			{"dc:ba", "standard", false, dcba},
 			{"xc:ba", "standard", false, xcba},
 			{"ac:eg", "standard", false, aceg},
 			{"xa:ce", "standard", false, xace},
@@ -123,11 +122,6 @@ func abcd(a, b, c, d int) bool {
 // ?a:bc
 func xabc(_, b, c, d int) bool {
 	return c == b+1 && d == c+1
-}
-
-// dc:ba
-func dcba(a, b, c, d int) bool {
-	return c == d+1 && b == c+1 && a == b+1
 }
 
 // ?c:ba
