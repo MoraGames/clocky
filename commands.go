@@ -426,7 +426,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				}
 				if !founded {
 					// Respond with a message indicating that the user does not exist
-					SendEntityNotFoundMessage("Utente", update, data, utils)
+					SendEntityNotFoundMessage("Utente", username, update, data, utils)
 					// Log the command failed execution
 					FinalCommandLog("User not found", update, utils)
 				} else {
@@ -483,7 +483,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					eventKey := cmdArgs[1]
 					if event, ok := events.Events.Map[eventKey]; !ok {
 						// Respond with a message indicating that the event does not exist
-						SendEntityNotFoundMessage("Evento", update, data, utils)
+						SendEntityNotFoundMessage("Evento", eventKey, update, data, utils)
 						// Log the command failed execution
 						FinalCommandLog("Event not found", update, utils)
 					} else {
@@ -552,7 +552,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 									SuccessResponseLog(update, utils)
 								} else {
 									// Respond with a message indicating that the effect does not exist
-									SendEntityNotFoundMessage("Effetto", update, data, utils)
+									SendEntityNotFoundMessage("Effetto", wrongEffect, update, data, utils)
 									// Log the command failed execution
 									FinalCommandLog("Effect not found", update, utils)
 								}
@@ -576,7 +576,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					}
 					if user, ok := Users[userKey]; !ok {
 						// Respond with a message indicating that the user does not exist
-						SendEntityNotFoundMessage("Utente", update, data, utils)
+						SendEntityNotFoundMessage("Utente", username, update, data, utils)
 						// Log the command failed execution
 						FinalCommandLog("User not found", update, utils)
 					} else {
@@ -704,8 +704,8 @@ func SendParameterNotValidMessage(parameter, expected string, update tgbotapi.Up
 	SendMessage(msg, update, data, utils)
 }
 
-func SendEntityNotFoundMessage(entity string, update tgbotapi.Update, data types.Data, utils types.Utils) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non trovato.", entity))
+func SendEntityNotFoundMessage(entity string, entityValue any, update tgbotapi.Update, data types.Data, utils types.Utils) {
+	msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v (%v) non trovato.", entity, entityValue))
 	SendMessage(msg, update, data, utils)
 }
 

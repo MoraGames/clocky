@@ -8,12 +8,12 @@ import (
 
 func ParseSlice(s string) ([]string, error) {
 	//s must match the regexp
-	exp := regexp.MustCompile("^\\[(\"[a-zA-Z0-9 ]+\")(, \"[a-zA-Z0-9 ]+\")*\\]$")
+	exp := regexp.MustCompile("^\\[(\"[a-zA-Z0-9_+-]+\")(,\"[a-zA-Z0-9_]+\")*\\]$")
 	match := exp.MatchString(s)
 	if match {
-		slice := strings.Split(strings.Trim(s, "[]"), ", ")
+		slice := strings.Split(strings.Trim(s, "[]"), ",")
 		for i, v := range slice {
-			slice[i] = strings.Trim(v, "\"")
+			slice[i] = strings.ReplaceAll(strings.Trim(v, "\""), "_", " ")
 		}
 		return slice, nil
 	} else {
