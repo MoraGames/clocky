@@ -188,6 +188,56 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			"sender":  update.Message.From.UserName,
 			"chat":    update.Message.Chat.Title,
 		}).Debug("Response to \"/help\" command sent successfully")
+	case "list":
+		// Respond with the list of all enabled sets
+		/*
+			Description:
+				Retrive the events.Event.Stats data structure and return some useful informations abount current sets or effects.
+
+			Forms:
+				/list sets
+				/list effects
+		*/
+		// Split the command arguments
+		cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+		// Check if the command arguments are in one of the above forms
+		if len(cmdArgs) != 1 {
+			// Respond with a message indicating that the command arguments are wrong
+			cmdSyntax := "/list <\"sets\"|\"effects\">"
+			SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
+			// Log the command failed execution
+			FinalCommandLog("Wrong command syntax", update, utils)
+		} else {
+			// Check if the command argument is sets or effects
+			switch cmdArgs[0] {
+			case "sets":
+				// Respond with the list of all enabled sets
+				text := fmt.Sprintf("\nSchemi Attivi (%v):\n", events.Events.Stats.EnabledSetsNum)
+				for _, setName := range events.Events.Stats.EnabledSets {
+					text += fmt.Sprintf(" | %q\n", setName)
+				}
+				SendMessage(tgbotapi.NewMessage(update.Message.Chat.ID, text), update, data, utils)
+				// Log the command executed successfully
+				FinalCommandLog("Events.Stats.EnabledSets sent", update, utils)
+				SuccessResponseLog(update, utils)
+			case "effects":
+				// Respond with the list of all enabled sets
+				text := fmt.Sprintf("\nEffetti Attivi (%v):\n", events.Events.Stats.EnabledEffectsNum)
+				for effectName, effectNum := range events.Events.Stats.EnabledEffects {
+					text += fmt.Sprintf(" | %q = %v\n", effectName, effectNum)
+				}
+				SendMessage(tgbotapi.NewMessage(update.Message.Chat.ID, text), update, data, utils)
+				// Log the command executed successfully
+				FinalCommandLog("Events.Stats.EnabledEffects sent", update, utils)
+				SuccessResponseLog(update, utils)
+			default:
+				// Respond with a message indicating that the command arguments are wrong
+				cmdSyntax := "/list <\"sets\"|\"effects\">"
+				SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
+				// Log the command failed execution
+				FinalCommandLog("Wrong command syntax", update, utils)
+			}
+		}
 	case "ping":
 		// Respond with a "pong" message. Useful for checking if the bot is online
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "pong")
