@@ -25,7 +25,7 @@ func (u *User) RemoveEffects(effects ...*Effect) {
 	newUserEffect := make([]*Effect, 0)
 	for _, e := range u.Effects {
 		for _, effect := range effects {
-			if e != effect {
+			if e.Name != effect.Name {
 				newUserEffect = append(newUserEffect, e)
 			}
 		}
