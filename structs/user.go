@@ -1,6 +1,8 @@
 package structs
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type User struct {
 	TelegramID                      int64
@@ -17,20 +19,18 @@ func NewUser(telegramID int64, username string) *User {
 	return &User{telegramID, username, 0, 0, 0, 0, 0, make([]*Effect, 0)}
 }
 
-func (u *User) AddEffects(effects ...*Effect) {
-	u.Effects = append(u.Effects, effects...)
+func (u *User) AddEffect(effectToAdd *Effect) {
+	u.Effects = append(u.Effects, effectToAdd)
 }
 
-func (u *User) RemoveEffects(effects ...*Effect) {
-	newUserEffect := make([]*Effect, 0)
-	for _, e := range u.Effects {
-		for _, effect := range effects {
-			if e.Name != effect.Name {
-				newUserEffect = append(newUserEffect, e)
-			}
+func (u *User) RemoveEffect(effectToRemove *Effect) {
+	newUserEffects := make([]*Effect, 0)
+	for _, userEffect := range u.Effects {
+		if userEffect.Name != effectToRemove.Name {
+			newUserEffects = append(newUserEffects, userEffect)
 		}
 	}
-	u.Effects = newUserEffect
+	u.Effects = newUserEffects
 }
 
 func (u *User) StringifyEffects() string {

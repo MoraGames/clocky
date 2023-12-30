@@ -221,16 +221,20 @@ func UpdateUserEffects(userID int64) {
 	interval := leaderPoints - userPoints
 
 	//Remove the Comeback effect
-	Users[userID].RemoveEffects(structs.ComebackBonus1, structs.ComebackBonus2, structs.ComebackBonus3)
+	user := Users[userID]
+	user.RemoveEffect(structs.ComebackBonus1)
+	user.RemoveEffect(structs.ComebackBonus2)
+	user.RemoveEffect(structs.ComebackBonus3)
 	switch {
 	case interval >= 20 && interval < 50:
 		//Add the +1 Comeback effect
-		Users[userID].AddEffects(structs.ComebackBonus1)
+		user.AddEffect(structs.ComebackBonus1)
 	case interval >= 50 && interval < 80:
 		//Add the +2 Comeback effect
-		Users[userID].AddEffects(structs.ComebackBonus2)
+		user.AddEffect(structs.ComebackBonus2)
 	case interval >= 80:
 		//Add the +3 Comeback effect
-		Users[userID].AddEffects(structs.ComebackBonus3)
+		user.AddEffect(structs.ComebackBonus3)
 	}
+	Users[userID] = user
 }
