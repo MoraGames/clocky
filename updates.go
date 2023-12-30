@@ -133,7 +133,7 @@ func run(utils types.Utils, data types.Data) {
 					}).Debug("Event activated")
 
 					// Add points to the user if they have never participated the event before
-					if event.HasPartecipated(update.Message.From.ID) {
+					if !event.HasPartecipated(update.Message.From.ID) {
 						event.Partecipate(Users[update.Message.From.ID], curTime)
 						Users[update.Message.From.ID].TotalPoints += event.Activation.EarnedPoints
 						Users[update.Message.From.ID].TotalEventPartecipations++
@@ -162,7 +162,7 @@ func run(utils types.Utils, data types.Data) {
 						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
 					}
 					// Add partecipations to the user if they have never participated the event before
-					if event.HasPartecipated(update.Message.From.ID) {
+					if !event.HasPartecipated(update.Message.From.ID) {
 						event.Partecipate(Users[update.Message.From.ID], curTime)
 						Users[update.Message.From.ID].TotalEventPartecipations++
 					}

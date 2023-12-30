@@ -292,7 +292,11 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				switch cmdArgs[0] {
 				case "events":
 					// Reset the events data structure
-					events.Events.Reset(true, &types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: update.Message.MessageID}, utils)
+					events.Events.Reset(
+						true,
+						&types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: update.Message.MessageID},
+						utils,
+					)
 
 					// Respond with command executed successfully
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Eventi resettati")

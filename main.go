@@ -90,9 +90,13 @@ func main() {
 	//set the gocron events reset
 	gcScheduler := gocron.NewScheduler(timeLocation)
 	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(
-		events.Events.Reset, true,
-		&types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1},
-		types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+		func() {
+			events.Events.Reset(
+				true,
+				&types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1},
+				types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+			)
+		},
 	)
 	if err != nil {
 		l.WithFields(logrus.Fields{
