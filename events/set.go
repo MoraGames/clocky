@@ -19,18 +19,18 @@ type SetJson struct {
 
 var (
 	SetsFunctions = FuncMap{
-		"aa:aa": aaaa,
-		"xa:aa": xaaa,
-		"ab:ab": abab,
-		"ab:ba": abba,
-		"ab:cd": abcd,
-		"xa:bc": xabc,
-		"dc:ba": dcba,
-		"xc:ba": xcba,
-		"ac:eg": aceg,
-		"xa:ce": xace,
-		"xe:ca": xeca,
-		"n:2*n": n2n,
+		"aa:aa":  aaaa,
+		"xa:aa":  xaaa,
+		"ab:ab":  abab,
+		"ab:ba":  abba,
+		"ab:cd":  abcd,
+		"xa:bc":  xabc,
+		"xc:ba":  xcba,
+		"ac:eg":  aceg,
+		"xa:ce":  xace,
+		"xe:ca":  xeca,
+		"n:2*n":  n2n,
+		"xn:3*n": xn3n,
 	}
 	Sets = SetSlice{
 		{"aa:aa", "standard", false, aaaa},
@@ -39,12 +39,12 @@ var (
 		{"ab:ba", "standard", false, abba},
 		{"ab:cd", "standard", false, abcd},
 		{"xa:bc", "standard", false, xabc},
-		{"dc:ba", "standard", false, dcba},
 		{"xc:ba", "standard", false, xcba},
 		{"ac:eg", "standard", false, aceg},
 		{"xa:ce", "standard", false, xace},
 		{"xe:ca", "standard", false, xeca},
 		{"n:2*n", "standard", false, n2n},
+		{"xn:3*n", "standard", false, xn3n},
 	}
 	SetsJson = SetJsonSlice{}
 
@@ -65,6 +65,7 @@ var (
 			{"xa:ce", "standard", false, xace},
 			{"xe:ca", "standard", false, xeca},
 			{"n:2*n", "standard", false, n2n},
+			{"xn:3*n", "standard", false, xn3n},
 		}
 	}
 )
@@ -152,4 +153,9 @@ func xeca(_, b, c, d int) bool {
 // n:2*n
 func n2n(a, b, c, d int) bool {
 	return 2*((a*10)+b) == (c*10)+d
+}
+
+// ?n:3*n
+func xn3n(_, b, c, d int) bool {
+	return 3*b == (c*10)+d
 }
