@@ -31,7 +31,6 @@ var (
 		"xa:ce": xace,
 		"xe:ca": xeca,
 		"n:2*n": n2n,
-		"n:3*n": n3n,
 	}
 	Sets = SetSlice{
 		{"aa:aa", "standard", false, aaaa},
@@ -46,7 +45,6 @@ var (
 		{"xa:ce", "standard", false, xace},
 		{"xe:ca", "standard", false, xeca},
 		{"n:2*n", "standard", false, n2n},
-		{"n:3*n", "standard", false, n3n},
 	}
 	SetsJson = SetJsonSlice{}
 
@@ -67,7 +65,6 @@ var (
 			{"xa:ce", "standard", false, xace},
 			{"xe:ca", "standard", false, xeca},
 			{"n:2*n", "standard", false, n2n},
-			{"n:3*n", "standard", false, n3n},
 		}
 	}
 )
@@ -155,9 +152,4 @@ func xeca(_, b, c, d int) bool {
 // n:2*n
 func n2n(a, b, c, d int) bool {
 	return 2*((a*10)+b) == (c*10)+d
-}
-
-// n:2*n
-func n3n(a, b, c, d int) bool {
-	return 3*((a*10)+b) == (c*10)+d
 }
