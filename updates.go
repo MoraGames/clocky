@@ -26,13 +26,37 @@ func run(utils types.Utils, data types.Data) {
 		// Save the time of the update reading (more precise than the time of the message)
 		curTime := time.Now()
 
+		// Get the update informations
+		updID := update.UpdateID
+		updAt := curTime.Format(utils.TimeFormat)
+		fields := logrus.Fields{
+			"updID": updID,
+			"updAt": updAt,
+		}
+
+		// Get the update.Chat informations (if available)
+		updChat := update.FromChat()
+		if updChat != nil {
+			fields["updChatType"] = updChat.Type
+			fields["updChatID"] = updChat.ID
+			if updChat.Type == "private" {
+				fields["updChatName"] = updChat.UserName
+			} else {
+				fields["updChatTitl"] = updChat.Title
+			}
+		}
+
+		// Get the update.User informations (if available)
+		updUser := update.SentFrom()
+		if updUser != nil {
+			fields["updUserID"] = updUser.ID
+			if updUser.UserName != "" {
+				fields["updUserName"] = updUser.UserName
+			}
+		}
+
 		//Log Update
-		utils.Logger.WithFields(logrus.Fields{
-			"updID": update.UpdateID,
-			"updFr": update.FromChat().Title,
-			"updBy": update.SentFrom().UserName,
-			"updAt": curTime.Format(utils.TimeFormat),
-		}).Debug("Update received")
+		utils.Logger.WithFields(fields).Debug("Update received")
 
 		// Check the type of the update
 		if update.CallbackQuery != nil {
