@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -324,7 +326,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Check if the command arguments are in the form /reset <events|users>
 			if len(cmdArgs) != 1 {
 				// Respond with a message indicating that the command arguments are wrong
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /reset <events|users>")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /reset <events|users|gocron>")
 				msg.ReplyToMessageID = update.Message.MessageID
 				message, error := data.Bot.Send(msg)
 				if error != nil {
@@ -396,9 +398,82 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 
 					// Log the /reset command sent
 					utils.Logger.Debug("Users resetted")
+				case "gocron":
+					// Reset the events data structure
+					events.Events.Reset(
+						true,
+						&types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: update.Message.MessageID},
+						utils,
+					)
+
+					// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
+					// Then reset the daily user's stats (unconditionally)
+					for userId := range Users {
+						if user, ok := Users[userId]; ok && user != nil {
+							if Users[userId].DailyEventWins >= int(math.Ceil(float64(TotalDailyEventWins)*0.3)) {
+								r := rand.New(rand.NewSource(time.Now().UnixNano()))
+								randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
+								setEvents := events.EventsOf(events.SetsFunctions[randomSet])
+
+								if Users[userId].PrivateChatId != 0 {
+									text := fmt.Sprintf("Congratulations! You have won %v/%v events and for this you are rewarded with an hint for the new day.\nHere are some of the events surely active in the next 24 hours:\n\nEvents of the Set %q:", Users[userId].DailyEventWins, TotalDailyEventWins, randomSet)
+									for _, event := range setEvents {
+										text += fmt.Sprintf(" | %q\n", event)
+									}
+
+									msg := tgbotapi.NewMessage(Users[userId].PrivateChatId, text)
+									message, error := data.Bot.Send(msg)
+									if error != nil {
+										utils.Logger.WithFields(logrus.Fields{
+											"err": error,
+											"msg": message,
+										}).Error("Error while sending message")
+									}
+								} else {
+									utils.Logger.WithFields(logrus.Fields{
+										"usr": userId,
+									}).Warn("User has no private chat")
+								}
+							}
+
+							Users[userId].DailyPoints = 0
+							Users[userId].DailyEventPartecipations = 0
+							Users[userId].DailyEventWins = 0
+						}
+					}
+
+					// Save the users
+					file, err := json.MarshalIndent(Users, "", " ")
+					if err != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err":  err,
+							"note": "preoccupati",
+						}).Error("Error while marshalling data")
+					}
+					err = os.WriteFile("files/users.json", file, 0644)
+					if err != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err":  err,
+							"note": "preoccupati tanto",
+						}).Error("Error while writing data")
+					}
+
+					// Respond with command executed successfully
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Funzione GoCron eseguita")
+					msg.ReplyToMessageID = update.Message.MessageID
+					message, error := data.Bot.Send(msg)
+					if error != nil {
+						utils.Logger.WithFields(logrus.Fields{
+							"err": error,
+							"msg": message,
+						}).Error("Error while sending message")
+					}
+
+					// Log the /reset command sent
+					utils.Logger.Debug("Users resetted")
 				default:
 					// Respond with a message indicating that the command arguments are wrong
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /reset <events|users>")
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /reset <events|users|gocron>")
 					msg.ReplyToMessageID = update.Message.MessageID
 					message, error := data.Bot.Send(msg)
 					if error != nil {
@@ -448,7 +523,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Send the message with user's stats
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
 			if u != nil {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nPunti/Partecipazioni: %.2f\nPunti/Vittorie: %.2f\nVittorie/Partecipazioni: %.2f\nVittorie/Sconfitte: %.2f\nEffetti attivi: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins), u.StringifyEffects()))
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nPunti odierni: %v\nPartecipazioni odierne: %v\nVittorie odierne: %v\nPunti/Partecipazioni: %.2f\nPunti/Vittorie: %.2f\nVittorie/Partecipazioni: %.2f\nVittorie/Sconfitte: %.2f\nEffetti attivi: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins), u.StringifyEffects()))
 			}
 			SendMessage(msg, update, data, utils)
 			// Log the command executed successfully
@@ -487,7 +562,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Send the message with user's stats
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))
 					if u != nil {
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le statistiche di %v sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nPunti/Partecipazioni: %.2f\nPunti/Vittorie: %.2f\nVittorie/Partecipazioni: %.2f\nVittorie/Sconfitte: %.2f\nEffetti attivi: %v", u.UserName, u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins), u.StringifyEffects()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le statistiche di %v sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nPunti odierni: %v\nPartecipazioni odierne: %v\nVittorie odierne: %v\nPunti/Partecipazioni: %.2f\nPunti/Vittorie: %.2f\nVittorie/Partecipazioni: %.2f\nVittorie/Sconfitte: %.2f\nEffetti attivi: %v", u.UserName, u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins), u.StringifyEffects()))
 					}
 					SendMessage(msg, update, data, utils)
 					// Log the command executed successfully

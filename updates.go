@@ -16,7 +16,8 @@ import (
 
 // Users is the data structure that contains all the users and their informations
 var (
-	Users = make(map[int64]*structs.User)
+	Users               = make(map[int64]*structs.User)
+	TotalDailyEventWins = 0
 )
 
 // Run the core of the bot
@@ -93,7 +94,7 @@ func run(utils types.Utils, data types.Data) {
 				if event.Activation == nil {
 					// Add the user to the data structure if they have never participated before
 					if _, ok := Users[update.Message.From.ID]; !ok {
-						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, 0, update.Message.From.UserName)
 					}
 
 					// Check (and eventually update) the user effects
@@ -162,6 +163,10 @@ func run(utils types.Utils, data types.Data) {
 						Users[update.Message.From.ID].TotalPoints += event.Activation.EarnedPoints
 						Users[update.Message.From.ID].TotalEventPartecipations++
 						Users[update.Message.From.ID].TotalEventWins++
+						Users[update.Message.From.ID].DailyPoints += event.Activation.EarnedPoints
+						Users[update.Message.From.ID].DailyEventPartecipations++
+						Users[update.Message.From.ID].DailyEventWins++
+						TotalDailyEventWins++
 					}
 				} else {
 					// Calculate the delay from o' clock and winner user
@@ -183,12 +188,13 @@ func run(utils types.Utils, data types.Data) {
 
 					// Add the user to the data structure if they have never participated before
 					if _, ok := Users[update.Message.From.ID]; !ok {
-						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, 0, update.Message.From.UserName)
 					}
 					// Add partecipations to the user if they have never participated the event before
 					if !event.HasPartecipated(update.Message.From.ID) {
 						event.Partecipate(Users[update.Message.From.ID], curTime)
 						Users[update.Message.From.ID].TotalEventPartecipations++
+						Users[update.Message.From.ID].DailyEventPartecipations++
 					}
 				}
 

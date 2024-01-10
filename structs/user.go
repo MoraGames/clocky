@@ -6,17 +6,21 @@ import (
 
 type User struct {
 	TelegramID                      int64
+	PrivateChatId                   int64
 	UserName                        string
 	TotalPoints                     int
 	TotalEventPartecipations        int
 	TotalEventWins                  int
+	DailyPoints                     int
+	DailyEventPartecipations        int
+	DailyEventWins                  int
 	TotalChampionshipPartecipations int
 	TotalChampionshipWins           int
 	Effects                         []*Effect
 }
 
-func NewUser(telegramID int64, username string) *User {
-	return &User{telegramID, username, 0, 0, 0, 0, 0, make([]*Effect, 0)}
+func NewUser(telegramID, privateChatID int64, username string) *User {
+	return &User{telegramID, privateChatID, username, 0, 0, 0, 0, 0, 0, 0, 0, make([]*Effect, 0)}
 }
 
 func (u *User) AddEffect(effectToAdd *Effect) {

@@ -3,6 +3,7 @@ package events
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -48,8 +49,8 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
 
+	now := time.Now()
 	for i := 0; i < 24*60; i++ {
-		now := time.Now()
 		time := time.Date(now.Year(), now.Month(), now.Day(), i/60, i%60, 0, 0, now.Location())
 
 		if CalculateValid(time) {
@@ -139,7 +140,7 @@ func (ed *EventsData) EnabledRandomSets(percentage types.Interval, utils types.U
 		set.Enabled = false
 	}
 
-	min, max := int(percentage.Min*float64(ed.Stats.TotalSetsNum)), int(percentage.Max*float64(ed.Stats.TotalSetsNum))
+	min, max := int(math.Round(percentage.Min*float64(ed.Stats.TotalSetsNum))), int(math.Round(percentage.Max*float64(ed.Stats.TotalSetsNum)))
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	setToActivate := r.Intn(max-min) + min
@@ -172,7 +173,7 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 		r = rand.New(rand.NewSource(time.Now().UnixNano()))
 		if r.Float64() < effect.Possible {
 			// Effects will be assigned
-			minEventsEffected, maxEventsEffected := int(effect.Amount.Min*float64(ed.Stats.EnabledEventsNum)), int(effect.Amount.Max*float64(ed.Stats.EnabledEventsNum))
+			minEventsEffected, maxEventsEffected := int(math.Round(effect.Amount.Min*float64(ed.Stats.EnabledEventsNum))), int(math.Round(effect.Amount.Max*float64(ed.Stats.EnabledEventsNum)))
 			if minEventsEffected == maxEventsEffected {
 				maxEventsEffected++
 			}
@@ -254,6 +255,18 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 		"num": ed.Stats.EnabledEffectsNum,
 		"map": ed.Stats.EnabledEffects,
 	}).Debug("EnabledEffects")
+}
+
+func EventsOf(setFunc func(int, int, int, int) bool) []string {
+	eventsOfSet := make([]string, 0)
+	for i := 0; i < 24*60; i++ {
+		h := i / 60
+		m := i % 60
+		if setFunc(h/10, h%10, m/10, m%10) {
+			eventsOfSet = append(eventsOfSet, fmt.Sprintf("%02d:%02d", h, m))
+		}
+	}
+	return eventsOfSet
 }
 
 func RemoveValue(s []string, value string) []string {

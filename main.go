@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
+	"math"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -89,13 +92,68 @@ func main() {
 
 	//set the gocron events reset
 	gcScheduler := gocron.NewScheduler(timeLocation)
-	gcJob, err := gcScheduler.Every(1).Day().At("23:58").Do(
+	gcJob, err := gcScheduler.Every(1).Day().At("23:59").Do(
 		func() {
+			// Reset the events
 			events.Events.Reset(
 				true,
 				&types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1},
 				types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
 			)
+
+			// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
+			// Then reset the daily user's stats (unconditionally)
+			for userId := range Users {
+				if user, ok := Users[userId]; ok && user != nil {
+					if Users[userId].DailyEventWins >= int(math.Ceil(float64(TotalDailyEventWins)*0.3)) {
+						r := rand.New(rand.NewSource(time.Now().UnixNano()))
+						randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
+						setEvents := events.EventsOf(events.SetsFunctions[randomSet])
+
+						if Users[userId].PrivateChatId != 0 {
+							text := fmt.Sprintf("Congratulations! You have won %v/%v events and for this you are rewarded with an hint for the new day.\nHere are some of the events surely active in the next 24 hours:\n\nEvents of the Set %q:", Users[userId].DailyEventWins, TotalDailyEventWins, randomSet)
+							for _, event := range setEvents {
+								text += fmt.Sprintf(" | %q\n", event)
+							}
+
+							msg := tgbotapi.NewMessage(Users[userId].PrivateChatId, text)
+							message, error := bot.Send(msg)
+							if error != nil {
+								l.WithFields(logrus.Fields{
+									"err": error,
+									"msg": message,
+								}).Error("Error while sending message")
+							}
+						} else {
+							l.WithFields(logrus.Fields{
+								"usr": userId,
+							}).Warn("User has no private chat")
+						}
+					}
+
+					Users[userId].DailyPoints = 0
+					Users[userId].DailyEventPartecipations = 0
+					Users[userId].DailyEventWins = 0
+				}
+			}
+
+			// Save the users
+			file, err := json.MarshalIndent(Users, "", " ")
+			if err != nil {
+				l.WithFields(logrus.Fields{
+					"err":  err,
+					"note": "preoccupati",
+				}).Error("Error while marshalling data")
+				l.Error(Users)
+			}
+			err = os.WriteFile("files/users.json", file, 0644)
+			if err != nil {
+				l.WithFields(logrus.Fields{
+					"err":  err,
+					"note": "preoccupati tanto",
+				}).Error("Error while writing data")
+				l.Error(Users)
+			}
 		},
 	)
 	if err != nil {
