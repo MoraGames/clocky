@@ -94,6 +94,9 @@ func main() {
 	gcScheduler := gocron.NewScheduler(timeLocation)
 	gcJob, err := gcScheduler.Every(1).Day().At("23:59").Do(
 		func() {
+			// Get the number of enabled events for the ended day
+			DailyEnabledEvents := events.Events.Stats.EnabledEventsNum
+
 			// Reset the events
 			events.Events.Reset(
 				true,
@@ -105,29 +108,24 @@ func main() {
 			// Then reset the daily user's stats (unconditionally)
 			for userId := range Users {
 				if user, ok := Users[userId]; ok && user != nil {
-					if Users[userId].DailyEventWins >= int(math.Ceil(float64(TotalDailyEventWins)*0.3)) {
+					// Check if the user has participated in at least 20% of the enabled events of the day and if he has won at least 30% of the events in which he participated
+					if Users[userId].DailyEventPartecipations >= int(math.Round(float64(DailyEnabledEvents)*0.2)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.3)) {
 						r := rand.New(rand.NewSource(time.Now().UnixNano()))
 						randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
 						setEvents := events.EventsOf(events.SetsFunctions[randomSet])
 
-						if Users[userId].PrivateChatId != 0 {
-							text := fmt.Sprintf("Congratulations! You have won %v/%v events and for this you are rewarded with an hint for the new day.\nHere are some of the events surely active in the next 24 hours:\n\nEvents of the Set %q:", Users[userId].DailyEventWins, TotalDailyEventWins, randomSet)
-							for _, event := range setEvents {
-								text += fmt.Sprintf(" | %q\n", event)
-							}
+						text := fmt.Sprintf("Congratulations! You have won %v/%v events and for this you are rewarded with an hint for the new day.\nHere are some of the events surely active in the next 24 hours:\n\nEvents of the Set %q:", Users[userId].DailyEventWins, TotalDailyEventWins, randomSet)
+						for _, event := range setEvents {
+							text += fmt.Sprintf(" | %q\n", event)
+						}
 
-							msg := tgbotapi.NewMessage(Users[userId].PrivateChatId, text)
-							message, error := bot.Send(msg)
-							if error != nil {
-								l.WithFields(logrus.Fields{
-									"err": error,
-									"msg": message,
-								}).Error("Error while sending message")
-							}
-						} else {
+						msg := tgbotapi.NewMessage(userId, text)
+						message, error := bot.Send(msg)
+						if error != nil {
 							l.WithFields(logrus.Fields{
-								"usr": userId,
-							}).Warn("User has no private chat")
+								"err": error,
+								"msg": message,
+							}).Error("Error while sending message")
 						}
 					}
 
