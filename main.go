@@ -114,7 +114,7 @@ func main() {
 						randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
 						setEvents := events.EventsOf(events.SetsFunctions[randomSet])
 
-						text := fmt.Sprintf("Congratulations! You have won %v/%v events and for this you are rewarded with an hint for the new day.\nHere are some of the events surely active in the next 24 hours:\n\nEvents of the Set %q:", Users[userId].DailyEventWins, TotalDailyEventWins, randomSet)
+						text := fmt.Sprintf("Congratulations! You have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events surely active in the next 24 hours:\n\nEvents of the Set %q:", Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet)
 						for _, event := range setEvents {
 							text += fmt.Sprintf(" | %q\n", event)
 						}
