@@ -20,6 +20,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	PinnedResetMessage tgbotapi.Message
+)
+
 func main() {
 	//get the configurations
 	conf, err := config.NewConfig()
@@ -120,12 +124,54 @@ func main() {
 						}
 
 						msg := tgbotapi.NewMessage(userId, text)
-						message, error := bot.Send(msg)
-						if error != nil {
+						message, err := bot.Send(msg)
+						if err != nil {
 							l.WithFields(logrus.Fields{
-								"err": error,
+								"err": err,
 								"msg": message,
 							}).Error("Error while sending message")
+						}
+
+						// Unpint the old reset message
+						message, err = bot.Send(tgbotapi.UnpinChatMessageConfig{
+							ChatID:    PinnedResetMessage.Chat.ID,
+							MessageID: PinnedResetMessage.MessageID,
+						})
+						if err != nil {
+							l.WithFields(logrus.Fields{
+								"err": err,
+								"msg": message,
+							}).Error("Error while unpinning message")
+						}
+
+						// Update the pinned reset message
+						PinnedResetMessage = message
+
+						// Save PinnedResetMessage
+						pinnedMessageFile, err := json.MarshalIndent(PinnedResetMessage, "", " ")
+						if err != nil {
+							l.WithFields(logrus.Fields{
+								"err": err,
+							}).Error("Error while marshalling Events data")
+						}
+						err = os.WriteFile("files/pinnedMessage.json", pinnedMessageFile, 0644)
+						if err != nil {
+							l.WithFields(logrus.Fields{
+								"err": err,
+							}).Error("Error while writing Events data")
+						}
+
+						// Pin the new reset message
+						message, err = bot.Send(tgbotapi.PinChatMessageConfig{
+							ChatID:              PinnedResetMessage.Chat.ID,
+							MessageID:           PinnedResetMessage.MessageID,
+							DisableNotification: true,
+						})
+						if err != nil {
+							l.WithFields(logrus.Fields{
+								"err": err,
+								"msg": message,
+							}).Error("Error while pinning message")
 						}
 					}
 
@@ -173,6 +219,7 @@ func main() {
 			{FileName: "files/sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
 			{FileName: "files/events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
 			{FileName: "files/users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
+			{FileName: "files/pinnedMessage.json", DataStruct: &PinnedResetMessage, IfOkay: nil, IfFail: nil},
 		},
 		types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
