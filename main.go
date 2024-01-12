@@ -113,10 +113,20 @@ func main() {
 						r := rand.New(rand.NewSource(time.Now().UnixNano()))
 						randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
 						setEvents := events.EventsOf(events.SetsFunctions[randomSet])
-
-						text := fmt.Sprintf("Congratulations! You have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events surely active in the next 24 hours:\n\nEvents of the Set %q:", Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet)
+						setEffects := make(map[string]int)
 						for _, event := range setEvents {
-							text += fmt.Sprintf(" | %q\n", event)
+							for _, effect := range event.Effects {
+								setEffects[effect.Name]++
+							}
+						}
+
+						text := fmt.Sprintf("Congratulations! You have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events and effects surely active in the next 24 hours:\n\nEvents of the Set %q (%v):\n", Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet, len(setEvents))
+						for _, event := range setEvents {
+							text += fmt.Sprintf(" | %q\n", event.Name)
+						}
+						text += fmt.Sprintf("\nEffects of the Set %q (%v):\n", randomSet, len(setEffects))
+						for effect, count := range setEffects {
+							text += fmt.Sprintf(" | %q (%v)\n", effect, count)
 						}
 
 						msg := tgbotapi.NewMessage(userId, text)

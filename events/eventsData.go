@@ -260,13 +260,13 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 	}).Debug("EnabledEffects")
 }
 
-func EventsOf(setFunc func(int, int, int, int) bool) []string {
-	eventsOfSet := make([]string, 0)
+func EventsOf(setFunc func(int, int, int, int) bool) []*Event {
+	eventsOfSet := make([]*Event, 0)
 	for i := 0; i < 24*60; i++ {
 		h := i / 60
 		m := i % 60
 		if setFunc(h/10, h%10, m/10, m%10) {
-			eventsOfSet = append(eventsOfSet, fmt.Sprintf("%02d:%02d", h, m))
+			eventsOfSet = append(eventsOfSet, Events.Map[fmt.Sprintf("%02d:%02d", h, m)])
 		}
 	}
 	return eventsOfSet
