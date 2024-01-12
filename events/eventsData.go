@@ -35,10 +35,13 @@ type (
 	}
 )
 
-var Events *EventsData
-var AssignEventsWithDefault = func(utils types.Utils) {
-	Events = NewEventsData(true, utils)
-}
+var (
+	PinnedResetMessage      tgbotapi.Message
+	Events                  *EventsData
+	AssignEventsWithDefault = func(utils types.Utils) {
+		Events = NewEventsData(true, utils)
+	}
+)
 
 func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 	ed := &EventsData{
@@ -332,5 +335,58 @@ func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, ut
 	if writeMsgData.ReplyMessageID != -1 {
 		message.ReplyToMessageID = writeMsgData.ReplyMessageID
 	}
-	writeMsgData.Bot.Send(message)
+	msg, err := writeMsgData.Bot.Send(message)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": msg,
+		}).Error("Error while sending message")
+	}
+
+	// Update the pinned Message
+	UpdatePinnedMessage(writeMsgData, utils, msg)
+}
+
+func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils, message tgbotapi.Message) {
+	// Unpin the old reset message
+	message, err := writeMsgData.Bot.Send(tgbotapi.UnpinChatMessageConfig{
+		ChatID:    PinnedResetMessage.Chat.ID,
+		MessageID: PinnedResetMessage.MessageID,
+	})
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": message,
+		}).Error("Error while unpinning message")
+	}
+
+	// Update the pinned reset message
+	PinnedResetMessage = message
+
+	// Save PinnedResetMessage
+	pinnedMessageFile, err := json.MarshalIndent(PinnedResetMessage, "", " ")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while marshalling Events data")
+	}
+	err = os.WriteFile("files/pinnedMessage.json", pinnedMessageFile, 0644)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while writing Events data")
+	}
+
+	// Pin the new reset message
+	message, err = writeMsgData.Bot.Send(tgbotapi.PinChatMessageConfig{
+		ChatID:              PinnedResetMessage.Chat.ID,
+		MessageID:           PinnedResetMessage.MessageID,
+		DisableNotification: true,
+	})
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": message,
+		}).Error("Error while pinning message")
+	}
 }
