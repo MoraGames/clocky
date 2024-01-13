@@ -15,6 +15,7 @@ import (
 	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/MoraGames/clockyuwu/structs"
 	"github.com/go-co-op/gocron"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
@@ -95,7 +96,7 @@ func main() {
 	gcJob, err := gcScheduler.Every(1).Day().At("23:59").Do(
 		func() {
 			// Get the number of enabled events for the ended day
-			DailyEnabledEvents := events.Events.Stats.EnabledEventsNum
+			dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
 
 			// Reset the events
 			events.Events.Reset(
@@ -106,62 +107,12 @@ func main() {
 
 			// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
 			// Then reset the daily user's stats (unconditionally)
-			for userId := range Users {
-				if user, ok := Users[userId]; ok && user != nil {
-					// Check if the user has participated in at least 20% of the enabled events of the day and if he has won at least 30% of the events in which he participated
-					if Users[userId].DailyEventPartecipations >= int(math.Round(float64(DailyEnabledEvents)*0.2)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.3)) {
-						r := rand.New(rand.NewSource(time.Now().UnixNano()))
-						randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
-						setEvents := events.EventsOf(events.SetsFunctions[randomSet])
-						setEffects := make(map[string]int)
-						for _, event := range setEvents {
-							for _, effect := range event.Effects {
-								setEffects[effect.Name]++
-							}
-						}
-
-						text := fmt.Sprintf("Congratulations! You have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events and effects surely active in the next 24 hours:\n\nEvents of the Set %q (%v):\n", Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet, len(setEvents))
-						for _, event := range setEvents {
-							text += fmt.Sprintf(" | %q\n", event.Name)
-						}
-						text += fmt.Sprintf("\nEffects of the Set %q (%v):\n", randomSet, len(setEffects))
-						for effect, count := range setEffects {
-							text += fmt.Sprintf(" | %q (%v)\n", effect, count)
-						}
-
-						msg := tgbotapi.NewMessage(userId, text)
-						message, err := bot.Send(msg)
-						if err != nil {
-							l.WithFields(logrus.Fields{
-								"err": err,
-								"msg": message,
-							}).Error("Error while sending message")
-						}
-					}
-
-					Users[userId].DailyPoints = 0
-					Users[userId].DailyEventPartecipations = 0
-					Users[userId].DailyEventWins = 0
-				}
-			}
-
-			// Save the users
-			file, err := json.MarshalIndent(Users, "", " ")
-			if err != nil {
-				l.WithFields(logrus.Fields{
-					"err":  err,
-					"note": "preoccupati",
-				}).Error("Error while marshalling data")
-				l.Error(Users)
-			}
-			err = os.WriteFile("files/users.json", file, 0644)
-			if err != nil {
-				l.WithFields(logrus.Fields{
-					"err":  err,
-					"note": "preoccupati tanto",
-				}).Error("Error while writing data")
-				l.Error(Users)
-			}
+			DailyUserRewardAndReset(
+				Users,
+				dailyEnabledEvents,
+				&types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1},
+				types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+			)
 		},
 	)
 	if err != nil {
@@ -269,6 +220,67 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 		"okaysFunc": numOfOkayFunc,
 		"totat":     len(reloads),
 	}).Info("Reloading data completed")
+}
+
+func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents int, writeMsgData *types.WriteMessageData, utils types.Utils) {
+	// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
+	// Then reset the daily user's stats (unconditionally)
+	for userId := range Users {
+		if user, ok := Users[userId]; ok && user != nil {
+			// Check if the user has participated in at least 20% of the enabled events of the day and if he has won at least 30% of the events in which he participated
+			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.2)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.3)) {
+				r := rand.New(rand.NewSource(time.Now().UnixNano()))
+				randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
+				setEvents := events.EventsOf(events.SetsFunctions[randomSet])
+				setEffects := make(map[string]int)
+				for _, event := range setEvents {
+					for _, effect := range event.Effects {
+						setEffects[effect.Name]++
+					}
+				}
+
+				text := fmt.Sprintf("Congratulations! You have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events and effects surely active in the next 24 hours:\n\nEvents of the Set %q (%v):\n", Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet, len(setEvents))
+				for _, event := range setEvents {
+					text += fmt.Sprintf(" | %q\n", event.Name)
+				}
+				text += fmt.Sprintf("\nEffects of the Set %q (%v):\n", randomSet, len(setEffects))
+				for effect, count := range setEffects {
+					text += fmt.Sprintf(" | %q (%v)\n", effect, count)
+				}
+
+				msg := tgbotapi.NewMessage(userId, text)
+				message, err := writeMsgData.Bot.Send(msg)
+				if err != nil {
+					utils.Logger.WithFields(logrus.Fields{
+						"err": err,
+						"msg": message,
+					}).Error("Error while sending message")
+				}
+			}
+
+			Users[userId].DailyPoints = 0
+			Users[userId].DailyEventPartecipations = 0
+			Users[userId].DailyEventWins = 0
+		}
+	}
+
+	// Save the users
+	file, err := json.MarshalIndent(Users, "", " ")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err":  err,
+			"note": "preoccupati",
+		}).Error("Error while marshalling data")
+		utils.Logger.Error(Users)
+	}
+	err = os.WriteFile("files/users.json", file, 0644)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err":  err,
+			"note": "preoccupati tanto",
+		}).Error("Error while writing data")
+		utils.Logger.Error(Users)
+	}
 }
 
 func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text string) {
