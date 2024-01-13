@@ -582,7 +582,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 	case "update":
 		/*
 			Description:
-				Update an event (points, enabled, effects) or user (points, partecipations, wins) property.
+				Update an event (points, enabled, effects) or user (points, partecipations, wins, effects) property.
 
 			Forms:
 				/update event <event> points <points>
@@ -591,6 +591,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				/update user <user> points <points>
 				/update user <user> partecipations <partecipations>
 				/update user <user> wins <wins>
+				/update user <user> effects <effects>
 		*/
 		// Check if the user is an bot-admin
 		if !isAdmin(update.Message.From, utils) {
@@ -604,7 +605,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Check if the command arguments are in one of the above forms
 			if len(cmdArgs) != 4 {
 				// Respond with a message indicating that the command arguments are wrong
-				cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+				cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"|\"effects\"> <points|enabled|effects|points|partecipations|wins|effects>"
 				SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
 				// Log the command failed execution
 				FinalCommandLog("Wrong command syntax", update, utils)
@@ -692,7 +693,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							}
 						default:
 							// Respond with a message indicating that the command arguments are wrong
-							cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+							cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"|\"effects\"> <points|enabled|effects|points|partecipations|wins|effects>"
 							SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
 							// Log the command failed execution
 							FinalCommandLog("Wrong command syntax", update, utils)
@@ -767,9 +768,43 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								FinalCommandLog("User.TotalEventWins updated", update, utils)
 								SuccessResponseLog(update, utils)
 							}
+						case "effects":
+							// Get and check if the effects value is a slice of strings
+							effectsNames, err := types.ParseSlice(cmdArgs[3])
+							if err != nil {
+								// Respond with a message indicating that the effects value is not valid
+								SendParameterNotValidMessage("effects", "una lista di effetti validi", update, data, utils)
+								// Log the command failed execution
+								FinalCommandLog("Wrong command syntax", update, utils)
+							} else {
+								// Get and check if the effects value is a slice of existing effects
+								effects := make([]*structs.Effect, 0)
+								wrongEffect := ""
+								for _, effectName := range effectsNames {
+									if _, ok := structs.Effects[effectName]; !ok {
+										wrongEffect = effectName
+										break
+									}
+									effects = append(effects, structs.Effects[effectName])
+								}
+								if wrongEffect == "" {
+									// Update the User.Effects value
+									Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins, Effects: effects}
+									// Respond with command executed successfully
+									SendPropertyUpdatedMessage("User.Effects", update, data, utils)
+									// Log the command executed successfully
+									FinalCommandLog("User.Effects updated", update, utils)
+									SuccessResponseLog(update, utils)
+								} else {
+									// Respond with a message indicating that the effect does not exist
+									SendEntityNotFoundMessage("Effetto", wrongEffect, update, data, utils)
+									// Log the command failed execution
+									FinalCommandLog("Effect not found", update, utils)
+								}
+							}
 						default:
 							// Respond with a message indicating that the command arguments are wrong
-							cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+							cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"|\"effects\"> <points|enabled|effects|points|partecipations|wins|effects>"
 							SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
 							// Log the command failed execution
 							FinalCommandLog("Wrong command syntax", update, utils)
@@ -777,7 +812,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					}
 				default:
 					// Respond with a message indicating that the command arguments are wrong
-					cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"> <points|enabled|effects|points|partecipations|wins>"
+					cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"|\"effects\"> <points|enabled|effects|points|partecipations|wins|effects>"
 					SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
 					// Log the command failed execution
 					FinalCommandLog("Wrong command syntax", update, utils)
