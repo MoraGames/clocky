@@ -353,17 +353,17 @@ func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, ut
 	UpdatePinnedMessage(writeMsgData, utils, msg)
 }
 
-func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils, message tgbotapi.Message) {
+func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils, msgToPin tgbotapi.Message) {
 	// Unpin the old reset message if exists
 	if PinnedResetMessage.Exist {
-		message, err := writeMsgData.Bot.Send(tgbotapi.UnpinChatMessageConfig{
+		msg, err := writeMsgData.Bot.Send(tgbotapi.UnpinChatMessageConfig{
 			ChatID:    PinnedResetMessage.ChatID,
 			MessageID: PinnedResetMessage.MessageID,
 		})
 		if err != nil {
 			utils.Logger.WithFields(logrus.Fields{
 				"err": err,
-				"msg": message,
+				"msg": msg,
 			}).Error("Error while unpinning message")
 		}
 	}
@@ -371,8 +371,8 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 	// Update the pinned reset message
 	PinnedResetMessage = EventsResetMessage{
 		true,
-		message.Chat.ID,
-		message.MessageID,
+		msgToPin.Chat.ID,
+		msgToPin.MessageID,
 	}
 
 	// Save PinnedResetMessage
@@ -391,7 +391,7 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 
 	// Pin the new reset message if exists
 	if PinnedResetMessage.Exist {
-		message, err = writeMsgData.Bot.Send(tgbotapi.PinChatMessageConfig{
+		msg, err := writeMsgData.Bot.Send(tgbotapi.PinChatMessageConfig{
 			ChatID:              PinnedResetMessage.ChatID,
 			MessageID:           PinnedResetMessage.MessageID,
 			DisableNotification: true,
@@ -399,7 +399,7 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 		if err != nil {
 			utils.Logger.WithFields(logrus.Fields{
 				"err": err,
-				"msg": message,
+				"msg": msg,
 			}).Error("Error while pinning message")
 		}
 	}
