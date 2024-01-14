@@ -18,8 +18,17 @@ type User struct {
 	Effects                         []*Effect
 }
 
+type UserMinimal struct {
+	TelegramID int64
+	UserName   string
+}
+
 func NewUser(telegramID int64, username string) *User {
 	return &User{telegramID, username, 0, 0, 0, 0, 0, 0, 0, 0, make([]*Effect, 0)}
+}
+
+func (u *User) Minimize() *UserMinimal {
+	return &UserMinimal{u.TelegramID, u.UserName}
 }
 
 func (u *User) AddEffect(effectToAdd *Effect) {

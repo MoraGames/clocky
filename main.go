@@ -135,6 +135,7 @@ func main() {
 			{FileName: "files/events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
 			{FileName: "files/users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
 			{FileName: "files/pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
+			{FileName: "files/hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
 		},
 		types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
@@ -225,10 +226,15 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents int, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
 	// Then reset the daily user's stats (unconditionally)
+	todayRewardedUsers := make([]*structs.UserMinimal, 0)
 	for userId := range Users {
 		if user, ok := Users[userId]; ok && user != nil {
 			// Check if the user has participated in at least 20% of the enabled events of the day and if he has won at least 30% of the events in which he participated
 			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.2)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.3)) {
+				// Update the data structure of deserving users
+				todayRewardedUsers = append(todayRewardedUsers, user.Minimize())
+
+				// Generate the reward message informations
 				r := rand.New(rand.NewSource(time.Now().UnixNano()))
 				randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
 				setEvents := events.EventsOf(events.SetsFunctions[randomSet])
@@ -239,6 +245,7 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 					}
 				}
 
+				// Generate the reward message
 				text := fmt.Sprintf("Congratulations! You have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events and effects surely active in the next 24 hours:\n\nEvents of the Set %q (%v):\n", Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet, len(setEvents))
 				for _, event := range setEvents {
 					text += fmt.Sprintf(" | %q\n", event.Name)
@@ -248,6 +255,7 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 					text += fmt.Sprintf(" | %q (%v)\n", effect, count)
 				}
 
+				// Send the reward message
 				msg := tgbotapi.NewMessage(userId, text)
 				message, err := writeMsgData.Bot.Send(msg)
 				if err != nil {
@@ -258,11 +266,15 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 				}
 			}
 
+			// Reset the daily user's stats
 			Users[userId].DailyPoints = 0
 			Users[userId].DailyEventPartecipations = 0
 			Users[userId].DailyEventWins = 0
 		}
 	}
+
+	// Update UserHintMessages
+	events.HintRewardedUsers[time.Now().Format("02-01-2006")] = todayRewardedUsers
 
 	// Save the users
 	file, err := json.MarshalIndent(Users, "", " ")
@@ -280,6 +292,24 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 			"note": "preoccupati tanto",
 		}).Error("Error while writing data")
 		utils.Logger.Error(Users)
+	}
+
+	// Save the hints sent
+	file, err = json.MarshalIndent(events.HintRewardedUsers, "", " ")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err":  err,
+			"note": "preoccupati tanto tanto",
+		}).Error("Error while marshalling data")
+		utils.Logger.Error(events.HintRewardedUsers)
+	}
+	err = os.WriteFile("files/hints.json", file, 0644)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err":  err,
+			"note": "preoccupati tanto tanto tanto",
+		}).Error("Error while writing data")
+		utils.Logger.Error(events.HintRewardedUsers)
 	}
 }
 

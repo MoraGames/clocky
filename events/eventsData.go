@@ -43,6 +43,7 @@ type (
 
 var (
 	PinnedResetMessage      EventsResetMessage
+	HintRewardedUsers       map[string][]*structs.UserMinimal
 	Events                  *EventsData
 	AssignEventsWithDefault = func(utils types.Utils) {
 		Events = NewEventsData(true, utils)
