@@ -449,6 +449,90 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				}
 			}
 		}
+	case "send":
+		// Send a message to a specific user
+		// Check if the user is an bot-admin
+		if !isAdmin(update.Message.From, utils) {
+			// Respond and log with a message indicating that the user is not authorized to use this command
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non sei autorizzato ad usare questo comando")
+			msg.ReplyToMessageID = update.Message.MessageID
+			message, error := data.Bot.Send(msg)
+			if error != nil {
+				utils.Logger.WithFields(logrus.Fields{
+					"err": error,
+					"msg": message,
+				}).Error("Error while sending message")
+			}
+			utils.Logger.WithFields(logrus.Fields{
+				"usr": update.Message.From.UserName,
+				"cmd": update.Message.Command(),
+			}).Debug("Unauthorized user")
+		} else {
+			// Split the command arguments
+			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+
+			// Check if the command arguments are in the form /send <user> <"hint">
+			if len(cmdArgs) != 2 {
+				// Respond with a message indicating that the command arguments are wrong
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /send <user> <\"hint\">")
+				msg.ReplyToMessageID = update.Message.MessageID
+				message, error := data.Bot.Send(msg)
+				if error != nil {
+					utils.Logger.WithFields(logrus.Fields{
+						"err": error,
+						"msg": message,
+					}).Error("Error while sending message")
+				}
+				utils.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"msg": update.Message.Text,
+				}).Debug("Wrong command")
+			} else {
+				// Get and check if the user exists
+				username := cmdArgs[0]
+				var userId int64
+				var founded bool
+				for userID, user := range Users {
+					if user.UserName == username {
+						founded = true
+						userId = userID
+					}
+				}
+				if !founded {
+					// Respond with a message indicating that the user does not exist
+					SendEntityNotFoundMessage("Utente", username, update, data, utils)
+					// Log the command failed execution
+					FinalCommandLog("User not found", update, utils)
+				} else {
+					// Check if the message type is valid
+					messageType := cmdArgs[1]
+					switch messageType {
+					case "hint":
+						// Send the message to the user
+						ManageRewardMessage(
+							userId,
+							&types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: -1},
+							utils,
+						)
+					default:
+						// Respond with a message indicating that the command arguments are wrong
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /send <user> <\"hint\">")
+						msg.ReplyToMessageID = update.Message.MessageID
+						message, error := data.Bot.Send(msg)
+						if error != nil {
+							utils.Logger.WithFields(logrus.Fields{
+								"err": error,
+								"msg": message,
+							}).Error("Error while sending message")
+						}
+						utils.Logger.WithFields(logrus.Fields{
+							"usr": update.Message.From.UserName,
+							"msg": update.Message.Text,
+						}).Debug("Wrong command")
+					}
+				}
+			}
+		}
 	case "start":
 		// Respond with an introduction message for the users of the bot
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID,

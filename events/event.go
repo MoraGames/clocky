@@ -1,6 +1,7 @@
 package events
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/structs"
@@ -73,6 +74,18 @@ func (e *Event) Partecipate(by *structs.User, at time.Time) {
 		PartecipatedBy: by,
 		PartecipatedAt: at,
 	}
+}
+
+func (e *Event) StringifyEffects() string {
+	stringifiedEffects := ""
+	for i, effect := range e.Effects {
+		if i != len(e.Effects)-1 {
+			stringifiedEffects += fmt.Sprintf("%q, ", effect.Name)
+		} else {
+			stringifiedEffects += fmt.Sprintf("%q", effect.Name)
+		}
+	}
+	return "[" + stringifiedEffects + "]"
 }
 
 func CalculateValid(time time.Time) bool {

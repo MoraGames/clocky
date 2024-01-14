@@ -234,36 +234,8 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 				// Update the data structure of deserving users
 				todayRewardedUsers = append(todayRewardedUsers, user.Minimize())
 
-				// Generate the reward message informations
-				r := rand.New(rand.NewSource(time.Now().UnixNano()))
-				randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
-				setEvents := events.EventsOf(events.SetsFunctions[randomSet])
-				setEffects := make(map[string]int)
-				for _, event := range setEvents {
-					for _, effect := range event.Effects {
-						setEffects[effect.Name]++
-					}
-				}
-
-				// Generate the reward message
-				text := fmt.Sprintf("Congratulations! You have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events and effects surely active in the next 24 hours:\n\nEvents of the Set %q (%v):\n", Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet, len(setEvents))
-				for _, event := range setEvents {
-					text += fmt.Sprintf(" | %q\n", event.Name)
-				}
-				text += fmt.Sprintf("\nEffects of the Set %q (%v):\n", randomSet, len(setEffects))
-				for effect, count := range setEffects {
-					text += fmt.Sprintf(" | %q (%v)\n", effect, count)
-				}
-
-				// Send the reward message
-				msg := tgbotapi.NewMessage(userId, text)
-				message, err := writeMsgData.Bot.Send(msg)
-				if err != nil {
-					utils.Logger.WithFields(logrus.Fields{
-						"err": err,
-						"msg": message,
-					}).Error("Error while sending message")
-				}
+				// Reward the user
+				ManageRewardMessage(userId, writeMsgData, utils)
 			}
 
 			// Reset the daily user's stats
@@ -310,6 +282,37 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 			"note": "preoccupati tanto tanto tanto",
 		}).Error("Error while writing data")
 		utils.Logger.Error(events.HintRewardedUsers)
+	}
+}
+
+func ManageRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) {
+	// Generate the reward message informations
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
+	setEvents := events.EventsOf(events.SetsFunctions[randomSet])
+	numEffects := 0
+	for _, event := range setEvents {
+		numEffects += len(event.Effects)
+	}
+
+	// Generate the reward message
+	text := fmt.Sprintf("Congratulations %v!\nYou have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events and relative effects that are surely active in the next 24 hours:\n\nEvents of the Set %q (%v events with %v effects):\n", Users[userId].UserName, Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet, len(setEvents), numEffects)
+	for _, event := range setEvents {
+		text += fmt.Sprintf(" | %q", event.Name)
+		eventEffects := event.StringifyEffects()
+		if eventEffects != "[]" {
+			text += fmt.Sprintf("  with %v\n", eventEffects)
+		}
+	}
+
+	// Send the reward message
+	msg := tgbotapi.NewMessage(userId, text)
+	message, err := writeMsgData.Bot.Send(msg)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": message,
+		}).Error("Error while sending message")
 	}
 }
 
