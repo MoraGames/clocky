@@ -514,6 +514,10 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							&types.WriteMessageData{Bot: data.Bot, ChatID: update.Message.Chat.ID, ReplyMessageID: -1},
 							utils,
 						)
+
+						// Log the command executed successfully
+						FinalCommandLog("reward message sent", update, utils)
+						SuccessResponseLog(update, utils)
 					default:
 						// Respond with a message indicating that the command arguments are wrong
 						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /send <user> <\"hint\">")
