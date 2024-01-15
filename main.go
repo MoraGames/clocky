@@ -301,8 +301,9 @@ func ManageRewardMessage(userId int64, writeMsgData *types.WriteMessageData, uti
 		text += fmt.Sprintf(" | %q", event.Name)
 		eventEffects := event.StringifyEffects()
 		if eventEffects != "[]" {
-			text += fmt.Sprintf("  with %v\n", eventEffects)
+			text += fmt.Sprintf("  with %v", eventEffects)
 		}
+		text += "\n"
 	}
 
 	// Send the reward message
