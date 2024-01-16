@@ -623,13 +623,13 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 				Update an event (points, enabled, effects) or user (points, partecipations, wins, effects) property.
 
 			Forms:
-				/update event <event> points <points>
-				/update event <event> enabled <enabled>
-				/update event <event> effects <effects>
-				/update user <user> points <points>
-				/update user <user> partecipations <partecipations>
-				/update user <user> wins <wins>
-				/update user <user> effects <effects>
+				/update [-s|--save] event <event> points <points>
+				/update [-s|--save] event <event> enabled <enabled>
+				/update [-s|--save] event <event> effects <effects>
+				/update [-s|--save] user <user> points <points>
+				/update [-s|--save] user <user> partecipations <partecipations>
+				/update [-s|--save] user <user> wins <wins>
+				/update [-s|--save] user <user> effects <effects>
 		*/
 		// Check if the user is an bot-admin
 		if !isAdmin(update.Message.From, utils) {
@@ -641,29 +641,36 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Split the command arguments
 			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
 			// Check if the command arguments are in one of the above forms
-			if len(cmdArgs) != 4 {
+			if ((cmdArgs[0] != "-s" && cmdArgs[0] != "--save") && len(cmdArgs) != 4) || ((cmdArgs[0] == "-s" || cmdArgs[0] == "--save") && len(cmdArgs) != 5) {
 				// Respond with a message indicating that the command arguments are wrong
-				cmdSyntax := "/update <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"|\"effects\"> <points|enabled|effects|points|partecipations|wins|effects>"
+				cmdSyntax := "/update [-s|--save] <\"event\"|\"user\"> <event|user> <\"points\"|\"enabled\"|\"effects\"|\"points\"|\"partecipations\"|\"wins\"|\"effects\"> <points|enabled|effects|points|partecipations|wins|effects>"
 				SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
 				// Log the command failed execution
 				FinalCommandLog("Wrong command syntax", update, utils)
 			} else {
-				targetType := cmdArgs[0]
+				// Check if the first argument is a flag and if true increases the offset to check all the other arguments.
+				offset := 0
+				cmdSuccess := false
+				flag := cmdArgs[0]
+				if flag == "-s" || flag == "--save" {
+					offset = 1
+				}
+				targetType := cmdArgs[0+offset]
 				switch targetType {
 				case "event":
 					// Get and check if the event exists
-					eventKey := cmdArgs[1]
+					eventKey := cmdArgs[1+offset]
 					if event, ok := events.Events.Map[eventKey]; !ok {
 						// Respond with a message indicating that the event does not exist
 						SendEntityNotFoundMessage("Evento", eventKey, update, data, utils)
 						// Log the command failed execution
 						FinalCommandLog("Event not found", update, utils)
 					} else {
-						targetProperty := cmdArgs[2]
+						targetProperty := cmdArgs[2+offset]
 						switch targetProperty {
 						case "points":
 							// Get and check if the points value is an integer number
-							points, err := strconv.Atoi(cmdArgs[3])
+							points, err := strconv.Atoi(cmdArgs[3+offset])
 							if err != nil {
 								// Respond with a message indicating that the points value is not valid
 								SendParameterNotValidMessage("points", "un numero intero", update, data, utils)
@@ -672,6 +679,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							} else {
 								// Update the Event.Points value
 								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: points, Enabled: event.Enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
+								cmdSuccess = true
 								// Respond with command executed successfully
 								SendPropertyUpdatedMessage("Event.Points", update, data, utils)
 								// Log the /update command executed successfully
@@ -680,7 +688,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							}
 						case "enabled":
 							// Get and check if the enabled value is a boolean
-							enabled, err := strconv.ParseBool(cmdArgs[3])
+							enabled, err := strconv.ParseBool(cmdArgs[3+offset])
 							if err != nil {
 								// Respond with a message indicating that the enabled value is not valid
 								SendParameterNotValidMessage("enabled", "un booleano", update, data, utils)
@@ -689,6 +697,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							} else {
 								// Update the Event.Enabled value
 								events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: enabled, Effects: event.Effects, Activation: event.Activation, Partecipations: event.Partecipations}
+								cmdSuccess = true
 								// Respond with command executed successfully
 								SendPropertyUpdatedMessage("Event.Enabled", update, data, utils)
 								// Log the command executed successfully
@@ -697,7 +706,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							}
 						case "effects":
 							// Get and check if the effects value is a slice of strings
-							effectsNames, err := types.ParseSlice(cmdArgs[3])
+							effectsNames, err := types.ParseSlice(cmdArgs[3+offset])
 							if err != nil {
 								// Respond with a message indicating that the effects value is not valid
 								SendParameterNotValidMessage("effects", "una lista di effetti validi", update, data, utils)
@@ -717,6 +726,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								if wrongEffect == "" {
 									// Update the Event.Effects value
 									events.Events.Map[eventKey] = &events.Event{Time: event.Time, Name: event.Name, Points: event.Points, Enabled: event.Enabled, Effects: effects, Activation: event.Activation, Partecipations: event.Partecipations}
+									cmdSuccess = true
 									// Respond with command executed successfully
 									SendPropertyUpdatedMessage("Event.Effects", update, data, utils)
 									// Log the command executed successfully
@@ -736,10 +746,25 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							// Log the command failed execution
 							FinalCommandLog("Wrong command syntax", update, utils)
 						}
+						if cmdSuccess && (flag == "-s" || flag == "--save") {
+							//Save Events on file
+							eventsFile, err := json.MarshalIndent(events.Events, "", " ")
+							if err != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err": err,
+								}).Error("Error while marshalling Events data")
+							}
+							err = os.WriteFile("files/events.json", eventsFile, 0644)
+							if err != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err": err,
+								}).Error("Error while writing Events data")
+							}
+						}
 					}
 				case "user":
 					// Get and check if the user exists
-					username := cmdArgs[1]
+					username := cmdArgs[1+offset]
 					var userKey int64
 					for userID, user := range Users {
 						if user != nil && user.UserName == username {
@@ -752,11 +777,11 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 						// Log the command failed execution
 						FinalCommandLog("User not found", update, utils)
 					} else {
-						targetProperty := cmdArgs[2]
+						targetProperty := cmdArgs[2+offset]
 						switch targetProperty {
 						case "points":
 							// Get and check if the points value is an integer number
-							points, err := strconv.Atoi(cmdArgs[3])
+							points, err := strconv.Atoi(cmdArgs[3+offset])
 							if err != nil {
 								// Respond with a message indicating that the points value is not valid
 								SendParameterNotValidMessage("points", "un numero intero", update, data, utils)
@@ -765,6 +790,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							} else {
 								// Update the User.TotalPoints value
 								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: points, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
+								cmdSuccess = true
 								// Respond with command executed successfully
 								SendPropertyUpdatedMessage("TotalPoints", update, data, utils)
 								// Log the command executed successfully
@@ -773,7 +799,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							}
 						case "partecipations":
 							// Get and check if the partecipations value is an integer number >= 0
-							partecipations, err := strconv.Atoi(cmdArgs[3])
+							partecipations, err := strconv.Atoi(cmdArgs[3+offset])
 							if err != nil || partecipations < 0 {
 								// Respond with a message indicating that the partecipations value is not valid
 								SendParameterNotValidMessage("partecipations", "un numero intero positivo", update, data, utils)
@@ -782,6 +808,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							} else {
 								// Update the User.TotalEventPartecipations value
 								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: partecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
+								cmdSuccess = true
 								// Respond with command executed successfully
 								SendPropertyUpdatedMessage("TotalEventPartecipations", update, data, utils)
 								// Log the command executed successfully
@@ -790,7 +817,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							}
 						case "wins":
 							// Get and check if the wins value is an integer number >= 0
-							wins, err := strconv.Atoi(cmdArgs[3])
+							wins, err := strconv.Atoi(cmdArgs[3+offset])
 							if err != nil || wins < 0 {
 								// Respond with a message indicating that the wins value is not valid
 								msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Parametro <wins> deve essere un numero intero positivo.")
@@ -800,6 +827,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							} else {
 								// Update the User.TotalEventWins value
 								Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: wins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins}
+								cmdSuccess = true
 								// Respond with command executed successfully
 								SendPropertyUpdatedMessage("TotalEventWins", update, data, utils)
 								// Log the command executed successfully
@@ -808,7 +836,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							}
 						case "effects":
 							// Get and check if the effects value is a slice of strings
-							effectsNames, err := types.ParseSlice(cmdArgs[3])
+							effectsNames, err := types.ParseSlice(cmdArgs[3+offset])
 							if err != nil {
 								// Respond with a message indicating that the effects value is not valid
 								SendParameterNotValidMessage("effects", "una lista di effetti validi", update, data, utils)
@@ -828,6 +856,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 								if wrongEffect == "" {
 									// Update the User.Effects value
 									Users[userKey] = &structs.User{UserName: user.UserName, TotalPoints: user.TotalPoints, TotalEventPartecipations: user.TotalEventPartecipations, TotalEventWins: user.TotalEventWins, TotalChampionshipPartecipations: user.TotalChampionshipPartecipations, TotalChampionshipWins: user.TotalChampionshipWins, Effects: effects}
+									cmdSuccess = true
 									// Respond with command executed successfully
 									SendPropertyUpdatedMessage("User.Effects", update, data, utils)
 									// Log the command executed successfully
@@ -846,6 +875,25 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 							SendWrongCommandSyntaxMessage(cmdSyntax, update, data, utils)
 							// Log the command failed execution
 							FinalCommandLog("Wrong command syntax", update, utils)
+						}
+						if cmdSuccess && (flag == "-s" || flag == "--save") {
+							//Save Users on file
+							file, err := json.MarshalIndent(Users, "", " ")
+							if err != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err":  err,
+									"note": "preoccupati",
+								}).Error("Error while marshalling data")
+								utils.Logger.Error(Users)
+							}
+							err = os.WriteFile("files/users.json", file, 0644)
+							if err != nil {
+								utils.Logger.WithFields(logrus.Fields{
+									"err":  err,
+									"note": "preoccupati tanto",
+								}).Error("Error while writing data")
+								utils.Logger.Error(Users)
+							}
 						}
 					}
 				default:
