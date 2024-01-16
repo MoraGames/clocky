@@ -229,8 +229,8 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 	todayRewardedUsers := make([]*structs.UserMinimal, 0)
 	for userId := range Users {
 		if user, ok := Users[userId]; ok && user != nil {
-			// Check if the user has participated in at least 20% of the enabled events of the day and if he has won at least 30% of the events in which he participated
-			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.2)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.3)) {
+			// Check if the user has participated in at least 15% of the enabled events of the day and if he has won at least 25% of the events in which he participated
+			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.15)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.25)) {
 				// Update the data structure of deserving users
 				todayRewardedUsers = append(todayRewardedUsers, user.Minimize())
 
