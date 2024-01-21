@@ -51,7 +51,7 @@ var (
 		{"Short Rapid Rise", "?a:ce", "static", false, shortRapidRise},
 		{"shortRapidFall", "?e:ca", "static", false, shortRapidFall},
 		{"double", "n:2*n", "static", false, double},
-		{"shortTriple", "?n:3*n", "static", false, shortTriple},
+		{"shortTriple", "[unnamed]", "static", false, shortTriple},
 		{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 	}
 	SetsJson = SetJsonSlice{}
@@ -72,7 +72,7 @@ var (
 			{"Short Rapid Rise", "?a:ce", "static", false, shortRapidRise},
 			{"Short Rapid Fall", "?e:ca", "static", false, shortRapidFall},
 			{"Double", "n:2*n", "static", false, double},
-			{"Short Triple", "?n:3*n", "static", false, shortTriple},
+			{"Short Triple", "[unnamed]", "static", false, shortTriple},
 			{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 		}
 	}
@@ -135,7 +135,7 @@ func shortRise(_, h2, m1, m2 int) bool {
 	return m1 == h2+1 && m2 == m1+1
 }
 
-// ?m1:ba
+// ?c:ba
 func shortFall(_, h2, m1, m2 int) bool {
 	return m1 == m2+1 && h2 == m1+1
 }
@@ -160,12 +160,12 @@ func double(h1, h2, m1, m2 int) bool {
 	return 2*((h1*10)+h2) == (m1*10)+m2
 }
 
-// ?n:3*n
+// [unnamed]
 func shortTriple(_, h2, m1, m2 int) bool {
 	return 3*h2 == (m1*10)+m2
 }
 
-// k^2 = ab:cd
+// [unnamed]
 func perfectSquare(h1, h2, m1, m2 int) bool {
 	total := (h1 * 1000) + (h2 * 100) + (m1 * 10) + (m2)
 	sqrt := int(math.Sqrt(float64(total)))
