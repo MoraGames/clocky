@@ -1,50 +1,58 @@
 package events
 
-import "github.com/MoraGames/clockyuwu/pkg/types"
+import (
+	"math"
+
+	"github.com/MoraGames/clockyuwu/pkg/types"
+)
 
 type SetSlice []*Set
 type SetJsonSlice []*SetJson
 type FuncMap map[string]func(h1, h2, m1, m2 int) bool
 type Set struct {
 	Name     string
+	Pattern  string
 	Typology string
 	Enabled  bool
 	Verify   func(h1, h2, m1, m2 int) bool
 }
 type SetJson struct {
 	Name     string
+	Pattern  string
 	Typology string
 	Enabled  bool
 }
 
 var (
 	SetsFunctions = FuncMap{
-		"aa:aa":  aaaa,
-		"xa:aa":  xaaa,
-		"ab:ab":  abab,
-		"ab:ba":  abba,
-		"ab:cd":  abcd,
-		"xa:bc":  xabc,
-		"xc:ba":  xcba,
-		"ac:eg":  aceg,
-		"xa:ce":  xace,
-		"xe:ca":  xeca,
-		"n:2*n":  n2n,
-		"xn:3*n": xn3n,
+		"Equal":            equal,
+		"Short Equal":      shortEqual,
+		"Repeat":           repeat,
+		"Mirror":           mirror,
+		"Rise":             rise,
+		"Short Rise":       shortRise,
+		"Short Fall":       shortFall,
+		"Rapid Rise":       rapidRise,
+		"Short Rapid Rise": shortRapidRise,
+		"Short Rapid Fall": shortRapidFall,
+		"Double":           double,
+		"Short Triple":     shortTriple,
+		"Perfect Square":   perfectSquare,
 	}
 	Sets = SetSlice{
-		{"aa:aa", "standard", false, aaaa},
-		{"xa:aa", "standard", false, xaaa},
-		{"ab:ab", "standard", false, abab},
-		{"ab:ba", "standard", false, abba},
-		{"ab:cd", "standard", false, abcd},
-		{"xa:bc", "standard", false, xabc},
-		{"xc:ba", "standard", false, xcba},
-		{"ac:eg", "standard", false, aceg},
-		{"xa:ce", "standard", false, xace},
-		{"xe:ca", "standard", false, xeca},
-		{"n:2*n", "standard", false, n2n},
-		{"xn:3*n", "standard", false, xn3n},
+		{"Equal", "aa:aa", "static", false, equal},
+		{"Short Equal", "?a:aa", "static", false, shortEqual},
+		{"Repeat", "ab:ab", "static", false, repeat},
+		{"Mirror", "ab:ba", "static", false, mirror},
+		{"Rise", "ab:cd", "static", false, rise},
+		{"Short Rise", "?a:bc", "static", false, shortRise},
+		{"Short Fall", "?c:ba", "static", false, shortFall},
+		{"Rapid Rise", "ac:eg", "static", false, rapidRise},
+		{"Short Rapid Rise", "?a:ce", "static", false, shortRapidRise},
+		{"shortRapidFall", "?e:ca", "static", false, shortRapidFall},
+		{"double", "n:2*n", "static", false, double},
+		{"shortTriple", "?n:3*n", "static", false, shortTriple},
+		{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 	}
 	SetsJson = SetJsonSlice{}
 
@@ -53,18 +61,19 @@ var (
 	}
 	AssignSetsWithDefault = func(utils types.Utils) {
 		Sets = SetSlice{
-			{"aa:aa", "standard", false, aaaa},
-			{"xa:aa", "standard", false, xaaa},
-			{"ab:ab", "standard", false, abab},
-			{"ab:ba", "standard", false, abba},
-			{"ab:cd", "standard", false, abcd},
-			{"xa:bc", "standard", false, xabc},
-			{"xc:ba", "standard", false, xcba},
-			{"ac:eg", "standard", false, aceg},
-			{"xa:ce", "standard", false, xace},
-			{"xe:ca", "standard", false, xeca},
-			{"n:2*n", "standard", false, n2n},
-			{"xn:3*n", "standard", false, xn3n},
+			{"Equal", "aa:aa", "static", false, equal},
+			{"Short Equal", "?a:aa", "static", false, shortEqual},
+			{"Repeat", "ab:ab", "static", false, repeat},
+			{"Mirror", "ab:ba", "static", false, mirror},
+			{"Rise", "ab:cd", "static", false, rise},
+			{"Short Rise", "?a:bc", "static", false, shortRise},
+			{"Short Fall", "?c:ba", "static", false, shortFall},
+			{"Rapid Rise", "ac:eg", "static", false, rapidRise},
+			{"Short Rapid Rise", "?a:ce", "static", false, shortRapidRise},
+			{"Short Rapid Fall", "?e:ca", "static", false, shortRapidFall},
+			{"Double", "n:2*n", "static", false, double},
+			{"Short Triple", "?n:3*n", "static", false, shortTriple},
+			{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 		}
 	}
 )
@@ -74,6 +83,7 @@ func (s SetSlice) ToJsonSlice() SetJsonSlice {
 	for _, set := range s {
 		jsonSlice = append(jsonSlice, &SetJson{
 			Name:     set.Name,
+			Pattern:  set.Pattern,
 			Typology: set.Typology,
 			Enabled:  set.Enabled,
 		})
@@ -86,6 +96,7 @@ func (sj SetJsonSlice) ToSlice() SetSlice {
 	for _, setjson := range sj {
 		slice = append(slice, &Set{
 			Name:     setjson.Name,
+			Pattern:  setjson.Pattern,
 			Typology: setjson.Typology,
 			Enabled:  setjson.Enabled,
 			Verify:   SetsFunctions[setjson.Name],
@@ -95,61 +106,68 @@ func (sj SetJsonSlice) ToSlice() SetSlice {
 }
 
 // aa:aa
-func aaaa(a, b, c, d int) bool {
-	return a == b && b == c && c == d
+func equal(h1, h2, m1, m2 int) bool {
+	return h1 == h2 && h2 == m1 && m1 == m2
 }
 
 // ?a:aa
-func xaaa(_, b, c, d int) bool {
-	return b == c && c == d
+func shortEqual(_, h2, m1, m2 int) bool {
+	return h2 == m1 && m1 == m2
 }
 
 // ab:ab
-func abab(a, b, c, d int) bool {
-	return a == c && b == d && a != b
+func repeat(h1, h2, m1, m2 int) bool {
+	return h1 == m1 && h2 == m2 && h1 != h2
 }
 
 // ab:ba
-func abba(a, b, c, d int) bool {
-	return a == d && b == c && a != b
+func mirror(h1, h2, m1, m2 int) bool {
+	return h1 == m2 && h2 == m1 && h1 != h2
 }
 
 // ab:cd
-func abcd(a, b, c, d int) bool {
-	return b == a+1 && c == b+1 && d == c+1
+func rise(h1, h2, m1, m2 int) bool {
+	return h2 == h1+1 && m1 == h2+1 && m2 == m1+1
 }
 
 // ?a:bc
-func xabc(_, b, c, d int) bool {
-	return c == b+1 && d == c+1
+func shortRise(_, h2, m1, m2 int) bool {
+	return m1 == h2+1 && m2 == m1+1
 }
 
-// ?c:ba
-func xcba(_, b, c, d int) bool {
-	return c == d+1 && b == c+1
+// ?m1:ba
+func shortFall(_, h2, m1, m2 int) bool {
+	return m1 == m2+1 && h2 == m1+1
 }
 
 // ac:eg
-func aceg(a, b, c, d int) bool {
-	return b == a+2 && c == b+2 && d == c+2
+func rapidRise(h1, h2, m1, m2 int) bool {
+	return h2 == h1+2 && m1 == h2+2 && m2 == m1+2
 }
 
 // ?a:ce
-func xace(_, b, c, d int) bool {
-	return c == b+2 && d == c+2
+func shortRapidRise(_, h2, m1, m2 int) bool {
+	return m1 == h2+2 && m2 == m1+2
 }
 
 // ?e:ca
-func xeca(_, b, c, d int) bool {
-	return c == d+2 && b == c+2
+func shortRapidFall(_, h2, m1, m2 int) bool {
+	return m1 == m2+2 && h2 == m1+2
 }
 
 // n:2*n
-func n2n(a, b, c, d int) bool {
-	return 2*((a*10)+b) == (c*10)+d
+func double(h1, h2, m1, m2 int) bool {
+	return 2*((h1*10)+h2) == (m1*10)+m2
 }
 
 // ?n:3*n
-func xn3n(_, b, c, d int) bool {
-	return 3*b == (c*10)+d
+func shortTriple(_, h2, m1, m2 int) bool {
+	return 3*h2 == (m1*10)+m2
+}
+
+// k^2 = ab:cd
+func perfectSquare(h1, h2, m1, m2 int) bool {
+	total := (h1 * 1000) + (h2 * 100) + (m1 * 10) + (m2)
+	sqrt := int(math.Sqrt(float64(total)))
+	return (sqrt * sqrt) == total
 }
