@@ -197,7 +197,27 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 		}).Debug("Response to \"/credits\" command sent successfully")
 	case "help":
 		// Respond with useful information about the working and commands of the bot
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Name: %v\nVersion: %v\n\nThis is a list of all possible commands within the bot:\n\n- /start : Get an introductory message about the bot's features.\n - /help : Get a complete list of all available commands.\n - /ranking : Get the ranking of the current championship.\n - /stats : Get the player's game statistics.\n - /ping : Verify if the bot is running.\n - /credits : Get more informations abount the project.\n\nAdmin's Only:\n - /check : Get more informations about bot status and data.\n - /reset : Force the execution of a specific Reset() function.\n -/update : Update the value of a data structure.", utils.Config.App.Name, utils.Config.App.Version))
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+			ComposeMessage([]string{
+				"Name: %v\nVersion: %v\n\n",
+				"This is a list of all possible commands within the bot.\n\n",
+				"General purpose Commands:\n",
+				"- /start: Get an introductory message about the bot's features.\n",
+				"- /help: Get a complete list of all available commands.\n",
+				"- /credits: Get more informations abount the project.\n",
+				"- /ping: Verify if the bot is running.\n\n",
+				"In-Game utils Commands:\n",
+				"- /ranking: Get the ranking of the current championship.\n",
+				"- /stats: Get the player's game statistics.\n",
+				"- /list: Get a list of active seets or effects.\n",
+				"- /alias: Get a list of all sets and their old names.\n\n",
+				"Admins only Commands:\n",
+				"- /check: Get more informations about bot status and data.\n",
+				"- /reset: Force the execution of a specific Reset() function.\n",
+				"- /update: Update the value of a data structure.",
+				"- /send: Send a message to a specific user.",
+			}, utils.Config.App.Name, utils.Config.App.Version),
+		)
 		msg.ReplyToMessageID = update.Message.MessageID
 		message, error := data.Bot.Send(msg)
 		if error != nil {
@@ -593,7 +613,25 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 			// Send the message with user's stats
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
 			if u != nil {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le tue statistiche sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nPunti odierni: %v\nPartecipazioni odierne: %v\nVittorie odierne: %v\nPunti/Partecipazioni: %.2f\nPunti/Vittorie: %.2f\nVittorie/Partecipazioni: %.2f\nVittorie/Sconfitte: %.2f\nEffetti attivi: %v", u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins), u.StringifyEffects()))
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID,
+					ComposeMessage(
+						[]string{
+							"Le tue statistiche sono:\n\n",
+							"Statistiche odierne:\n",
+							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
+							"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
+							"Statistiche totali:\n",
+							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
+							"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
+							"Effetti attivi: %v",
+						},
+						u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins,
+						float64(u.DailyPoints)/float64(u.DailyEventPartecipations), float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations-u.DailyEventWins),
+						u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins,
+						float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins),
+						u.StringifyEffects(),
+					),
+				)
 			}
 			SendMessage(msg, update, data, utils)
 			// Log the command executed successfully
@@ -632,7 +670,26 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, 
 					// Send the message with user's stats
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))
 					if u != nil {
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Le statistiche di %v sono:\n\nPunti totali: %v\nPartecipazioni totali: %v\nVittorie totali: %v\nPunti odierni: %v\nPartecipazioni odierne: %v\nVittorie odierne: %v\nPunti/Partecipazioni: %.2f\nPunti/Vittorie: %.2f\nVittorie/Partecipazioni: %.2f\nVittorie/Sconfitte: %.2f\nEffetti attivi: %v", u.UserName, u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins), u.StringifyEffects()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID,
+							ComposeMessage(
+								[]string{
+									"Le statistiche di %v sono:\n\n",
+									"Statistiche odierne:\n",
+									"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
+									"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
+									"Statistiche totali:\n",
+									"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
+									"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
+									"Effetti attivi: %v",
+								},
+								u.UserName,
+								u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins,
+								float64(u.DailyPoints)/float64(u.DailyEventPartecipations), float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations-u.DailyEventWins),
+								u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins,
+								float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins),
+								u.StringifyEffects(),
+							),
+						)
 					}
 					SendMessage(msg, update, data, utils)
 					// Log the command executed successfully
