@@ -26,6 +26,30 @@ type Rank struct {
 // switch for all the commands that the bot can receive
 func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, curTime time.Time, eventKey string) {
 	switch update.Message.Command() {
+	case "alias":
+		// Get all set's patterns
+		text := "Ecco la lista di tutti i set e dei loro vecchi nomi:\n\n"
+		for _, set := range events.Sets {
+			text += fmt.Sprintf("%v => %v\n", set.Name, set.Pattern)
+		}
+		text += "\nNewNames => OldNames"
+
+		// Respond with the message
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, text)
+		msg.ReplyToMessageID = update.Message.MessageID
+		message, error := data.Bot.Send(msg)
+		if error != nil {
+			utils.Logger.WithFields(logrus.Fields{
+				"err": error,
+				"msg": message,
+			}).Error("Error while sending message")
+		}
+
+		utils.Logger.WithFields(logrus.Fields{
+			"message": update.Message.Text,
+			"sender":  update.Message.From.UserName,
+			"chat":    update.Message.Chat.Title,
+		}).Debug("Response to \"/alias\" command sent successfully")
 	case "check":
 		// Check actual event infos
 		if !isAdmin(update.Message.From, utils) {
