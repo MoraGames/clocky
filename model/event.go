@@ -6,23 +6,28 @@ import (
 
 type (
 	Event struct {
-		Message   string
-		Type      string
-		Time      time.Time
-		Enabled   bool
-		Instances []*EventIstance
+		ID      int64
+		Message string
+		Type    string
+		Time    time.Time
+		Enabled bool
 	}
-	EventIstance struct {
-		Points         int
-		Effects        []*Effect
-		Activated      bool
-		ActivatedBy    *User
-		ActivatedAt    time.Time
-		ArrivedAt      time.Time
-		Partecipations []EventPartecipation
+	EventInstance struct {
+		ID          int64
+		Event       *Event
+		BasePoints  int
+		Points      int
+		Effects     []*Effect
+		Activated   bool
+		ActivatedBy *User
+		ActivatedAt time.Time
+		ArrivedAt   time.Time
 	}
 	EventPartecipation struct {
-		User *User
-		Time time.Time
+		ID            int64
+		EventInstance *EventInstance
+		User          *User
+		Chat          *Chat
+		Time          time.Time
 	}
 )

@@ -1,9 +1,12 @@
 package model
 
 type Record struct {
+	ID           int64
 	Title        string
 	Value        int
 	User         *User
+	Chat         *Chat
+	Event        *EventInstance
 	Championship *Championship
 }
 
