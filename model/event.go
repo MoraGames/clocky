@@ -6,14 +6,14 @@ import (
 
 type (
 	Event struct {
-		ID      int64
+		Id      int64
 		Message string
 		Type    string
 		Time    time.Time
 		Enabled bool
 	}
 	EventInstance struct {
-		ID          int64
+		Id          int64
 		Event       *Event
 		BasePoints  int
 		Points      int
@@ -24,7 +24,7 @@ type (
 		ArrivedAt   time.Time
 	}
 	EventPartecipation struct {
-		ID            int64
+		Id            int64
 		EventInstance *EventInstance
 		User          *User
 		Chat          *Chat

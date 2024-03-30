@@ -8,7 +8,7 @@ import (
 
 type (
 	Chat struct {
-		ID            int64
+		Id            int64
 		TelegramChat  *tgbotapi.Chat
 		Type          string
 		Title         string
