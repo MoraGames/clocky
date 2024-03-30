@@ -4,7 +4,7 @@ import "time"
 
 type (
 	Championship struct {
-		ID           int64
+		Id           int64
 		Title        string
 		StartDate    time.Time
 		Settings     *ChampionshipSettings

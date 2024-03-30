@@ -4,20 +4,27 @@ import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 type (
 	User struct {
-		ID           int64
+		Id           int64
 		TelegramUser *tgbotapi.User
 		Nickname     string
-		UserStats    *UserStats
-		Effects      []*Effect
+		Stats        *UserStats
+		Inventory    *UserInventory
 	}
 
 	UserStats struct {
 		TotalPoints                      int
-		MaxChampionshipPoints            int
-		MaxChampionshipWins              int
-		TotalEventsPartecipations        int
-		TotalChampionshipsPartecipations int
 		TotalEventsWins                  int
+		TotalEventsPartecipations        int
 		TotalChampionshipsWins           int
+		TotalChampionshipsPartecipations int
+		MaxPointsInAChampionship         int
+		MaxWinsInAChampionship           int
+		MaxPartecipationsInAChampionship int
+	}
+
+	UserInventory struct {
+		Gems    int
+		Items   [5]*Effect
+		Effects []*Effect
 	}
 )

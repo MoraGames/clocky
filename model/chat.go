@@ -1,6 +1,10 @@
 package model
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 type (
 	Chat struct {
@@ -13,5 +17,7 @@ type (
 	}
 
 	ChatSettings struct {
+		SummaryStats     bool
+		SummaryStatsTime time.Duration
 	}
 )
