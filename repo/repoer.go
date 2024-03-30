@@ -10,36 +10,43 @@ type ChampionshipRepoer interface {
 	Delete(int64) error
 }
 type ChatRepoer interface {
-	Create(*model.Chat) error
+	Create(*model.Chat) (int64, error)
 	Get(int64) (*model.Chat, error)
 	GetAll() []*model.Chat
 	Update(int64, *model.Chat) error
 	Delete(int64) error
 }
 type EffectRepoer interface {
-	Create(*model.Effect) error
-	Get(string) (*model.Effect, error)
+	Create(*model.Effect) (int64, error)
+	Get(int64) (*model.Effect, error)
 	GetAll() []*model.Effect
 	Update(string, *model.Effect) error
 	Delete(string) error
 }
 type EventRepoer interface {
-	Create(*model.Event) error
-	Get(string) (*model.Event, error)
+	Create(*model.Event) (int64, error)
+	Get(int64) (*model.Event, error)
 	GetAll() []*model.Event
 	Update(string, *model.Event) error
 	Delete(string) error
 }
-type PartecipationRepoer interface {
-	Create(*model.Partecipation) (int64, error)
-	Get(int64) (*model.Partecipation, error)
-	GetAll() []*model.Partecipation
-	Update(int64, *model.Partecipation) error
+type EventInstanceReport interface {
+	Create(*model.EventInstance) (int64, error)
+	Get(int64) (*model.EventInstance, error)
+	GetAll() []*model.EventInstance
+	Update(int64, *model.EventInstance) error
+	Delete(int64) error
+}
+type EventPartecipationRepoer interface {
+	Create(*model.EventPartecipation) (int64, error)
+	Get(int64) (*model.EventPartecipation, error)
+	GetAll() []*model.EventPartecipation
+	Update(int64, *model.EventPartecipation) error
 	Delete(int64) error
 }
 type RecordRepoer interface {
-	Create(*model.Record) error
-	Get(string) (*model.Record, error)
+	Create(*model.Record) (int64, error)
+	Get(int64) (*model.Record, error)
 	GetAll() []*model.Record
 	Update(string, *model.Record) error
 	Delete(string) error
@@ -52,9 +59,9 @@ type SetRepoer interface {
 	Delete(int64) error
 }
 type UserRepoer interface {
-	Create(*model.User) error
+	Create(*model.User) (int64, error)
 	Get(int64) (*model.User, error)
-	GetAll() ([]*model.User, error)
+	GetAll() []*model.User
 	Update(int64, *model.User) error
 	Delete(int64) error
 }
