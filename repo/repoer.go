@@ -30,7 +30,7 @@ type EventRepoer interface {
 	Update(int64, *model.Event) error
 	Delete(int64) error
 }
-type EventInstanceReport interface {
+type EventInstanceRepoer interface {
 	Create(*model.EventInstance) (int64, error)
 	Get(int64) (*model.EventInstance, error)
 	GetAll() []*model.EventInstance
