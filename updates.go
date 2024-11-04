@@ -77,7 +77,7 @@ func run(utils types.Utils, data types.Data) {
 
 			// Check if the message is a command (and ignore other actions)
 			if update.Message.IsCommand() {
-				manageCommands(update, utils, data, curTime, eventKey)
+				manageCommands(update, utils, data)
 				continue
 			}
 

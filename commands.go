@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/pkg/types"
@@ -24,7 +23,7 @@ type Rank struct {
 }
 
 // switch for all the commands that the bot can receive
-func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data, curTime time.Time, eventKey string) {
+func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data) {
 	switch update.Message.Command() {
 	case "alias":
 		// Get all set's patterns
