@@ -1,7 +1,7 @@
 package model
 
 type Set struct {
-	Id     int64
+	ID     int64
 	Name   string
 	Type   string
 	Rule   string

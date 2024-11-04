@@ -4,7 +4,8 @@ import "time"
 
 type (
 	Championship struct {
-		Id           int64
+		ID           int64
+		Chat         *Chat
 		Title        string
 		StartDate    time.Time
 		Settings     *ChampionshipSettings

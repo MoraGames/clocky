@@ -1,7 +1,7 @@
 package model
 
 type Record struct {
-	Id           int64
+	ID           int64
 	Title        string
 	Value        int
 	User         *User
