@@ -39,7 +39,7 @@ func main() {
 		},
 		logger.LoggerOutput{
 			LogWriter: &lumberjack.Logger{
-				Filename: "./logs/log.json",
+				Filename: "./files/logs/log.json",
 				MaxSize:  10, // MB
 			},
 			LogType:       "json",
