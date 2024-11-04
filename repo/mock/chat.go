@@ -1,37 +1,52 @@
 package mock
 
 import (
+	"fmt"
+
 	"github.com/MoraGames/clockyuwu/model"
-	"github.com/MoraGames/clockyuwu/pkg/errorType"
 	"github.com/MoraGames/clockyuwu/repo"
 )
+
+// ChatRepo Error
+type ErrChatRepo struct {
+	ChatId   int64
+	Message  string
+	Location string
+}
+
+func (err ErrChatRepo) Error() string {
+	return fmt.Sprintf("%v: %v {id=%v}", err.Location, err.Message, err.ChatId)
+}
 
 // Check if the repo implements the interface
 var _ repo.ChatRepoer = new(ChatRepo)
 
-// mock.UserRepo
+// ChatRepo is a mock implementation
 type ChatRepo struct {
-	chats map[int64]*model.Chat
+	chats  map[int64]*model.Chat
+	lastId int64
 }
 
-// Return a new UserRepo
 func NewChatRepo() *ChatRepo {
 	return &ChatRepo{
-		chats: make(map[int64]*model.Chat),
+		chats:  make(map[int64]*model.Chat),
+		lastId: -1,
 	}
 }
 
-func (cr *ChatRepo) Create(chat *model.Chat) error {
-	cr.chats[chat.TelegramChat.ID] = chat
-	return nil
+func (cr *ChatRepo) Create(chat *model.Chat) (int64, error) {
+	cr.lastId++
+	chat.ID = cr.lastId
+	cr.chats[cr.lastId] = chat
+	return cr.lastId, nil
 }
 
 func (cr *ChatRepo) Get(id int64) (*model.Chat, error) {
 	chat, ok := cr.chats[id]
 	if !ok {
-		return nil, errorType.ErrChatNotFound{
-			ChatID:   id,
-			Message:  "cannot get chat not found",
+		return nil, ErrChatRepo{
+			ChatId:   id,
+			Message:  "chat not found",
 			Location: "ChatRepo.Get()",
 		}
 	}
@@ -49,9 +64,9 @@ func (cr *ChatRepo) GetAll() []*model.Chat {
 func (cr *ChatRepo) Update(id int64, chat *model.Chat) error {
 	_, ok := cr.chats[id]
 	if !ok {
-		return errorType.ErrChatNotFound{
-			ChatID:   id,
-			Message:  "cannot update chat not found",
+		return ErrChatRepo{
+			ChatId:   id,
+			Message:  "chat not found",
 			Location: "ChatRepo.Update()",
 		}
 	}
@@ -62,9 +77,9 @@ func (cr *ChatRepo) Update(id int64, chat *model.Chat) error {
 func (cr *ChatRepo) Delete(id int64) error {
 	_, ok := cr.chats[id]
 	if !ok {
-		return errorType.ErrChatNotFound{
-			ChatID:   id,
-			Message:  "cannot delete chat not found",
+		return ErrChatRepo{
+			ChatId:   id,
+			Message:  "chat not found",
 			Location: "ChatRepo.Delete()",
 		}
 	}

@@ -1,41 +1,52 @@
 package mock
 
 import (
+	"fmt"
+
 	"github.com/MoraGames/clockyuwu/model"
-	"github.com/MoraGames/clockyuwu/pkg/errorType"
 	"github.com/MoraGames/clockyuwu/repo"
 )
+
+// ChampionshipRepo Error
+type ErrChampionshipRepo struct {
+	ChampionshipId int64
+	Message        string
+	Location       string
+}
+
+func (err ErrChampionshipRepo) Error() string {
+	return fmt.Sprintf("%v: %v {id=%v}", err.Location, err.Message, err.ChampionshipId)
+}
 
 // Check if the repo implements the interface
 var _ repo.ChampionshipRepoer = new(ChampionshipRepo)
 
-// mock.UserRepo
+// ChampionshipRepo is a mock implementation
 type ChampionshipRepo struct {
 	championships map[int64]*model.Championship
-	lastID        int64
+	lastId        int64
 }
 
-// Return a new UserRepo
 func NewChampionshipRepo() *ChampionshipRepo {
 	return &ChampionshipRepo{
 		championships: make(map[int64]*model.Championship),
-		lastID:        -1,
+		lastId:        -1,
 	}
 }
 
 func (cr *ChampionshipRepo) Create(championship *model.Championship) (int64, error) {
-	cr.lastID++
-	championship.ID = cr.lastID
-	cr.championships[cr.lastID] = championship
-	return cr.lastID, nil
+	cr.lastId++
+	championship.ID = cr.lastId
+	cr.championships[cr.lastId] = championship
+	return cr.lastId, nil
 }
 
 func (cr *ChampionshipRepo) Get(id int64) (*model.Championship, error) {
 	championship, ok := cr.championships[id]
 	if !ok {
-		return nil, errorType.ErrChampionshipNotFound{
-			ChampionshipID: id,
-			Message:        "cannot get championship not found",
+		return nil, ErrChampionshipRepo{
+			ChampionshipId: id,
+			Message:        "championship not found",
 			Location:       "ChampionshipRepo.Get()",
 		}
 	}
@@ -53,16 +64,16 @@ func (cr *ChampionshipRepo) GetAll() []*model.Championship {
 func (cr *ChampionshipRepo) Update(id int64, championship *model.Championship) error {
 	_, ok := cr.championships[id]
 	if !ok {
-		return errorType.ErrChampionshipNotFound{
-			ChampionshipID: id,
-			Message:        "cannot update championship not found",
+		return ErrChampionshipRepo{
+			ChampionshipId: id,
+			Message:        "championship not found",
 			Location:       "ChampionshipRepo.Update()",
 		}
 	}
 	if id != championship.ID {
-		return errorType.ErrChampionshipNotValid{
-			ChampionshipID: id,
-			Message:        "cannot update championship when id mismatch",
+		return ErrChampionshipRepo{
+			ChampionshipId: id,
+			Message:        "championships id mismatch",
 			Location:       "ChampionshipRepo.Update()",
 		}
 	}
@@ -74,9 +85,9 @@ func (cr *ChampionshipRepo) Update(id int64, championship *model.Championship) e
 func (cr *ChampionshipRepo) Delete(id int64) error {
 	_, ok := cr.championships[id]
 	if !ok {
-		return errorType.ErrChampionshipNotFound{
-			ChampionshipID: id,
-			Message:        "cannot delete championship not found",
+		return ErrChampionshipRepo{
+			ChampionshipId: id,
+			Message:        "championship not found",
 			Location:       "ChampionshipRepo.Delete()",
 		}
 	}

@@ -1,87 +1,121 @@
 package mock
 
 import (
+	"fmt"
+
 	"github.com/MoraGames/clockyuwu/model"
-	"github.com/MoraGames/clockyuwu/pkg/errorType"
 	"github.com/MoraGames/clockyuwu/repo"
 )
+
+// EventRepo Error
+type ErrEventRepo struct {
+	EventId  int64
+	Message  string
+	Location string
+}
+
+func (err ErrEventRepo) Error() string {
+	return fmt.Sprintf("%v: %v {id=%v}", err.Location, err.Message, err.EventId)
+}
 
 // Check if the repo implements the interface
 var _ repo.EventRepoer = new(EventRepo)
 
-// mock.UserRepo
+// EventRepo is a mock implementation
 type EventRepo struct {
-	events map[string]*model.Event
+	events map[int64]*model.Event
+	lastId int64
 }
 
-// Return a new UserRepo
 func NewEventRepo() *EventRepo {
 	return &EventRepo{
-		events: make(map[string]*model.Event),
+		events: make(map[int64]*model.Event),
+		lastId: -1,
 	}
 }
 
-func (er *EventRepo) Create(event *model.Event) error {
-	if _, ok := er.events[event.Message]; ok {
-		return errorType.ErrEventAlreadyExist{
-			EventMessage: event.Message,
-			Message:      "cannot create event that already exists",
-			Location:     "EventRepo.Create()",
+func (er *EventRepo) Create(event *model.Event) (int64, error) {
+	if er.messageAlreadyUsed(event) {
+		return -1, ErrEventRepo{
+			EventId:  -1,
+			Message:  "event message already used",
+			Location: "EventRepo.Create()",
 		}
 	}
 
-	er.events[event.Message] = event
-	return nil
+	er.lastId++
+	event.ID = er.lastId
+	er.events[er.lastId] = event
+	return er.lastId, nil
 }
 
-func (er *EventRepo) Get(message string) (*model.Event, error) {
-	record, ok := er.events[message]
+func (er *EventRepo) Get(id int64) (*model.Event, error) {
+	event, ok := er.events[id]
 	if !ok {
-		return nil, errorType.ErrEventNotFound{
-			EventMessage: message,
-			Message:      "cannot get event not found",
-			Location:     "EventRepo.Get()",
+		return nil, ErrEventRepo{
+			EventId:  id,
+			Message:  "event not found",
+			Location: "EventRepo.Get()",
 		}
 	}
-	return record, nil
+	return event, nil
 }
 
 func (er *EventRepo) GetAll() []*model.Event {
-	events := make([]*model.Event, 0, len(er.events))
-	for _, event := range er.events {
-		events = append(events, event)
+	bonuses := make([]*model.Event, 0, len(er.events))
+	for _, bonus := range er.events {
+		bonuses = append(bonuses, bonus)
 	}
-	return events
+	return bonuses
 }
 
-func (er *EventRepo) Update(message string, event *model.Event) error {
-	if _, ok := er.events[message]; !ok {
-		return errorType.ErrEventNotFound{
-			EventMessage: message,
-			Message:      "cannot update event not found",
-			Location:     "EventRepo.Update()",
+func (er *EventRepo) Update(id int64, event *model.Event) error {
+	_, ok := er.events[id]
+	if !ok {
+		return ErrEventRepo{
+			EventId:  id,
+			Message:  "event not found",
+			Location: "EventRepo.Update()",
 		}
 	}
-	if message != event.Message {
-		return errorType.ErrEventNotValid{
-			EventMessage: message,
-			Message:      "cannot update event when message mismatch",
-			Location:     "EventRepo.Update()",
+	if id != event.ID {
+		return ErrEventRepo{
+			EventId:  id,
+			Message:  "events id mismatch",
+			Location: "EventRepo.Update()",
 		}
 	}
 
-	er.events[message] = event
+	if er.messageAlreadyUsed(event) {
+		return ErrEventRepo{
+			EventId:  id,
+			Message:  "event message already used",
+			Location: "EventRepo.Update()",
+		}
+	}
+
+	er.events[id] = event
 	return nil
 }
 
-func (er *EventRepo) Delete(message string) error {
-	if _, ok := er.events[message]; !ok {
-		return errorType.ErrEventNotFound{
-			EventMessage: message,
-			Message:      "cannot delete event not found",
-			Location:     "EventRepo.Delete()",
+func (er *EventRepo) Delete(id int64) error {
+	_, ok := er.events[id]
+	if !ok {
+		return ErrEventRepo{
+			EventId:  id,
+			Message:  "event not found",
+			Location: "EventRepo.Delete()",
 		}
 	}
-	delete(er.events, message)
+	delete(er.events, id)
 	return nil
+}
+
+func (er *EventRepo) messageAlreadyUsed(event *model.Event) bool {
+	for _, e := range er.events {
+		if e.Message == event.Message {
+			return true
+		}
+	}
+	return false
 }

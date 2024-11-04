@@ -1,45 +1,56 @@
 package mock
 
 import (
+	"fmt"
+
 	"github.com/MoraGames/clockyuwu/model"
-	"github.com/MoraGames/clockyuwu/pkg/errorType"
 	"github.com/MoraGames/clockyuwu/repo"
 )
+
+// SetRepo Error
+type ErrSetRepo struct {
+	SetId    int64
+	Message  string
+	Location string
+}
+
+func (err ErrSetRepo) Error() string {
+	return fmt.Sprintf("%v: %v {id=%v}", err.Location, err.Message, err.SetId)
+}
 
 // Check if the repo implements the interface
 var _ repo.SetRepoer = new(SetRepo)
 
-// mock.UserRepo
+// SetRepo is a mock implementation
 type SetRepo struct {
 	sets   map[int64]*model.Set
-	lastID int64
+	lastId int64
 }
 
-// Return a new UserRepo
 func NewSetRepo() *SetRepo {
 	return &SetRepo{
 		sets:   make(map[int64]*model.Set),
-		lastID: -1,
+		lastId: -1,
 	}
 }
 
 func (sr *SetRepo) Create(set *model.Set) (int64, error) {
-	sr.lastID++
-	set.ID = sr.lastID
-	sr.sets[sr.lastID] = set
-	return sr.lastID, nil
+	sr.lastId++
+	set.ID = sr.lastId
+	sr.sets[sr.lastId] = set
+	return sr.lastId, nil
 }
 
 func (sr *SetRepo) Get(id int64) (*model.Set, error) {
-	bonus, ok := sr.sets[id]
+	set, ok := sr.sets[id]
 	if !ok {
-		return nil, errorType.ErrSetNotFound{
-			SetID:    id,
-			Message:  "cannot get set not found",
+		return nil, ErrSetRepo{
+			SetId:    id,
+			Message:  "set not found",
 			Location: "SetRepo.Get()",
 		}
 	}
-	return bonus, nil
+	return set, nil
 }
 
 func (sr *SetRepo) GetAll() []*model.Set {
@@ -53,16 +64,16 @@ func (sr *SetRepo) GetAll() []*model.Set {
 func (sr *SetRepo) Update(id int64, set *model.Set) error {
 	_, ok := sr.sets[id]
 	if !ok {
-		return errorType.ErrSetNotFound{
-			SetID:    id,
-			Message:  "cannot get set not found",
+		return ErrSetRepo{
+			SetId:    id,
+			Message:  "set not found",
 			Location: "SetRepo.Update()",
 		}
 	}
 	if id != set.ID {
-		return errorType.ErrSetNotValid{
-			SetID:    id,
-			Message:  "cannot update set when id mismatch",
+		return ErrSetRepo{
+			SetId:    id,
+			Message:  "sets id mismatch",
 			Location: "SetRepo.Update()",
 		}
 	}
@@ -74,9 +85,9 @@ func (sr *SetRepo) Update(id int64, set *model.Set) error {
 func (sr *SetRepo) Delete(id int64) error {
 	_, ok := sr.sets[id]
 	if !ok {
-		return errorType.ErrSetNotFound{
-			SetID:    id,
-			Message:  "cannot delete set not found",
+		return ErrSetRepo{
+			SetId:    id,
+			Message:  "set not found",
 			Location: "SetRepo.Delete()",
 		}
 	}

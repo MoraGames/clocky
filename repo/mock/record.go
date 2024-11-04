@@ -1,87 +1,121 @@
 package mock
 
 import (
+	"fmt"
+
 	"github.com/MoraGames/clockyuwu/model"
-	"github.com/MoraGames/clockyuwu/pkg/errorType"
 	"github.com/MoraGames/clockyuwu/repo"
 )
+
+// RecordRepo Error
+type ErrRecordRepo struct {
+	RecordId int64
+	Message  string
+	Location string
+}
+
+func (err ErrRecordRepo) Error() string {
+	return fmt.Sprintf("%v: %v {id=%v}", err.Location, err.Message, err.RecordId)
+}
 
 // Check if the repo implements the interface
 var _ repo.RecordRepoer = new(RecordRepo)
 
-// mock.UserRepo
+// RecordRepo is a mock implementation
 type RecordRepo struct {
-	records map[string]*model.Record
+	records map[int64]*model.Record
+	lastId  int64
 }
 
-// Return a new UserRepo
 func NewRecordRepo() *RecordRepo {
 	return &RecordRepo{
-		records: make(map[string]*model.Record),
+		records: make(map[int64]*model.Record),
+		lastId:  -1,
 	}
 }
 
-func (rr *RecordRepo) Create(record *model.Record) error {
-	if _, ok := rr.records[record.Title]; ok {
-		return errorType.ErrRecordAlreadyExist{
-			RecordTitle: record.Title,
-			Message:     "cannot create record that already exists",
-			Location:    "RecordRepo.Create()",
+func (rr *RecordRepo) Create(record *model.Record) (int64, error) {
+	if rr.titleAlreadyUsed(record) {
+		return -1, ErrRecordRepo{
+			RecordId: -1,
+			Message:  "record title already used",
+			Location: "RecordRepo.Create()",
 		}
 	}
 
-	rr.records[record.Title] = record
-	return nil
+	rr.lastId++
+	record.ID = rr.lastId
+	rr.records[rr.lastId] = record
+	return rr.lastId, nil
 }
 
-func (rr *RecordRepo) Get(title string) (*model.Record, error) {
-	record, ok := rr.records[title]
+func (rr *RecordRepo) Get(id int64) (*model.Record, error) {
+	record, ok := rr.records[id]
 	if !ok {
-		return nil, errorType.ErrRecordNotFound{
-			RecordTitle: title,
-			Message:     "cannot get record not found",
-			Location:    "RecordRepo.Get()",
+		return nil, ErrRecordRepo{
+			RecordId: id,
+			Message:  "record not found",
+			Location: "RecordRepo.Get()",
 		}
 	}
 	return record, nil
 }
 
 func (rr *RecordRepo) GetAll() []*model.Record {
-	records := make([]*model.Record, 0, len(rr.records))
-	for _, record := range rr.records {
-		records = append(records, record)
+	bonuses := make([]*model.Record, 0, len(rr.records))
+	for _, bonus := range rr.records {
+		bonuses = append(bonuses, bonus)
 	}
-	return records
+	return bonuses
 }
 
-func (rr *RecordRepo) Update(title string, record *model.Record) error {
-	if _, ok := rr.records[title]; !ok {
-		return errorType.ErrRecordNotFound{
-			RecordTitle: title,
-			Message:     "cannot update record not found",
-			Location:    "RecordRepo.Update()",
+func (rr *RecordRepo) Update(id int64, record *model.Record) error {
+	_, ok := rr.records[id]
+	if !ok {
+		return ErrRecordRepo{
+			RecordId: id,
+			Message:  "record not found",
+			Location: "RecordRepo.Update()",
 		}
 	}
-	if title != record.Title {
-		return errorType.ErrRecordNotValid{
-			RecordTitle: title,
-			Message:     "cannot update record when title mismatch",
-			Location:    "RecordRepo.Update()",
+	if id != record.ID {
+		return ErrRecordRepo{
+			RecordId: id,
+			Message:  "records id mismatch",
+			Location: "RecordRepo.Update()",
 		}
 	}
 
-	rr.records[title] = record
+	if rr.titleAlreadyUsed(record) {
+		return ErrRecordRepo{
+			RecordId: id,
+			Message:  "record title already used",
+			Location: "RecordRepo.Update()",
+		}
+	}
+
+	rr.records[id] = record
 	return nil
 }
 
-func (rr *RecordRepo) Delete(title string) error {
-	if _, ok := rr.records[title]; !ok {
-		return errorType.ErrRecordNotFound{
-			RecordTitle: title,
-			Message:     "cannot delete record not found",
-			Location:    "RecordRepo.Delete()",
+func (rr *RecordRepo) Delete(id int64) error {
+	_, ok := rr.records[id]
+	if !ok {
+		return ErrRecordRepo{
+			RecordId: id,
+			Message:  "record not found",
+			Location: "RecordRepo.Delete()",
 		}
 	}
-	delete(rr.records, title)
+	delete(rr.records, id)
 	return nil
+}
+
+func (rr *RecordRepo) titleAlreadyUsed(record *model.Record) bool {
+	for _, e := range rr.records {
+		if e.Title == record.Title {
+			return true
+		}
+	}
+	return false
 }
