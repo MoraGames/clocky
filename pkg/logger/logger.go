@@ -4,7 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewLogger(logType, logFormat, logLevel string) *logrus.Logger {
+func NewLogger(logType, logFormat, logLevel, logRotation string) *logrus.Logger {
 	logger := logrus.New()
 
 	if logType == "text" {
