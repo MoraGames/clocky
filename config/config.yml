@@ -1,15 +1,187 @@
-app:
-  name: "go-o-clock"
-  version: "2.0.0"
+#### path: "./config/config.yaml"
+#### note: TELEGRAM_API_TOKEN and TELEGRAM_ADMINS_ID are hardcoded as required: they must be set in .env file even if ther are not present in the 'must_exists' config list.
 
+### |-> GENERICS
+
+##  +-> Logger
+# Logger is the package that manages the bot's logs, both on cli and on files.
+  # 'type' can be "text" or "json" and specifies the format of the printouts.
+  # 'format' is the datetime format of the printouts.
+  # 'level' is the minimum level of the logs to be printed, it can be in order from least to worst "trace", "debug", "info", "warn", "error" or "fatal".
+  # 'rotation' can be "daily", "weekly" or "monthly" and specifies the frequency of the log rotation.
 logger:
   type: "text"
   format: "02-01-2006 15:04:05.000"
   level: "debug"
+  rotation: "monthly"
 
-environments:
-  - "TELEGRAM_API_TOKEN"
-  - "TELEGRAM_ADMIN_ID"
-  - "PLANETSCALEDB_USERNAME"
-  - "PLANETSCALEDB_PASSWORD"
-  - "PLANETSCALEDB_DNS"
+
+### |-> CHAMPIONSHIPS
+
+##  +-> CHAMPIONSHIPS
+# Championship is the data structure that contains the configuration of the championships.
+  # 'joining' contains the configuration of the joining phase.
+    # 'availability' can be "public" or "private" and specifies whether users can join freely or with admins or staffs (specified in the .env) approval.
+    # 'window' can be "anytime" or "scheduled" and specifies the period in which users can enter, at any time or in a pre-established time window.
+    # 'duration' is the duration of the joining time window and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'window' is anything other than "scheduled".
+  # 'ending' contains the configuration of the championship end.
+    # 'typology' can be "points", "gap", "duration" or "events" and specifies whether the championship must end when the first in leaderboard reaches a certain number of points, has a gap from the second by a certain number of points, after a certain duration compared to the start or after a certain number of events played.
+    # 'points' is the number of points that the winner must reach to end the championship and must be greater than 0. The property is ignored if 'typology' is anything other than "points".
+    # 'gap' is the number of points that the first in leaderboard must have more than the second to end the championship and must be greater than 0. The property is ignored if 'typology' is anything other than "gap".
+    # 'duration' is the duration from the start of the championship to end it and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'typology' is anything other than "duration".
+    # 'events' is the number of events that must be played to end the championship and must be greater than 0. The property is ignored if 'typology' is anything other than "events".
+championships:
+  joining:
+    availability: "public"
+    window: "anytime"
+    duration: "168h"
+  ending:
+    typology: "duration"
+    points: 1500
+    gap: 200
+    duration: "720h"
+    events: 1000
+
+
+### |-> SETS
+
+##  +-> SETS
+# Set is the data structure that contains the configuration of the sets.
+  # 'available' is the list of names of sets that can be used in the championship.
+  # 'rotation' contains the configuration of the sets rotation.
+    # 'enabled' can be "true" or "false" and specifies whether the set rotation (change which sets are randomly activated) is enabled.
+    # 'amount_min' is the minimum number of sets that must be active in the championship. The property is ignored if 'enabled' is false.
+    # 'amount_max' is the maximum number of sets that must be active in the championship. The property is ignored if 'enabled' is false.
+    # 'condition' can be "duration" or "events" and specifies whether the set rotation must be done every certain duration or every certain number of events played. The property is ignored if 'enabled' is false.
+    # 'events' is the number of events that must be played to rotate the sets and must be greater than 0. The property is ignored if 'condition' is anything other than "events" or if 'enabled' is false.
+    # 'duration' is the duration from the last sets rotation to rotate the sets and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'condition' is anything other than "duration" or if 'enabled' is false.
+    # 'hints' contains the configuration of the hint message (a set with all it's events and associated effects) that are given to users who meet certain requirements at each sets rotation.
+      # 'enabled' can be "true" or "false" and specifies whether the hints are enabled.
+      # 'amount' is the number of hints that are generated for each 'deserving' user. The property is ignored if 'enabled' is false.
+      # 'constraints' is the list of constraints that a user must meet to be able to have the hint, can contains "points", "partecipations", "wins" and "losses". For each constraint, the 'type' can be "number" or "percentage" and specifies whether the constraint is an absolute number or a percentage (based on available points/events in the set rotation). The property is ignored if 'enabled' is false.
+        # 'points' is the minimum number/percentage of points that a user must have gained to be able to have the hint.
+        # 'partecipations' is the minimum number/percentage of events that a user must have played to be able to request a hint.
+        # 'wins' is the minimum number/percentage of events that a user must have won to be able to request a hint.
+        # 'losses' is the maximum number/percentage of events that a user must have lost to be able to request a hint.
+sets:
+  available:
+    - "Equal"
+  rotation:
+    enabled: true
+    amount_min: 8
+    amount_max: 13
+    condition: "duration"
+    events: 50
+    duration: "24h"
+    hints:
+      enabled: true
+      amount: 1
+      constraints:
+        - {
+          property: "points",
+          value: 10,
+          type: "number"
+        }
+        - {
+          property: "partecipations",
+          value: 15,
+          type: "percentage"
+        }
+        - {
+          property: "wins",
+          value: 5,
+          type: "percentage"
+        }
+
+
+### |-> EFFECTS
+
+##  +-> RANDOM EFFECTS
+# Random effects is the data structure that contains the configuration of the random effects (applicated on events).
+  # 'enabled' can be "true" or "false" and specifies whether the random effects are enabled.
+  # 'amount_min' is the minimum number of effects that must be applied on an event. The property is ignored if 'enabled' is false.
+  # 'amount_max' is the maximum number of effects that must be applied on an event. The property is ignored if 'enabled' is false.
+random_effects:
+  enabled: true
+  amount_min: 0
+  amount_max: 2
+
+##  +-> INVENTORY EFFECTS
+# Inventory effects is the data structure that contains the configuration of the inventory effects (applicated on users).
+  # 'storage' contains the configuration of how the effects are accumulated.
+    # 'enabled' can be "true" or "false" and specifies whether the inventory is enabled.
+    # 'inventory_size' is the number of slots available in the inventory and must be greater than 0. The property is ignored if 'enabled' is false.
+    # 'stack_size' is the list of the maximum number of the same item that can be stored in one slot of the inventory. The property is ignored if 'enabled' is false.
+  # 'looting' contains the configuration of the looting of inventory effects.
+    # 'enabled' can be "true" or "false" and specifies whether the looting is enabled. It specifies if the inventory effects can be looted by winning events.
+    # 'percentage' is the percentage of the events that contain a lootable inventory effect. The property is ignored if 'enabled' is false.
+    # 'replacement' can be "true" or "false" and specifies if (on an event) the presence of a lootable invetory effect replaces the presence of points (and related random effects). The property is ignored if 'enabled' is false.
+  # 'shop' contains the configuration of the shop.
+    # 'enabled' can be "true" or "false" and specifies whether the shop is enabled.
+    # 'amount' is the number of different inventory effects that are available in the shop. The property is ignored if 'enabled' is false.
+    # 'stocks' is the number of each inventory effects that are available for purchase in the shop. The property is ignored if 'enabled' is false.
+    # 'users_stocks' is the number of each inventory effects that a user can buy from the shop. The property is ignored if 'enabled' is false.
+    # 'refresh' can be "true" or "false" and specifies whether the shop is refreshed periodically. The property is ignored if 'enabled' is false.
+    # 'refresh_time' is the time interval between two shop refreshes and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'refresh' is false or if 'enabled' is false.
+inventory_effects:
+  storage:
+    enabled: true
+    inventory_size: 3
+    stack_size:
+      - {
+        effect: "Effects Shield",
+        amount: 5
+      }
+      - {
+        effect: "Freeze",
+        amount: 3
+      }
+      - {
+        effect: "No Negative",
+        amount: 1
+      }
+  looting:
+    enabled: true
+    percentage: 5
+    replacement: true
+  shop:
+    enabled: false
+    amount: 4
+    stocks: 3
+    users_stocks: 1
+    refresh: true
+    refresh_time: "24h"
+
+##  +-> CONDITION EFFECTS
+# Condition effects is the list of the condition effects (applicated on users) that are enabled in the championship.
+  # 'name' is the effect name and can be contains "Comeback", "Last-Chance" and "Ghost".
+  # 'max_level' is the maximum level of the effect that can be enabled. The lowest value is 1. To disable it, you must remove it from the list.
+condition_effects:
+  - {
+    name: "Comeback",
+    max_level: 3
+  }
+  - {
+    name: "Last-Chance",
+    max_level: 2
+  }
+  - {
+    name: "Ghost",
+    max_level: 1
+  }
+
+
+### |-> MESSAGES
+
+##  +-> SUMMARIES
+# Summaries is the list of the summaries that are automatically sent to gave information about recent changes.
+  # 'enabled' is the list of summaries that are enabled, can contains "stats" for time-limited users stats, "hints" for know who has received hints, "top3"/"top5"/"top10" for infos about the top users in the leaderboard and "active" for infos about the active users in the time range.
+  # 'frequency' can be "daily", "weekly" or "monthly" and specifies the frequency of the summaries (and related time ranges for some infos).
+  # 'location' can be "group" or "private" and specifies if the summaries are sent on the group chat or in private chat of each user.
+summaries:
+  enabled:
+    - "stats"
+    - "hints"
+    - "active"
+  frequency: "daily"
+  location: "group"
