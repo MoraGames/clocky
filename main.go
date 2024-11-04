@@ -19,6 +19,7 @@ import (
 	"github.com/go-co-op/gocron"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
@@ -29,7 +30,23 @@ func main() {
 	}
 
 	//setup the logger
-	l := logger.NewLogger(conf.Log.Type, conf.Log.Format, conf.Log.Level)
+	l := logger.NewLogger(
+		logger.LoggerOutput{
+			LogWriter:     os.Stdout,
+			LogType:       conf.Log.Type,
+			LogTimeFormat: conf.Log.Format,
+			LogLevel:      conf.Log.Level,
+		},
+		logger.LoggerOutput{
+			LogWriter: &lumberjack.Logger{
+				Filename: "./logs/log.json",
+				MaxSize:  10, // MB
+			},
+			LogType:       "json",
+			LogLevel:      conf.Log.Level,
+			LogTimeFormat: conf.Log.Format,
+		},
+	)
 	l.WithFields(logrus.Fields{
 		"lvl": conf.Log.Level,
 		"typ": conf.Log.Type,
