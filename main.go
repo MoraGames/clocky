@@ -47,10 +47,10 @@ func main() {
 		},
 	)
 	l.WithFields(logrus.Fields{
+		"out": []string{"os.Stdout", "./files/logs/log.json"},
 		"lvl": conf.Log.Level,
-		"typ": conf.Log.Type,
-		"frm": conf.Log.Format,
-	}).Debug("Logger initialized")
+		"fmt": conf.Log.Format,
+	}).Info("Logger initialized")
 
 	//link Telegram API
 	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
@@ -76,14 +76,6 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 180
 
-	//get current time location
-	timeLocation, err := time.LoadLocation("Local")
-	if err != nil {
-		l.WithFields(logrus.Fields{
-			"err": err,
-		}).Warn("Time location not get (using UTC)")
-	}
-
 	//set the default chat ID
 	defChatIDstr := os.Getenv("TELEGRAM_DEFAULT_CHAT_ID")
 	if defChatIDstr == "" {
@@ -97,6 +89,14 @@ func main() {
 		l.WithFields(logrus.Fields{
 			"err": err,
 		}).Warn("Error while parsing TELEGRAM_DEFAULT_CHAT_ID to int64")
+	}
+
+	//get current time location
+	timeLocation, err := time.LoadLocation("Local")
+	if err != nil {
+		l.WithFields(logrus.Fields{
+			"err": err,
+		}).Warn("Time location not get (using UTC)")
 	}
 
 	//set the gocron events reset
@@ -134,7 +134,7 @@ func main() {
 	l.WithFields(logrus.Fields{
 		"debugMode": bot.Debug,
 		"timeout":   u.Timeout,
-	}).Debug("Update channel retreived")
+	}).Info("Update channel retreived")
 
 	// Read from specified files and reload the data into the structs
 	ReloadStatus(
@@ -204,7 +204,7 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 				reload.IfFail(utils)
 				utils.Logger.WithFields(logrus.Fields{
 					"file": reload.FileName,
-				}).Info("Reload.IfFail() executed")
+				}).Debug("Reload.IfFail() executed")
 			}
 		} else {
 			numOfOkay++
@@ -217,7 +217,7 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 				reload.IfOkay(utils)
 				utils.Logger.WithFields(logrus.Fields{
 					"file": reload.FileName,
-				}).Info("Reload.IfOkay() executed")
+				}).Debug("Reload.IfOkay() executed")
 			}
 		}
 	}
@@ -227,7 +227,7 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 		"failsFunc": numOfFailFunc,
 		"okays":     numOfOkay,
 		"okaysFunc": numOfOkayFunc,
-		"totat":     len(reloads),
+		"total":     len(reloads),
 	}).Info("Reloading data completed")
 }
 
@@ -260,16 +260,16 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 	file, err := json.MarshalIndent(Users, "", " ")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
-			"err":  err,
-			"note": "preoccupati",
+			"err": err,
+			"msg": "Unable to marshal Users data",
 		}).Error("Error while marshalling data")
 		utils.Logger.Error(Users)
 	}
 	err = os.WriteFile("files/users.json", file, 0644)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
-			"err":  err,
-			"note": "preoccupati tanto",
+			"err": err,
+			"msg": "Unable to write Users data",
 		}).Error("Error while writing data")
 		utils.Logger.Error(Users)
 	}
@@ -278,16 +278,16 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 	file, err = json.MarshalIndent(events.HintRewardedUsers, "", " ")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
-			"err":  err,
-			"note": "preoccupati tanto tanto",
+			"err": err,
+			"msg": "Unable to marshal HintRewards data",
 		}).Error("Error while marshalling data")
 		utils.Logger.Error(events.HintRewardedUsers)
 	}
 	err = os.WriteFile("files/hints.json", file, 0644)
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
-			"err":  err,
-			"note": "preoccupati tanto tanto tanto",
+			"err": err,
+			"msg": "Unable to write HintRewards data",
 		}).Error("Error while writing data")
 		utils.Logger.Error(events.HintRewardedUsers)
 	}

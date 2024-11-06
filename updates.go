@@ -60,7 +60,7 @@ func run(utils types.Utils, data types.Data) {
 
 		// Check the type of the update
 		if update.CallbackQuery != nil {
-			utils.Logger.WithFields(logrus.Fields{}).Info("CallbackQuery received")
+			utils.Logger.WithFields(logrus.Fields{}).Debug("CallbackQuery received")
 			// TODO: Manage CallbackQuery
 		}
 		if update.Message != nil {
@@ -70,7 +70,7 @@ func run(utils types.Utils, data types.Data) {
 				"msgText": update.Message.Text,
 				"msgTime": update.Message.Time().Format(utils.TimeFormat),
 				"curTime": curTime.Format(utils.TimeFormat),
-			}).Info("Message received")
+			}).Debug("Message received")
 
 			// TODO: Rework better this timing system
 			eventKey := update.Message.Time().Format("15:04")
@@ -87,7 +87,7 @@ func run(utils types.Utils, data types.Data) {
 				utils.Logger.WithFields(logrus.Fields{
 					"evnt": update.Message.Text,
 					"user": update.Message.From.UserName,
-				}).Debug("Event validated")
+				}).Info("Event validated")
 
 				// Check if the user has already partecipated
 				if event.Activation == nil {
@@ -200,16 +200,16 @@ func run(utils types.Utils, data types.Data) {
 				file, err := json.MarshalIndent(Users, "", " ")
 				if err != nil {
 					utils.Logger.WithFields(logrus.Fields{
-						"err":  err,
-						"note": "preoccupati",
+						"err": err,
+						"msg": "Error while marshalling Users data",
 					}).Error("Error while marshalling data")
 					utils.Logger.Error(Users)
 				}
 				err = os.WriteFile("files/users.json", file, 0644)
 				if err != nil {
 					utils.Logger.WithFields(logrus.Fields{
-						"err":  err,
-						"note": "preoccupati tanto",
+						"err": err,
+						"msg": "Error while writing Users data",
 					}).Error("Error while writing data")
 					utils.Logger.Error(Users)
 				}
