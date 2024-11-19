@@ -10,17 +10,16 @@ import (
 
 type (
 	Config struct {
-		App `yaml:"application"`
-		Log `yaml:"logger"`
-		Env `yaml:"required_envs"`
+		Application `env-required:"true" yaml:"application"`
+		Logger      `env-required:"true" yaml:"logger"`
 	}
 
-	App struct {
+	Application struct {
 		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
 		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
 	}
 
-	Log struct {
+	Logger struct {
 		Console struct {
 			Writer     string `env-required:"true" yaml:"writer" env:"LOG_WRITER"`
 			Type       string `env-required:"true" yaml:"type" env:"LOG_TYPE"`
@@ -29,14 +28,12 @@ type (
 		} `env-required:"true" yaml:"console"`
 		File struct {
 			Location   string `env-required:"true" yaml:"location"`
-			MaxSize    int    `env-required:"true" yaml:"size-rotation"`
+			MaxSize    int    `yaml:"size-rotation"`
 			Type       string `env-required:"true" yaml:"type"`
 			TimeFormat string `env-required:"true" yaml:"time-format"`
 			Level      string `env-required:"true" yaml:"level"`
-		} `env-required:"true" yaml:"file"`
+		} `yaml:"file"`
 	}
-
-	Env []string
 )
 
 func NewConfig() (*Config, error) {
@@ -48,7 +45,7 @@ func NewConfig() (*Config, error) {
 	if err := cfg.ReadConfig("./config/config.yml"); err != nil {
 		return nil, err
 	}
-	if err := cfg.ReadEnv(cfg.Env); err != nil {
+	if err := cfg.ReadEnv([]string{"TELEGRAM_API_TOKEN", "TELEGRAM_ADMINS_ID"}); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +59,7 @@ func (cfg *Config) ReadConfig(path string) error {
 	return nil
 }
 
-func (cfg *Config) ReadEnv(mustExist Env) error {
+func (cfg *Config) ReadEnv(mustExist []string) error {
 	if err := cleanenv.ReadEnv(cfg); err != nil {
 		return err
 	}

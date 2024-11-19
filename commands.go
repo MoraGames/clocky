@@ -217,7 +217,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data) 
 				"- /reset: Force the execution of a specific Reset() function.\n",
 				"- /update: Update the value of a data structure.",
 				"- /send: Send a message to a specific user.",
-			}, utils.Config.App.Name, utils.Config.App.Version),
+			}, utils.Config.Application.Name, utils.Config.Application.Version),
 		)
 		msg.ReplyToMessageID = update.Message.MessageID
 		message, error := data.Bot.Send(msg)
@@ -590,7 +590,7 @@ func manageCommands(update tgbotapi.Update, utils types.Utils, data types.Data) 
 				"Once the bot is added, the game mainly (but not exclusively) involves sending messages in the \"hh:mm\" format at certain times of the day, in exchange for valuable points.",
 				"The person who has earned the most points at the end of the championship will be the new Clocky Champion!\n",
 				"Use /help to get a list of all commands or /credits for more information about the project.\n\n- %v, a bot from @MoraGames.",
-			}, utils.Config.App.Name, utils.Config.App.Name),
+			}, utils.Config.Application.Name, utils.Config.Application.Name),
 		)
 		SendMessage(msg, update, data, utils)
 		// Log the command executed successfully

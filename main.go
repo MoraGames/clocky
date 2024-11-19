@@ -31,33 +31,33 @@ func main() {
 	//setup the logger
 	l := logger.NewLogger(
 		logger.LoggerOutput{
-			LogWriter:     logger.StringToWriter(conf.Log.Console.Writer),
-			LogType:       conf.Log.Console.Type,
-			LogTimeFormat: conf.Log.Console.TimeFormat,
-			LogLevel:      conf.Log.Console.Level,
+			LogWriter:     logger.StringToWriter(conf.Logger.Console.Writer),
+			LogType:       conf.Logger.Console.Type,
+			LogTimeFormat: conf.Logger.Console.TimeFormat,
+			LogLevel:      conf.Logger.Console.Level,
 		},
 		logger.LoggerOutput{
 			LogWriter: &lumberjack.Logger{
-				Filename: conf.Log.File.Location,
-				MaxSize:  conf.Log.File.MaxSize, // MB
+				Filename: conf.Logger.File.Location,
+				MaxSize:  conf.Logger.File.MaxSize, // MB
 			},
-			LogType:       conf.Log.File.Type,
-			LogTimeFormat: conf.Log.File.TimeFormat,
-			LogLevel:      conf.Log.File.Level,
+			LogType:       conf.Logger.File.Type,
+			LogTimeFormat: conf.Logger.File.TimeFormat,
+			LogLevel:      conf.Logger.File.Level,
 		},
 	)
 	l.WithFields(logrus.Fields{
-		"typ": conf.Log.Console.Type,
-		"lvl": conf.Log.Console.Level,
-		"fmt": conf.Log.Console.TimeFormat,
-	}).Debug("Output ", conf.Log.Console.Writer, " set")
+		"typ": conf.Logger.Console.Type,
+		"lvl": conf.Logger.Console.Level,
+		"fmt": conf.Logger.Console.TimeFormat,
+	}).Debug("Output ", conf.Logger.Console.Writer, " set")
 	l.WithFields(logrus.Fields{
-		"typ": conf.Log.File.Type,
-		"lvl": conf.Log.File.Level,
-		"fmt": conf.Log.File.TimeFormat,
-	}).Debug("Output ", conf.Log.File.Location, " set")
+		"typ": conf.Logger.File.Type,
+		"lvl": conf.Logger.File.Level,
+		"fmt": conf.Logger.File.TimeFormat,
+	}).Debug("Output ", conf.Logger.File.Location, " set")
 	l.WithFields(logrus.Fields{
-		"outs": []string{conf.Log.Console.Writer, conf.Log.File.Location},
+		"outs": []string{conf.Logger.Console.Writer, conf.Logger.File.Location},
 	}).Info("Logger initialized")
 
 	//link Telegram API
