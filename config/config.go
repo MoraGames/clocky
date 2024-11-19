@@ -21,9 +21,19 @@ type (
 	}
 
 	Log struct {
-		Type   string `env-required:"true" yaml:"type"  env:"LOG_TYPE"`
-		Format string `env-required:"true" yaml:"format" env:"LOG_FORMAT"`
-		Level  string `env-required:"true" yaml:"level" env:"LOG_LEVEL"`
+		Console struct {
+			Writer     string `env-required:"true" yaml:"writer" env:"LOG_WRITER"`
+			Type       string `env-required:"true" yaml:"type" env:"LOG_TYPE"`
+			TimeFormat string `env-required:"true" yaml:"time-format" env:"LOG_TIME_FORMAT"`
+			Level      string `env-required:"true" yaml:"level" env:"LOG_LEVEL"`
+		} `env-required:"true" yaml:"console"`
+		File struct {
+			Location   string `env-required:"true" yaml:"location"`
+			MaxSize    int    `env-required:"true" yaml:"size-rotation"`
+			Type       string `env-required:"true" yaml:"type"`
+			TimeFormat string `env-required:"true" yaml:"time-format"`
+			Level      string `env-required:"true" yaml:"level"`
+		} `env-required:"true" yaml:"file"`
 	}
 
 	Env []string

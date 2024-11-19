@@ -31,19 +31,19 @@ func main() {
 	//setup the logger
 	l := logger.NewLogger(
 		logger.LoggerOutput{
-			LogWriter:     os.Stdout,
-			LogType:       conf.Log.Type,
-			LogTimeFormat: conf.Log.Format,
-			LogLevel:      conf.Log.Level,
+			LogWriter:     logger.StringToWriter(conf.Log.Console.Writer),
+			LogType:       conf.Log.Console.Type,
+			LogTimeFormat: conf.Log.Console.TimeFormat,
+			LogLevel:      conf.Log.Console.Level,
 		},
 		logger.LoggerOutput{
 			LogWriter: &lumberjack.Logger{
-				Filename: "./files/logs/log.json",
-				MaxSize:  10, // MB
+				Filename: conf.Log.File.Location,
+				MaxSize:  conf.Log.File.MaxSize, // MB
 			},
-			LogType:       "json",
-			LogLevel:      conf.Log.Level,
-			LogTimeFormat: conf.Log.Format,
+			LogType:       conf.Log.File.Type,
+			LogTimeFormat: conf.Log.File.TimeFormat,
+			LogLevel:      conf.Log.File.Level,
 		},
 	)
 	l.WithFields(logrus.Fields{

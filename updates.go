@@ -103,8 +103,10 @@ func run(utils types.Utils, data types.Data) {
 					event.Activate(Users[update.Message.From.ID], curTime, update.Message.Time(), event.Points)
 					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
 
-					if event.Activation.ArrivedAt.Second() == 59 {
+					if event.Activation.ArrivedAt.Second() == 58 {
 						event.AddEffect(structs.LastChanceBonus)
+					} else if event.Activation.ArrivedAt.Second() == 59 {
+						event.AddEffect(structs.LastChanceBonus2)
 					}
 
 					// Apply all effects
@@ -253,16 +255,24 @@ func UpdateUserEffects(userID int64) {
 	user.RemoveEffect(structs.ComebackBonus1)
 	user.RemoveEffect(structs.ComebackBonus2)
 	user.RemoveEffect(structs.ComebackBonus3)
+	user.RemoveEffect(structs.ComebackBonus4)
+	user.RemoveEffect(structs.ComebackBonus5)
 	switch {
-	case interval >= 20 && interval < 50:
+	case interval >= 20 && interval < 40:
 		//Add the +1 Comeback effect
 		user.AddEffect(structs.ComebackBonus1)
-	case interval >= 50 && interval < 80:
+	case interval >= 40 && interval < 60:
 		//Add the +2 Comeback effect
 		user.AddEffect(structs.ComebackBonus2)
-	case interval >= 80:
+	case interval >= 60 && interval < 80:
 		//Add the +3 Comeback effect
 		user.AddEffect(structs.ComebackBonus3)
+	case interval >= 80 && interval < 100:
+		//Add the +4 Comeback effect
+		user.AddEffect(structs.ComebackBonus4)
+	case interval >= 100:
+		//Add the +5 Comeback effect
+		user.AddEffect(structs.ComebackBonus5)
 	}
 	Users[userID] = user
 }

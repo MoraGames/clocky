@@ -2,6 +2,7 @@ package logger
 
 import (
 	"io"
+	"os"
 
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
@@ -50,10 +51,10 @@ func SetLogger(logger *logrus.Logger, lo LoggerOutput) {
 		logger.SetLevel(logrus.WarnLevel)
 	case "error":
 		logger.SetLevel(logrus.ErrorLevel)
-	case "fatal":
-		logger.SetLevel(logrus.FatalLevel)
 	case "panic":
 		logger.SetLevel(logrus.PanicLevel)
+	case "fatal":
+		logger.SetLevel(logrus.FatalLevel)
 	default:
 		logger.SetLevel(logrus.InfoLevel)
 	}
@@ -94,17 +95,17 @@ func SetHook(logger *logrus.Logger, lo LoggerOutput) {
 	case "error":
 		writerMap[logrus.ErrorLevel] = lo.LogWriter
 		fallthrough
-	case "fatal":
-		writerMap[logrus.FatalLevel] = lo.LogWriter
-		fallthrough
 	case "panic":
 		writerMap[logrus.PanicLevel] = lo.LogWriter
+		fallthrough
+	case "fatal":
+		writerMap[logrus.FatalLevel] = lo.LogWriter
 	default:
 		writerMap[logrus.InfoLevel] = lo.LogWriter
 		writerMap[logrus.WarnLevel] = lo.LogWriter
 		writerMap[logrus.ErrorLevel] = lo.LogWriter
-		writerMap[logrus.FatalLevel] = lo.LogWriter
 		writerMap[logrus.PanicLevel] = lo.LogWriter
+		writerMap[logrus.FatalLevel] = lo.LogWriter
 	}
 
 	logger.AddHook(lfshook.NewHook(
@@ -117,5 +118,16 @@ func NewLumberjackLogger(filePath string, fileMaxSize int) *lumberjack.Logger {
 	return &lumberjack.Logger{
 		Filename: filePath,
 		MaxSize:  fileMaxSize, // MB
+	}
+}
+
+func StringToWriter(str string) *os.File {
+	switch str {
+	case "stdout":
+		return os.Stdout
+	case "stderr":
+		return os.Stderr
+	default:
+		return os.Stdout
 	}
 }
