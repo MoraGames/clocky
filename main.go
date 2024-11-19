@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"math"
 	"math/rand"
@@ -52,14 +51,6 @@ func main() {
 		"typ": conf.Log.Console.Type,
 		"frm": conf.Log.Console.TimeFormat,
 	}).Debug("Logger initialized")
-
-	logFile, err := os.OpenFile("files/log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Println(err)
-	}
-
-	mw := io.MultiWriter(os.Stdout, logFile)
-	l.SetOutput(mw)
 
 	//link Telegram API
 	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
