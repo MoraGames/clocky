@@ -33,24 +33,24 @@ func main() {
 	l := logger.NewLogger(
 		logger.LoggerOutput{
 			LogWriter:     os.Stdout,
-			LogType:       conf.Log.Type,
-			LogTimeFormat: conf.Log.Format,
-			LogLevel:      conf.Log.Level,
+			LogType:       conf.Log.Console.Type,
+			LogTimeFormat: conf.Log.Console.TimeFormat,
+			LogLevel:      conf.Log.Console.Level,
 		},
 		logger.LoggerOutput{
 			LogWriter: &lumberjack.Logger{
-				Filename: "./files/logs/log.json",
-				MaxSize:  10, // MB
+				Filename: conf.Log.File.Location,
+				MaxSize:  conf.Log.File.MaxSize, // MB
 			},
-			LogType:       "json",
-			LogLevel:      conf.Log.Level,
-			LogTimeFormat: conf.Log.Format,
+			LogType:       conf.Log.File.Type,
+			LogTimeFormat: conf.Log.File.TimeFormat,
+			LogLevel:      conf.Log.File.Level,
 		},
 	)
 	l.WithFields(logrus.Fields{
-		"lvl": conf.Log.Level,
-		"typ": conf.Log.Type,
-		"frm": conf.Log.Format,
+		"lvl": conf.Log.Console.Level,
+		"typ": conf.Log.Console.Type,
+		"frm": conf.Log.Console.TimeFormat,
 	}).Debug("Logger initialized")
 
 	logFile, err := os.OpenFile("files/log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)

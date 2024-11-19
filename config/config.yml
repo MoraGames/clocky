@@ -1,12 +1,38 @@
 application:
   name: "go-o-clock"
-  version: "0.3.0"
+  version: "0.3.1"
 
+#### path: "./config/config.yaml"
+#### note: TELEGRAM_API_TOKEN and TELEGRAM_ADMINS_ID are hardcoded as required: they must be set in .env file even if ther are not present in the 'must_exists' config list.
+
+### |-> GENERICS
+
+##  +-> Logger
+# Logger is the package that manages the bot's logs, both on cli and on files.
+  # Console takes the parameters for the configuration of the cli logger:
+    # 'writer' can be "stdout" or "stderr" and specifies where the logs are printed.
+    # 'type' can be "text" or "json" and specifies the format of the printouts.
+    # 'format' is the datetime format of the printouts.
+    # 'level' is the minimum level of the logs to be printed, it can be in order from least to worst "trace", "debug", "info", "warn", "error", "panic" or "fatal".
+  # File takes the parameters for the configuration of the file logger:
+    # 'location' is the path where the logs are saved.
+    # 'size-rotation' is the maximum size in MB of the log file before it is rotated.
+    # 'type' can be "text" or "json" and specifies the format of the printouts.
+    # 'format' is the datetime format of the printouts.
+    # 'level' is the minimum level of the logs to be saved, it can be in order from least to worst "trace", "debug", "info", "warn", "error", "panic" or "fatal".
 logger:
-  type: "text"
-  format: "02-01-2006 15:04:05.000"
-  level: "debug"
-
+  console:
+    writer: "stdout"
+    type: "text"
+    time-format: "02-01-2006 15:04:05.000"
+    level: "debug"
+  file:
+    location: "./files/logs/log.json"
+    size-rotation: "10"
+    type: "json"
+    time-format: "02-01-2006 15:04:05.000"
+    level: "debug"
+    
 required_envs:
   - "TELEGRAM_API_TOKEN"
   - "TELEGRAM_ADMIN_ID"
