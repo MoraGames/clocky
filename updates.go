@@ -253,16 +253,24 @@ func UpdateUserEffects(userID int64) {
 	user.RemoveEffect(structs.ComebackBonus1)
 	user.RemoveEffect(structs.ComebackBonus2)
 	user.RemoveEffect(structs.ComebackBonus3)
+	user.RemoveEffect(structs.ComebackBonus4)
+	user.RemoveEffect(structs.ComebackBonus5)
 	switch {
-	case interval >= 20 && interval < 50:
+	case interval >= 20 && interval < 40:
 		//Add the +1 Comeback effect
 		user.AddEffect(structs.ComebackBonus1)
-	case interval >= 50 && interval < 80:
+	case interval >= 40 && interval < 60:
 		//Add the +2 Comeback effect
 		user.AddEffect(structs.ComebackBonus2)
-	case interval >= 80:
+	case interval >= 60 && interval < 80:
 		//Add the +3 Comeback effect
 		user.AddEffect(structs.ComebackBonus3)
+	case interval >= 80 && interval < 100:
+		//Add the +4 Comeback effect
+		user.AddEffect(structs.ComebackBonus4)
+	case interval >= 100:
+		//Add the +5 Comeback effect
+		user.AddEffect(structs.ComebackBonus5)
 	}
 	Users[userID] = user
 }
