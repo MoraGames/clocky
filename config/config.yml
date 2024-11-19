@@ -29,7 +29,7 @@ logger:
     level: "debug"
   file:
     location: "./files/logs/log.json"
-    size-rotation: "10"
+    size-rotation: 10
     type: "json"
     time-format: "02-01-2006 15:04:05.000"
     level: "debug"
