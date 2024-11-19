@@ -103,8 +103,10 @@ func run(utils types.Utils, data types.Data) {
 					event.Activate(Users[update.Message.From.ID], curTime, update.Message.Time(), event.Points)
 					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
 
-					if event.Activation.ArrivedAt.Second() == 59 {
+					if event.Activation.ArrivedAt.Second() == 58 {
 						event.AddEffect(structs.LastChanceBonus)
+					} else if event.Activation.ArrivedAt.Second() == 59 {
+						event.AddEffect(structs.LastChanceBonus2)
 					}
 
 					// Apply all effects
