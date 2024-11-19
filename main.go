@@ -47,9 +47,17 @@ func main() {
 		},
 	)
 	l.WithFields(logrus.Fields{
-		"out": []string{"os.Stdout", "./files/logs/log.json"},
-		"lvl": conf.Log.Level,
-		"fmt": conf.Log.Format,
+		"typ": conf.Log.Console.Type,
+		"lvl": conf.Log.Console.Level,
+		"fmt": conf.Log.Console.TimeFormat,
+	}).Debug("Output ", conf.Log.Console.Writer, " set")
+	l.WithFields(logrus.Fields{
+		"typ": conf.Log.File.Type,
+		"lvl": conf.Log.File.Level,
+		"fmt": conf.Log.File.TimeFormat,
+	}).Debug("Output ", conf.Log.File.Location, " set")
+	l.WithFields(logrus.Fields{
+		"outs": []string{conf.Log.Console.Writer, conf.Log.File.Location},
 	}).Info("Logger initialized")
 
 	//link Telegram API
@@ -154,17 +162,15 @@ func main() {
 }
 
 func ReloadStatus(reloads []types.Reload, utils types.Utils) {
-	utils.Logger.WithFields(logrus.Fields{
-		"reloads": reloads,
-	}).Info("Reloading data")
+	utils.Logger.Info("Reloading data from files")
 
 	numOfFail, numOfFailFunc, numOfOkay, numOfOkayFunc := 0, 0, 0, 0
 	for _, reload := range reloads {
 		hasFailed := false
 
 		utils.Logger.WithFields(logrus.Fields{
-			"IfFail() exist": reload.IfFail != nil,
-			"IfOkay() exist": reload.IfOkay != nil,
+			"IfFail()": reload.IfFail != nil,
+			"IfOkay()": reload.IfOkay != nil,
 		}).Debug("Reloading " + reload.FileName)
 
 		file, err := os.ReadFile(reload.FileName)
@@ -174,9 +180,7 @@ func ReloadStatus(reloads []types.Reload, utils types.Utils) {
 				"file": reload.FileName,
 				"err":  err,
 			}).Error("Error while reading file")
-		}
-
-		if len(file) != 0 {
+		} else if len(file) != 0 {
 			err = json.Unmarshal(file, reload.DataStruct)
 			if err != nil {
 				hasFailed = true
