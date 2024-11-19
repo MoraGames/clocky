@@ -1,9 +1,10 @@
+#### path: "./config/config.yaml"
+#### note: TELEGRAM_API_TOKEN and TELEGRAM_ADMINS_ID are hardcoded as required: they must be set in .env file even if ther are not present in the 'must_exists' config list.
+
 application:
   name: "go-o-clock"
   version: "0.3.1"
 
-#### path: "./config/config.yaml"
-#### note: TELEGRAM_API_TOKEN and TELEGRAM_ADMINS_ID are hardcoded as required: they must be set in .env file even if ther are not present in the 'must_exists' config list.
 
 ### |-> GENERICS
 

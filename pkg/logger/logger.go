@@ -2,6 +2,7 @@ package logger
 
 import (
 	"io"
+	"os"
 
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
@@ -117,5 +118,16 @@ func NewLumberjackLogger(filePath string, fileMaxSize int) *lumberjack.Logger {
 	return &lumberjack.Logger{
 		Filename: filePath,
 		MaxSize:  fileMaxSize, // MB
+	}
+}
+
+func StringToWriter(str string) *os.File {
+	switch str {
+	case "stdout":
+		return os.Stdout
+	case "stderr":
+		return os.Stderr
+	default:
+		return os.Stdout
 	}
 }

@@ -32,7 +32,7 @@ func main() {
 	//setup the logger
 	l := logger.NewLogger(
 		logger.LoggerOutput{
-			LogWriter:     os.Stdout,
+			LogWriter:     logger.StringToWriter(conf.Log.Console.Writer),
 			LogType:       conf.Log.Console.Type,
 			LogTimeFormat: conf.Log.Console.TimeFormat,
 			LogLevel:      conf.Log.Console.Level,
