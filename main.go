@@ -14,6 +14,7 @@ import (
 	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/MoraGames/clockyuwu/pkg/utils"
 	"github.com/MoraGames/clockyuwu/structs"
 	"github.com/go-co-op/gocron"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -21,88 +22,108 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func main() {
+var App utils.Application
+
+func init() {
 	//get the configurations
-	conf, err := config.NewConfig()
+	var err error
+	App.Config, err = config.NewConfig()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	//setup the logger
-	l := logger.NewLogger(
+	App.Logger = logger.NewLogger(
 		logger.LoggerOutput{
-			LogWriter:     logger.StringToWriter(conf.Logger.Console.Writer),
-			LogType:       conf.Logger.Console.Type,
-			LogTimeFormat: conf.Logger.Console.TimeFormat,
-			LogLevel:      conf.Logger.Console.Level,
+			LogWriter:     logger.StringToWriter(App.Config.Logger.Console.Writer),
+			LogType:       App.Config.Logger.Console.Type,
+			LogTimeFormat: App.Config.Logger.Console.TimeFormat,
+			LogLevel:      App.Config.Logger.Console.Level,
 		},
 		logger.LoggerOutput{
 			LogWriter: &lumberjack.Logger{
-				Filename: conf.Logger.File.Location,
-				MaxSize:  conf.Logger.File.MaxSize, // MB
+				Filename: App.Config.Logger.File.Location,
+				MaxSize:  App.Config.Logger.File.MaxSize, // MB
 			},
-			LogType:       conf.Logger.File.Type,
-			LogTimeFormat: conf.Logger.File.TimeFormat,
-			LogLevel:      conf.Logger.File.Level,
+			LogType:       App.Config.Logger.File.Type,
+			LogTimeFormat: App.Config.Logger.File.TimeFormat,
+			LogLevel:      App.Config.Logger.File.Level,
 		},
 	)
-	l.WithFields(logrus.Fields{
-		"typ": conf.Logger.Console.Type,
-		"lvl": conf.Logger.Console.Level,
-		"fmt": conf.Logger.Console.TimeFormat,
-	}).Debug("Output ", conf.Logger.Console.Writer, " set")
-	l.WithFields(logrus.Fields{
-		"typ": conf.Logger.File.Type,
-		"lvl": conf.Logger.File.Level,
-		"fmt": conf.Logger.File.TimeFormat,
-	}).Debug("Output ", conf.Logger.File.Location, " set")
-	l.WithFields(logrus.Fields{
-		"outs": []string{conf.Logger.Console.Writer, conf.Logger.File.Location},
+	App.Logger.WithFields(logrus.Fields{
+		"typ": App.Config.Logger.Console.Type,
+		"lvl": App.Config.Logger.Console.Level,
+		"fmt": App.Config.Logger.Console.TimeFormat,
+	}).Debug("Output ", App.Config.Logger.Console.Writer, " set")
+	App.Logger.WithFields(logrus.Fields{
+		"typ": App.Config.Logger.File.Type,
+		"lvl": App.Config.Logger.File.Level,
+		"fmt": App.Config.Logger.File.TimeFormat,
+	}).Debug("Output ", App.Config.Logger.File.Location, " set")
+	App.Logger.WithFields(logrus.Fields{
+		"outs": []string{App.Config.Logger.Console.Writer, App.Config.Logger.File.Location},
 	}).Info("Logger initialized")
 
 	//link Telegram API
 	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
 	if apiToken == "" {
-		l.WithFields(logrus.Fields{
+		App.Logger.WithFields(logrus.Fields{
 			"env": "TELEGRAM_API_TOKEN",
 		}).Panic("Env not set")
 	}
 
 	//get the bot API
-	bot, err := tgbotapi.NewBotAPI(apiToken)
+	App.BotAPI, err = tgbotapi.NewBotAPI(apiToken)
 	if err != nil {
-		l.WithFields(logrus.Fields{
+		App.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Panic("Error while getting bot API")
 	}
-	l.WithFields(logrus.Fields{
-		"id":       bot.Self.ID,
-		"username": bot.Self.UserName,
+	App.Logger.WithFields(logrus.Fields{
+		"id":       App.BotAPI.Self.ID,
+		"username": App.BotAPI.Self.UserName,
 	}).Info("Account authorized")
 
-	bot.Debug = false
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 180
+	App.BotAPI.Debug = false
+	upd := tgbotapi.NewUpdate(0)
+	upd.Timeout = 180
+
+	//get the updates channel
+	App.Updates = App.BotAPI.GetUpdatesChan(upd)
+	App.Logger.WithFields(logrus.Fields{
+		"debugMode": App.BotAPI.Debug,
+		"timeout":   upd.Timeout,
+	}).Info("Update channel retreived")
+
+	comunicationsChatEnv := os.Getenv("TELEGRAM_COMUNICATIONS_CHAT_ID")
+	if comunicationsChatEnv == "" {
+		App.Logger.WithFields(logrus.Fields{
+			"env": "TELEGRAM_COMUNICATIONS_CHAT_ID",
+		}).Panic("Env not set")
+	}
+
+	comunicationsChatID, err := strconv.ParseInt(comunicationsChatEnv, 10, 64)
+	if err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while parsing TELEGRAM_DEFAULT_CHAT_ID to int64")
+	}
+}
+
+func main() {
 
 	//set the default chat ID
 	defChatIDstr := os.Getenv("TELEGRAM_DEFAULT_CHAT_ID")
 	if defChatIDstr == "" {
-		l.WithFields(logrus.Fields{
+		App.Logger.WithFields(logrus.Fields{
 			"env": "TELEGRAM_DEFAULT_CHAT_ID",
 		}).Warn("Env not set")
-	}
-
-	defChatID, err := strconv.ParseInt(defChatIDstr, 10, 64)
-	if err != nil {
-		l.WithFields(logrus.Fields{
-			"err": err,
-		}).Warn("Error while parsing TELEGRAM_DEFAULT_CHAT_ID to int64")
 	}
 
 	//get current time location
 	timeLocation, err := time.LoadLocation("Local")
 	if err != nil {
-		l.WithFields(logrus.Fields{
+		App.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Warn("Time location not get (using UTC)")
 	}
@@ -117,8 +138,8 @@ func main() {
 			// Reset the events
 			events.Events.Reset(
 				true,
-				&types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1},
-				types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 			)
 
 			// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
@@ -126,23 +147,19 @@ func main() {
 			DailyUserRewardAndReset(
 				Users,
 				dailyEnabledEvents,
-				&types.WriteMessageData{Bot: bot, ChatID: defChatID, ReplyMessageID: -1},
-				types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 			)
 		},
 	)
 	if err != nil {
-		l.WithFields(logrus.Fields{
+		App.Logger.WithFields(logrus.Fields{
 			"gcJob": gcJob,
 			"error": err,
 		}).Error("GoCron job not set")
 	}
 
-	updates := bot.GetUpdatesChan(u)
-	l.WithFields(logrus.Fields{
-		"debugMode": bot.Debug,
-		"timeout":   u.Timeout,
-	}).Info("Update channel retreived")
+	App.TimeFormat = "15:04:05.000000 MST -07:00"
 
 	// Read from specified files and reload the data into the structs
 	ReloadStatus(
@@ -153,11 +170,11 @@ func main() {
 			{FileName: "files/pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
 			{FileName: "files/hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
 		},
-		types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"},
+		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
 
 	gcScheduler.StartAsync()
-	run(types.Utils{Config: conf, Logger: l, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: bot, Updates: updates})
+	run(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: App.BotAPI, Updates: App.Updates})
 	gcScheduler.Stop()
 }
 

@@ -7,8 +7,9 @@ import (
 )
 
 type Application struct {
-	Config  *config.Config
-	Logger  *logrus.Logger
-	BotAPI  *tgbotapi.BotAPI
-	Updates tgbotapi.UpdatesChannel
+	Config     *config.Config
+	Logger     *logrus.Logger
+	BotAPI     *tgbotapi.BotAPI
+	Updates    tgbotapi.UpdatesChannel
+	TimeFormat string
 }
