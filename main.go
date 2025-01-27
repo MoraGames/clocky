@@ -95,29 +95,18 @@ func init() {
 		"timeout":   upd.Timeout,
 	}).Info("Update channel retreived")
 
-	comunicationsChatEnv := os.Getenv("TELEGRAM_COMUNICATIONS_CHAT_ID")
-	if comunicationsChatEnv == "" {
-		App.Logger.WithFields(logrus.Fields{
-			"env": "TELEGRAM_COMUNICATIONS_CHAT_ID",
-		}).Panic("Env not set")
-	}
-
-	comunicationsChatID, err := strconv.ParseInt(comunicationsChatEnv, 10, 64)
-	if err != nil {
-		App.Logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Error("Error while parsing TELEGRAM_DEFAULT_CHAT_ID to int64")
-	}
-}
-
-func main() {
-
-	//set the default chat ID
-	defChatIDstr := os.Getenv("TELEGRAM_DEFAULT_CHAT_ID")
-	if defChatIDstr == "" {
+	defaultChatEnv := os.Getenv("TELEGRAM_DEFAULT_CHAT_ID")
+	if defaultChatEnv == "" {
 		App.Logger.WithFields(logrus.Fields{
 			"env": "TELEGRAM_DEFAULT_CHAT_ID",
 		}).Warn("Env not set")
+	}
+
+	defaultChatID, err := strconv.ParseInt(defaultChatEnv, 10, 64)
+	if err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Warn("Error while parsing TELEGRAM_DEFAULT_CHAT_ID to int64")
 	}
 
 	//get current time location
@@ -128,9 +117,11 @@ func main() {
 		}).Warn("Time location not get (using UTC)")
 	}
 
+	App.TimeFormat = "15:04:05.000000 MST -07:00"
+
 	//set the gocron events reset
-	gcScheduler := gocron.NewScheduler(timeLocation)
-	gcJob, err := gcScheduler.Every(1).Day().At("23:59").Do(
+	App.GocronScheduler = gocron.NewScheduler(timeLocation)
+	gcJob, err := App.GocronScheduler.Every(1).Day().At("23:59").Do(
 		func() {
 			// Get the number of enabled events for the ended day
 			dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
@@ -138,8 +129,8 @@ func main() {
 			// Reset the events
 			events.Events.Reset(
 				true,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defChatID, ReplyMessageID: -1},
-				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 			)
 
 			// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
@@ -147,8 +138,8 @@ func main() {
 			DailyUserRewardAndReset(
 				Users,
 				dailyEnabledEvents,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defChatID, ReplyMessageID: -1},
-				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 			)
 		},
 	)
@@ -158,11 +149,10 @@ func main() {
 			"error": err,
 		}).Error("GoCron job not set")
 	}
+}
 
-	App.TimeFormat = "15:04:05.000000 MST -07:00"
-
-	// Read from specified files and reload the data into the structs
-	ReloadStatus(
+func main() {
+	reloadStatus(
 		[]types.Reload{
 			{FileName: "files/sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
 			{FileName: "files/events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
@@ -172,84 +162,11 @@ func main() {
 		},
 		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
+	manageMigrations()
 
-	gcScheduler.StartAsync()
+	App.GocronScheduler.StartAsync()
 	run(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: App.BotAPI, Updates: App.Updates})
-	gcScheduler.Stop()
-}
-
-func ReloadStatus(reloads []types.Reload, utils types.Utils) {
-	utils.Logger.Info("Reloading data from files")
-
-	numOfFail, numOfFailFunc, numOfOkay, numOfOkayFunc := 0, 0, 0, 0
-	for _, reload := range reloads {
-		hasFailed := false
-
-		utils.Logger.WithFields(logrus.Fields{
-			"IfFail()": reload.IfFail != nil,
-			"IfOkay()": reload.IfOkay != nil,
-		}).Debug("Reloading " + reload.FileName)
-
-		file, err := os.ReadFile(reload.FileName)
-		if err != nil {
-			hasFailed = true
-			utils.Logger.WithFields(logrus.Fields{
-				"file": reload.FileName,
-				"err":  err,
-			}).Error("Error while reading file")
-		} else if len(file) != 0 {
-			err = json.Unmarshal(file, reload.DataStruct)
-			if err != nil {
-				hasFailed = true
-				utils.Logger.WithFields(logrus.Fields{
-					"data": reload.DataStruct,
-					"err":  err,
-				}).Error("Error while unmarshalling data")
-			}
-		} else {
-			hasFailed = true
-			utils.Logger.WithFields(logrus.Fields{
-				"file": reload.FileName,
-			}).Error("File is empty")
-		}
-
-		if hasFailed {
-			numOfFail++
-
-			utils.Logger.WithFields(logrus.Fields{
-				"file": reload.FileName,
-			}).Warn("Reloading has failed")
-
-			if reload.IfFail != nil {
-				numOfFailFunc++
-				reload.IfFail(utils)
-				utils.Logger.WithFields(logrus.Fields{
-					"file": reload.FileName,
-				}).Debug("Reload.IfFail() executed")
-			}
-		} else {
-			numOfOkay++
-			utils.Logger.WithFields(logrus.Fields{
-				"file": reload.FileName,
-			}).Debug("Reloading has succeed")
-
-			if reload.IfOkay != nil {
-				numOfOkayFunc++
-				reload.IfOkay(utils)
-				utils.Logger.WithFields(logrus.Fields{
-					"file": reload.FileName,
-				}).Debug("Reload.IfOkay() executed")
-			}
-		}
-	}
-
-	utils.Logger.WithFields(logrus.Fields{
-		"fails":     numOfFail,
-		"failsFunc": numOfFailFunc,
-		"okays":     numOfOkay,
-		"okaysFunc": numOfOkayFunc,
-		"total":     len(reloads),
-	}).Info("Reloading data completed")
+	App.GocronScheduler.Stop()
 }
 
 func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents int, writeMsgData *types.WriteMessageData, utils types.Utils) {

@@ -45,7 +45,7 @@ func NewConfig() (*Config, error) {
 	if err := cfg.ReadConfig("./config/config.yml"); err != nil {
 		return nil, err
 	}
-	if err := cfg.ReadEnv([]string{"TELEGRAM_API_TOKEN", "TELEGRAM_ADMINS_ID"}); err != nil {
+	if err := cfg.ReadEnv([]string{"TELEGRAM_API_TOKEN", "TELEGRAM_ADMIN_ID"}); err != nil {
 		return nil, err
 	}
 
