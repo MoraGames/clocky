@@ -9,6 +9,7 @@ import (
 
 	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/MoraGames/clockyuwu/pkg/utils"
 	"github.com/MoraGames/clockyuwu/structs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
@@ -222,10 +223,10 @@ func run(utils types.Utils, data types.Data) {
 
 func UpdateUserEffects(userID int64) {
 	// Generate the ranking
-	ranking := make([]Rank, 0)
+	ranking := make([]utils.Rank, 0)
 	for _, u := range Users {
 		if u != nil {
-			ranking = append(ranking, Rank{u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+			ranking = append(ranking, utils.Rank{UserTelegramID: u.TelegramID, Username: u.UserName, Points: u.TotalPoints, Partecipations: u.TotalEventPartecipations})
 		}
 	}
 
