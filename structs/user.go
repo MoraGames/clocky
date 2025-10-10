@@ -13,6 +13,9 @@ type User struct {
 	DailyPoints                     int
 	DailyEventPartecipations        int
 	DailyEventWins                  int
+	ChampionshipPoints              int
+	ChampionshipEventPartecipations int
+	ChampionshipEventWins           int
 	TotalChampionshipPartecipations int
 	TotalChampionshipWins           int
 	Effects                         []*Effect
@@ -24,7 +27,7 @@ type UserMinimal struct {
 }
 
 func NewUser(telegramID int64, username string) *User {
-	return &User{telegramID, username, 0, 0, 0, 0, 0, 0, 0, 0, make([]*Effect, 0)}
+	return &User{telegramID, username, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, make([]*Effect, 0)}
 }
 
 func (u *User) Minimize() *UserMinimal {
