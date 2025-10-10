@@ -17,6 +17,7 @@ type EffectPresence struct {
 
 var (
 	// Multiplier
+	QuintupleNegativePoints = &Effect{"Mul -5", "Event", "*", -5}
 	TripleNegativePoints    = &Effect{"Mul -3", "Event", "*", -3}
 	DoubleNegativePoints    = &Effect{"Mul -2", "Event", "*", -2}
 	SingleNegativePoints    = &Effect{"Mul -1", "Event", "*", -1}
@@ -39,23 +40,29 @@ var (
 	ComebackBonus5   = &Effect{"Comeback 5", "User", "+", 5}
 	LastChanceBonus  = &Effect{"Last Chance 1", "User", "+", 2}
 	LastChanceBonus2 = &Effect{"Last Chance 2", "User", "+", 5}
+	ReigningLeader   = &Effect{"Reigning Leader", "User", "+", 3}
+	ReigningPodium   = &Effect{"Reigning Podium", "User", "+", 2}
 
 	// Map of all the effects
 	Effects = map[string]*Effect{
-		"Mul -3":      TripleNegativePoints,
-		"Mul -2":      DoubleNegativePoints,
-		"Mul -1":      SingleNegativePoints,
-		"Mul +2":      DoublePositivePoints,
-		"Mul +3":      TriplePositivePoints,
-		"Mul +5":      QuintuplePositivePoints,
-		"Sub 2":       SubTwoPoints,
-		"Sub 1":       SubOnePoint,
-		"Add 1":       AddOnePoint,
-		"Add 2":       AddTwoPoints,
-		"Add 3":       AddThreePoints,
-		"Comeback 1":  ComebackBonus1,
-		"Comeback 2":  ComebackBonus2,
-		"Comeback 3":  ComebackBonus3,
-		"Last Chance": LastChanceBonus,
+		"Mul -5":        QuintupleNegativePoints,
+		"Mul -3":        TripleNegativePoints,
+		"Mul -2":        DoubleNegativePoints,
+		"Mul -1":        SingleNegativePoints,
+		"Mul +2":        DoublePositivePoints,
+		"Mul +3":        TriplePositivePoints,
+		"Mul +5":        QuintuplePositivePoints,
+		"Sub 2":         SubTwoPoints,
+		"Sub 1":         SubOnePoint,
+		"Add 1":         AddOnePoint,
+		"Add 2":         AddTwoPoints,
+		"Add 3":         AddThreePoints,
+		"Comeback 1":    ComebackBonus1,
+		"Comeback 2":    ComebackBonus2,
+		"Comeback 3":    ComebackBonus3,
+		"Comeback 4":    ComebackBonus4,
+		"Comeback 5":    ComebackBonus5,
+		"Last Chance":   LastChanceBonus,
+		"Last Chance 2": LastChanceBonus2,
 	}
 )
