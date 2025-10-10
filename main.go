@@ -209,10 +209,12 @@ func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData 
 			}
 
 			// Reset and update the championship user's stats
+			if Users[userId].ChampionshipEventPartecipations > 0 && Users[userId].ChampionshipEventWins > 0 {
+				Users[userId].TotalChampionshipPartecipations++
+			}
 			Users[userId].ChampionshipPoints = 0
 			Users[userId].ChampionshipEventPartecipations = 0
 			Users[userId].ChampionshipEventWins = 0
-			Users[userId].TotalChampionshipPartecipations++
 		}
 	}
 
