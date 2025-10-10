@@ -65,10 +65,10 @@ func init() {
 	}).Info("Logger initialized")
 
 	//link Telegram API
-	apiToken := os.Getenv("TELEGRAM_API_TOKEN_TEST")
+	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
 	if apiToken == "" {
 		App.Logger.WithFields(logrus.Fields{
-			"env": "TELEGRAM_API_TOKEN_TEST",
+			"env": "TELEGRAM_API_TOKEN",
 		}).Panic("Env not set")
 	}
 
