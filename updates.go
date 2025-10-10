@@ -122,6 +122,10 @@ func run(utils types.Utils, data types.Data) {
 								effectText += fmt.Sprintf("%q", curEffects[i].Name)
 							}
 
+							if (curEffects[i].Name == structs.NoNegative.Name) && event.Activation.EarnedPoints < 0 {
+								event.Activation.EarnedPoints = 0
+								continue
+							}
 							switch curEffects[i].Key {
 							case "*":
 								event.Activation.EarnedPoints *= curEffects[i].Value
@@ -165,6 +169,9 @@ func run(utils types.Utils, data types.Data) {
 						Users[update.Message.From.ID].TotalPoints += event.Activation.EarnedPoints
 						Users[update.Message.From.ID].TotalEventPartecipations++
 						Users[update.Message.From.ID].TotalEventWins++
+						Users[update.Message.From.ID].ChampionshipPoints += event.Activation.EarnedPoints
+						Users[update.Message.From.ID].ChampionshipEventPartecipations++
+						Users[update.Message.From.ID].ChampionshipEventWins++
 						Users[update.Message.From.ID].DailyPoints += event.Activation.EarnedPoints
 						Users[update.Message.From.ID].DailyEventPartecipations++
 						Users[update.Message.From.ID].DailyEventWins++
@@ -195,6 +202,7 @@ func run(utils types.Utils, data types.Data) {
 					if !event.HasPartecipated(update.Message.From.ID) {
 						event.Partecipate(Users[update.Message.From.ID], curTime)
 						Users[update.Message.From.ID].TotalEventPartecipations++
+						Users[update.Message.From.ID].ChampionshipEventPartecipations++
 						Users[update.Message.From.ID].DailyEventPartecipations++
 					}
 				}

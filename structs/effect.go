@@ -33,15 +33,18 @@ var (
 	AddThreePoints = &Effect{"Add 3", "Event", "+", 3}
 
 	// Special Effects
-	ComebackBonus1   = &Effect{"Comeback 1", "User", "+", 1}
-	ComebackBonus2   = &Effect{"Comeback 2", "User", "+", 2}
-	ComebackBonus3   = &Effect{"Comeback 3", "User", "+", 3}
-	ComebackBonus4   = &Effect{"Comeback 4", "User", "+", 4}
-	ComebackBonus5   = &Effect{"Comeback 5", "User", "+", 5}
-	LastChanceBonus  = &Effect{"Last Chance 1", "User", "+", 2}
-	LastChanceBonus2 = &Effect{"Last Chance 2", "User", "+", 5}
-	ReigningLeader   = &Effect{"Reigning Leader", "User", "+", 3}
-	ReigningPodium   = &Effect{"Reigning Podium", "User", "+", 2}
+	ComebackBonus1         = &Effect{"Comeback 1", "User", "+", 1}
+	ComebackBonus2         = &Effect{"Comeback 2", "User", "+", 2}
+	ComebackBonus3         = &Effect{"Comeback 3", "User", "+", 3}
+	ComebackBonus4         = &Effect{"Comeback 4", "User", "+", 4}
+	ComebackBonus5         = &Effect{"Comeback 5", "User", "+", 5}
+	LastChanceBonus        = &Effect{"Last Chance 1", "User", "+", 2}
+	LastChanceBonus2       = &Effect{"Last Chance 2", "User", "+", 5}
+	ReigningLeader         = &Effect{"Reigning Leader", "User", "+", 3}
+	ReigningPodium         = &Effect{"Reigning Podium", "User", "+", 2}
+	NoNegative             = &Effect{"No Negative", "User", "+", 0}
+	ConsistentParticipant1 = &Effect{"Consistent Participant 1", "User", "+", 3}
+	ConsistentParticipant2 = &Effect{"Consistent Participant 2", "User", "+", 5}
 
 	// Map of all the effects
 	Effects = map[string]*Effect{

@@ -243,13 +243,36 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 	todayRewardedUsers := make([]*structs.UserMinimal, 0)
 	for userId := range Users {
 		if user, ok := Users[userId]; ok && user != nil {
+			// Check if the user has participated in at least 15% of the enabled events of the day
+			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.15)) {
+				// Update the data structure of deserving users
+				Users[userId].DailyPartecipationStreak++
+			} else {
+				Users[userId].DailyPartecipationStreak = 0
+			}
+
 			// Check if the user has participated in at least 15% of the enabled events of the day and if he has won at least 25% of the events in which he participated
 			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.15)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.25)) {
 				// Update the data structure of deserving users
 				todayRewardedUsers = append(todayRewardedUsers, user.Minimize())
+				Users[userId].DailyActivityStreak++
 
 				// Reward the user
 				ManageDailyRewardMessage(userId, writeMsgData, utilsVar)
+			} else {
+				Users[userId].DailyActivityStreak = 0
+			}
+
+			Users[userId].RemoveEffect(structs.NoNegative)
+			Users[userId].RemoveEffect(structs.ConsistentParticipant1)
+			Users[userId].RemoveEffect(structs.ConsistentParticipant2)
+
+			// Check if the user have an active activity streak of at least 7/21 days
+			if Users[userId].DailyActivityStreak >= 21 {
+				Users[userId].AddEffect(structs.NoNegative)
+				Users[userId].AddEffect(structs.ConsistentParticipant2)
+			} else if Users[userId].DailyActivityStreak >= 7 {
+				Users[userId].AddEffect(structs.ConsistentParticipant1)
 			}
 
 			// Reset the daily user's stats
