@@ -65,10 +65,10 @@ func init() {
 	}).Info("Logger initialized")
 
 	//link Telegram API
-	apiToken := os.Getenv("TELEGRAM_API_TOKEN")
+	apiToken := os.Getenv("TELEGRAM_API_TOKEN_TEST")
 	if apiToken == "" {
 		App.Logger.WithFields(logrus.Fields{
-			"env": "TELEGRAM_API_TOKEN",
+			"env": "TELEGRAM_API_TOKEN_TEST",
 		}).Panic("Env not set")
 	}
 
@@ -121,34 +121,43 @@ func init() {
 
 	//set the gocron events reset
 	App.GocronScheduler = gocron.NewScheduler(timeLocation)
-	gcJob, err := App.GocronScheduler.Every(1).Day().At("23:59").Do(
-		func() {
-			// Get the number of enabled events for the ended day
-			dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
-
-			// Reset the events
-			events.Events.Reset(
-				true,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
-				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
-			)
-
-			// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
-			// Then reset the daily user's stats (unconditionally)
-			DailyUserRewardAndReset(
-				Users,
-				dailyEnabledEvents,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
-				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
-			)
-		},
-	)
-	if err != nil {
+	if championshipsJob, err := App.GocronScheduler.Every(1).Day().At("23:59:40").Name("ChampionshipsJob").Do(func() {
+		// Reset the championship
+		fmt.Println("Resetting championships...")
+	}); err != nil {
 		App.Logger.WithFields(logrus.Fields{
-			"gcJob": gcJob,
+			"gcJob": utils.StringifyJobs([]*gocron.Job{championshipsJob}),
 			"error": err,
 		}).Error("GoCron job not set")
 	}
+	if dailyEventsJob, err := App.GocronScheduler.Every(1).Week().At("23:59:50").Name("DailyEventsJob").Do(func() {
+		// Get the number of enabled events for the ended day
+		dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
+
+		// Reset the events
+		events.Events.Reset(
+			true,
+			&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+			types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+		)
+
+		// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
+		// Then reset the daily user's stats (unconditionally)
+		DailyUserRewardAndReset(
+			Users,
+			dailyEnabledEvents,
+			&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+			types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+		)
+	}); err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"gcJob": utils.StringifyJobs([]*gocron.Job{dailyEventsJob}),
+			"error": err,
+		}).Error("GoCron jobs not set")
+	}
+	App.Logger.WithFields(logrus.Fields{
+		"gcJobs": utils.StringifyJobs(App.GocronScheduler.Jobs()),
+	}).Info("GoCron jobs set")
 }
 
 func main() {
