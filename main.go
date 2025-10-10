@@ -121,16 +121,21 @@ func init() {
 
 	//set the gocron events reset
 	App.GocronScheduler = gocron.NewScheduler(timeLocation)
-	if championshipsJob, err := App.GocronScheduler.Every(1).Day().At("23:59:40").Name("ChampionshipsJob").Do(func() {
-		// Reset the championship
-		fmt.Println("Resetting championships...")
+	if championshipsJob, err := App.GocronScheduler.Every(1).Week().At("23:59:40").Name("ChampionshipsJob").Do(func() {
+		// Reward the users based on their performance
+		// Then reset the championship user's stats (unconditionally)
+		ChampionshipUserRewardAndReset(
+			Users,
+			&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+			types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+		)
 	}); err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"gcJob": utils.StringifyJobs([]*gocron.Job{championshipsJob}),
 			"error": err,
 		}).Error("GoCron job not set")
 	}
-	if dailyEventsJob, err := App.GocronScheduler.Every(1).Week().At("23:59:50").Name("DailyEventsJob").Do(func() {
+	if dailyEventsJob, err := App.GocronScheduler.Every(1).Day().At("23:59:50").Name("DailyEventsJob").Do(func() {
 		// Get the number of enabled events for the ended day
 		dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
 
@@ -141,7 +146,7 @@ func init() {
 			types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 		)
 
-		// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
+		// Reward the users based on their performance
 		// Then reset the daily user's stats (unconditionally)
 		DailyUserRewardAndReset(
 			Users,
@@ -178,7 +183,59 @@ func main() {
 	App.GocronScheduler.Stop()
 }
 
-func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents int, writeMsgData *types.WriteMessageData, utils types.Utils) {
+func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData *types.WriteMessageData, utilsVar types.Utils) {
+	// Reward the user that have won the championship
+	ranking := utils.GetRanking(Users)
+	for userId := range Users {
+		if user, ok := Users[userId]; ok && user != nil {
+			// Remove the reigning leader and reigning podium effects
+			Users[userId].RemoveEffect(structs.ReigningLeader)
+			Users[userId].RemoveEffect(structs.ReigningPodium)
+
+			// Check if the user is in the top 3 of the ranking
+			for r := 0; r < 3 && r < len(ranking); r++ {
+				if ranking[r].UserTelegramID == userId {
+					// Update the data structure of deserving users
+					if r == 0 {
+						Users[userId].TotalChampionshipWins++
+						Users[userId].AddEffect(structs.ReigningLeader)
+					} else {
+						Users[userId].AddEffect(structs.ReigningPodium)
+					}
+
+					// Reward the user
+					ManageChampionshipRewardMessage(userId, r, writeMsgData, utilsVar)
+				}
+			}
+
+			// Reset and update the championship user's stats
+			Users[userId].ChampionshipPoints = 0
+			Users[userId].ChampionshipEventPartecipations = 0
+			Users[userId].ChampionshipEventWins = 0
+			Users[userId].TotalChampionshipPartecipations++
+		}
+	}
+
+	// Save the users
+	file, err := json.MarshalIndent(Users, "", " ")
+	if err != nil {
+		utilsVar.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": "Unable to marshal Users data",
+		}).Error("Error while marshalling data")
+		utilsVar.Logger.Error(Users)
+	}
+	err = os.WriteFile("files/users.json", file, 0644)
+	if err != nil {
+		utilsVar.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": "Unable to write Users data",
+		}).Error("Error while writing data")
+		utilsVar.Logger.Error(Users)
+	}
+}
+
+func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents int, writeMsgData *types.WriteMessageData, utilsVar types.Utils) {
 	// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
 	// Then reset the daily user's stats (unconditionally)
 	todayRewardedUsers := make([]*structs.UserMinimal, 0)
@@ -190,7 +247,7 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 				todayRewardedUsers = append(todayRewardedUsers, user.Minimize())
 
 				// Reward the user
-				ManageRewardMessage(userId, writeMsgData, utils)
+				ManageDailyRewardMessage(userId, writeMsgData, utilsVar)
 			}
 
 			// Reset the daily user's stats
@@ -206,41 +263,68 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 	// Save the users
 	file, err := json.MarshalIndent(Users, "", " ")
 	if err != nil {
-		utils.Logger.WithFields(logrus.Fields{
+		utilsVar.Logger.WithFields(logrus.Fields{
 			"err": err,
 			"msg": "Unable to marshal Users data",
 		}).Error("Error while marshalling data")
-		utils.Logger.Error(Users)
+		utilsVar.Logger.Error(Users)
 	}
 	err = os.WriteFile("files/users.json", file, 0644)
 	if err != nil {
-		utils.Logger.WithFields(logrus.Fields{
+		utilsVar.Logger.WithFields(logrus.Fields{
 			"err": err,
 			"msg": "Unable to write Users data",
 		}).Error("Error while writing data")
-		utils.Logger.Error(Users)
+		utilsVar.Logger.Error(Users)
 	}
 
 	// Save the hints sent
 	file, err = json.MarshalIndent(events.HintRewardedUsers, "", " ")
 	if err != nil {
-		utils.Logger.WithFields(logrus.Fields{
+		utilsVar.Logger.WithFields(logrus.Fields{
 			"err": err,
 			"msg": "Unable to marshal HintRewards data",
 		}).Error("Error while marshalling data")
-		utils.Logger.Error(events.HintRewardedUsers)
+		utilsVar.Logger.Error(events.HintRewardedUsers)
 	}
 	err = os.WriteFile("files/hints.json", file, 0644)
 	if err != nil {
-		utils.Logger.WithFields(logrus.Fields{
+		utilsVar.Logger.WithFields(logrus.Fields{
 			"err": err,
 			"msg": "Unable to write HintRewards data",
 		}).Error("Error while writing data")
-		utils.Logger.Error(events.HintRewardedUsers)
+		utilsVar.Logger.Error(events.HintRewardedUsers)
 	}
 }
 
-func ManageRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) {
+func ManageChampionshipRewardMessage(userId int64, rankPosition int, writeMsgData *types.WriteMessageData, utils types.Utils) {
+	// Generate the reward message
+	var finalPositionMessage, effectAppliedMessage string
+	switch rankPosition {
+	case 0:
+		finalPositionMessage = "You are the new Clocky Champion! For"
+		effectAppliedMessage = "You are the proud owner of the effect \"Reigning Leader\", wich grants you a +3 points bonus to every event you will participate.\n Congratulations again!"
+	case 1:
+		finalPositionMessage = "You're standing on the 2nd step of the podium, and for"
+		effectAppliedMessage = "You are an owner of the effect \"Reigning Podium\", wich grants you a +2 points bonus to every event you will participate."
+	case 2:
+		finalPositionMessage = "You're standing on the 3rd step of the podium, and for"
+		effectAppliedMessage = "You are an owner of the effect \"Reigning Podium\", wich grants you a +2 points bonus to every event you will participate."
+	}
+	text := fmt.Sprintf("Congratulations %v!\n%v this you are rewarded with a special bonus effect for the entire duration of the next championship (if you choose to participate in it):\n\n%v", Users[userId].UserName, finalPositionMessage, effectAppliedMessage)
+
+	// Send the reward message
+	msg := tgbotapi.NewMessage(userId, text)
+	message, err := writeMsgData.Bot.Send(msg)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": message,
+		}).Error("Error while sending message")
+	}
+}
+
+func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	// Generate the reward message informations
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
