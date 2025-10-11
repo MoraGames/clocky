@@ -121,7 +121,7 @@ func init() {
 
 	//set the gocron events reset
 	App.GocronScheduler = gocron.NewScheduler(timeLocation)
-	if championshipsJob, err := App.GocronScheduler.Every(1).Week().At("23:59:40").Name("ChampionshipsJob").Do(func() {
+	if championshipsJob, err := App.GocronScheduler.Every(2).Weekday(time.Sunday).At("23:59:40").Name("ChampionshipsJob").Do(func() {
 		// Reward the users based on their performance
 		// Then reset the championship user's stats (unconditionally)
 		ChampionshipUserRewardAndReset(
