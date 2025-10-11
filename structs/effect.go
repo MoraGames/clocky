@@ -27,6 +27,7 @@ var (
 	SixtuplePositivePoints  = &Effect{"Mul +6", "Event", "*", 6}
 
 	// Additive
+	SubFourPoints  = &Effect{"Sub 4", "Event", "-", 4}
 	SubThreePoints = &Effect{"Sub 3", "Event", "-", 3}
 	SubTwoPoints   = &Effect{"Sub 2", "Event", "-", 2}
 	SubOnePoint    = &Effect{"Sub 1", "Event", "-", 1}
@@ -60,6 +61,7 @@ var (
 		"Mul +3":                   TriplePositivePoints,
 		"Mul +5":                   QuintuplePositivePoints,
 		"Mul +6":                   SixtuplePositivePoints,
+		"Sub 4":                    SubFourPoints,
 		"Sub 3":                    SubThreePoints,
 		"Sub 2":                    SubTwoPoints,
 		"Sub 1":                    SubOnePoint,
