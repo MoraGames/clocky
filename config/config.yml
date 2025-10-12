@@ -101,13 +101,16 @@ sets:
   # 'enabled' can be "true" or "false" and specifies whether the random effects are enabled.
   # 'amount_min' is the minimum number of effects that must be applied on an event. The property is ignored if 'enabled' is false.
   # 'amount_max' is the maximum number of effects that must be applied on an event. The property is ignored if 'enabled' is false.
+  # 'overlap_type' can be "true" or "false" and specifies whether same type of effects can be applied on the same event or not. The property is ignored if 'enabled' is false.
 random_effects:
   enabled: true
   amount_min: 0
   amount_max: 2
+  overlap_type: false
 
 ##  +-> INVENTORY EFFECTS
 # Inventory effects is the data structure that contains the configuration of the inventory effects (applicated on users).
+  # 'availability' can be "public" or "private" and specifies whether the inventory effects (inventory, looting and shop) are visible to all users or only to the involved user.
   # 'storage' contains the configuration of how the effects are accumulated.
     # 'enabled' can be "true" or "false" and specifies whether the inventory is enabled.
     # 'inventory_size' is the number of slots available in the inventory and must be greater than 0. The property is ignored if 'enabled' is false.
@@ -124,6 +127,7 @@ random_effects:
     # 'refresh' can be "true" or "false" and specifies whether the shop is refreshed periodically. The property is ignored if 'enabled' is false.
     # 'refresh_time' is the time interval between two shop refreshes and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'refresh' is false or if 'enabled' is false.
 inventory_effects:
+  availability: "private"
   storage:
     enabled: true
     inventory_size: 3

@@ -76,12 +76,14 @@ type (
 
 	// Effects
 	RandomEffects struct {
-		Enabled   *bool `env-required:"true" yaml:"enabled"`
-		AmountMin int   `yaml:"amount_min"`
-		AmountMax int   `yaml:"amount_max"`
+		Enabled     *bool `env-required:"true" yaml:"enabled"`
+		AmountMin   int   `yaml:"amount_min"`
+		AmountMax   int   `yaml:"amount_max"`
+		OverlapType bool  `yaml:"overlap_type"`
 	}
 	InventoryEffects struct {
-		Storage struct {
+		Availability string `env-required:"true" yaml:"availability"`
+		Storage      struct {
 			Enabled       *bool `env-required:"true" yaml:"enabled"`
 			InventorySize int   `yaml:"inventory_size"`
 			StackSize     []struct {
