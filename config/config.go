@@ -56,13 +56,13 @@ type (
 	Sets struct {
 		Available []string `env-required:"true" yaml:"available"`
 		Rotation  struct {
-			Enabled   *bool  `env-required:"true" yaml:"enabled"`
-			AmountMin int    `yaml:"amount_min"`
-			AmountMax int    `yaml:"amount_max"`
-			Condition string `yaml:"condition"`
-			Events    int    `yaml:"events"`
-			Duration  string `yaml:"duration"`
-			Hints     struct {
+			Enabled    *bool  `env-required:"true" yaml:"enabled"`
+			PercentMin int    `yaml:"amount_min"`
+			PercentMax int    `yaml:"amount_max"`
+			Condition  string `yaml:"condition"`
+			Duration   string `yaml:"duration"`
+			Events     int    `yaml:"events"`
+			Hints      struct {
 				Enabled     *bool `env-required:"true" yaml:"enabled"`
 				Amount      int   `yaml:"amount"`
 				Constraints []struct {
@@ -76,12 +76,14 @@ type (
 
 	// Effects
 	RandomEffects struct {
-		Enabled   *bool `env-required:"true" yaml:"enabled"`
-		AmountMin int   `yaml:"amount_min"`
-		AmountMax int   `yaml:"amount_max"`
+		Enabled     *bool `env-required:"true" yaml:"enabled"`
+		AmountMin   int   `yaml:"amount_min"`
+		AmountMax   int   `yaml:"amount_max"`
+		OverlapType bool  `yaml:"overlap_type"`
 	}
 	InventoryEffects struct {
-		Storage struct {
+		Availability string `env-required:"true" yaml:"availability"`
+		Storage      struct {
 			Enabled       *bool `env-required:"true" yaml:"enabled"`
 			InventorySize int   `yaml:"inventory_size"`
 			StackSize     []struct {

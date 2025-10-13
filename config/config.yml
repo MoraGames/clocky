@@ -25,7 +25,7 @@ logger:
     # 'window' can be "anytime" or "scheduled" and specifies the period in which users can enter, at any time or in a pre-established time window.
     # 'duration' is the duration of the joining time window and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'window' is anything other than "scheduled".
   # 'ending' contains the configuration of the championship end.
-    # 'typology' can be "points", "gap", "duration" or "events" and specifies whether the championship must end when the first in leaderboard reaches a certain number of points, has a gap from the second by a certain number of points, after a certain duration compared to the start or after a certain number of events played.
+    # 'typology' can be "endless", "points", "gap", "duration" or "events" and specifies whether the championship must not or end when the first in leaderboard reaches a certain number of points, has a gap from the second by a certain number of points, after a certain duration compared to the start or after a certain number of events played.
     # 'points' is the number of points that the winner must reach to end the championship and must be greater than 0. The property is ignored if 'typology' is anything other than "points".
     # 'gap' is the number of points that the first in leaderboard must have more than the second to end the championship and must be greater than 0. The property is ignored if 'typology' is anything other than "gap".
     # 'duration' is the duration from the start of the championship to end it and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'typology' is anything other than "duration".
@@ -68,11 +68,11 @@ sets:
     - "Equal"
   rotation:
     enabled: true
-    amount_min: 8
-    amount_max: 13
+    percent_min: 60
+    percent_max: 100
     condition: "duration"
-    events: 50
     duration: "24h"
+    events: 50
     hints:
       enabled: true
       amount: 1
@@ -105,6 +105,7 @@ random_effects:
   enabled: true
   amount_min: 0
   amount_max: 2
+  overlap_type: false
 
 ##  +-> INVENTORY EFFECTS
 # Inventory effects is the data structure that contains the configuration of the inventory effects (applicated on users).
@@ -124,6 +125,7 @@ random_effects:
     # 'refresh' can be "true" or "false" and specifies whether the shop is refreshed periodically. The property is ignored if 'enabled' is false.
     # 'refresh_time' is the time interval between two shop refreshes and it must be indicated with one or more of the following valid time units "h", "m", "s", "ms", "us"/"µs" and "ns". The property is ignored if 'refresh' is false or if 'enabled' is false.
 inventory_effects:
+  availability: "public"
   storage:
     enabled: true
     inventory_size: 3
