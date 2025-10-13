@@ -4,36 +4,23 @@ import "time"
 
 type (
 	Championship struct {
-		ID           int64
-		Chat         *Chat
-		Title        string
-		StartDate    time.Time
-		Settings     *ChampionshipSettings
-		Partecipants []*User
-		Ranking      []*ChampionshipPlacement
+		ID        int64
+		Title     string
+		StartDate time.Time
+		Settings  *ChampionshipSettings
+		Ranking   []*ChampionshipPlacement // Sorted by Points > Wins > Partecipations > User.ID
 	}
 
 	ChampionshipSettings struct {
-		JoiningAvaibility               string
-		JoiningParameter                string
-		EndingType                      string
-		EndingParameter                 string
-		SetsEnabled                     []*Set
-		SetsRotation                    string
-		SetsRotationTime                time.Duration
-		EffectsEnabled                  string
-		EffectsEventMinimumAmount       int
-		EffectsEventMaximumAmount       int
-		EffectsInventoryAmount          int
-		EffectsInventoryStackAmount     int
-		EffectsInventoryShopEnabled     bool
-		EffectsInventoryShopAmount      int
-		EffectsInventoryShopRefreshTime time.Duration
+		JoiningAvaibility string // "public"|"private"
+		JoiningWindow     string // "anytime"|"scheduled"
+		JoiningParameter  string // ^ ""|duration
+		EndingType        string // "endless"|"points"|"gaps"|"duration"|"events"
+		EndingParameter   string // ^ ""|points|gap|duration|events
 	}
 
 	ChampionshipPlacement struct {
 		User                *User
-		Position            int
 		Points              int
 		EventPartecipations int
 		EventWins           int
