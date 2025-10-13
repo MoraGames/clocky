@@ -1,0 +1,79 @@
+sets:
+  - {
+    name: "Equal",
+    description: "All of the digits must be the same (00:00, 11:11, etc)",
+    type: "static",
+    expression: "utils.BtoI(h1 == h2 && h2 == m1 && m1 == m2) * 1",
+  }
+  - {
+    name: "Short Equal",
+    description: "The first digit of the hour is ignored, the other 3 digits must be equal (00:00, 01:11, 02:22, etc)",
+    type: "static",
+    expression: "utils.BtoI(h2 == m1 && m1 == m2) * 1",
+  }
+  - {
+    name: "Repeat",
+    description: "The minute must be equal to the hour (01:01, 02:02, 03:04, etc)",
+    type: "static",
+    expression: "utils.BtoI(h1 == m1 && h2 == m2) * 1",
+  }
+  - {
+    name: "Mirror",
+    description: "The minute must be equal to the hour but reversed (01:10, 02:20, 03:30, etc)",
+    type: "static",
+    expression: "utils.BtoI(h1 == m2 && h2 == m1 && h1 != h2) * 1",
+  }
+  - {
+    name: "Rise",
+    description: "The hour and minute together must compose an increasing sequence (01:23, 12:34, etc)",
+    type: "static",
+    expression: "utils.BtoI(h2 == h1 + 1 && m1 == h2 + 1 && m2 == m1 + 1) * 1",
+  }
+  - {
+    name: "Short Rise",
+    description: "The first digit of the hour is ignored; the other 3 digits must compose an increasing sequence (00:12, 01:23, 02:34, etc)",
+    type: "static",
+    expression: "utils.BtoI(m1 == h2 + 1 && m2 == m1 + 1) * 1",
+  }
+  - {
+    name: "Short Fall",
+    description: "The first digit of the hour is ignored; the other 3 digits must compose a decreasing sequence (02:10, 03:21, 04:32, etc)",
+    type: "static",
+    expression: "utils.BtoI(m1 == m2 + 1 && h2 == m1 + 1) * 1",
+  }
+  - {
+    name: "Rapid Rise",
+    description: "The hour and minute together must compose an increasing sequence with a step of 2 (02:46, 13:57, etc)",
+    type: "static",
+    expression: "utils.BtoI(h2 == h1 + 2 && m1 == h2 + 2 && m2 == m1 + 2) * 1",
+  }
+  - {
+    name: "Short Rapid Rise",
+    description: "The first digit of the hour is ignored; the other 3 digits must compose an increasing sequence with a step of 2 (00:24, 01:35, 02:46, etc)",
+    type: "static",
+    expression: "utils.BtoI(m1 == h2 + 2 && m2 == m1 + 2) * 1",
+  }
+  - {
+    name: "Short Rapid Fall",
+    description: "The first digit of the hour is ignored; the other 3 digits must compose a decreasing sequence with a step of 2 (04:20, 05:31, 06:42, etc)",
+    type: "static",
+    expression: "utils.BtoI(m1 == m2 + 2 && h2 == m1 + 2) * 1",
+  }
+  - {
+    name: "Double",
+    description: "The minute must be the double of the hour (00:00, 01:02, 02:04, etc)",
+    type: "static",
+    expression: "utils.BtoI(2 * ((h1 * 10) + h2) == (m1 * 10) + m2) * 1",
+  }
+  - {
+    name: "Short Triple",
+    description: "The first digit of the hour is ignored; minutes must be the triple of the second digit of the hour (00:00, 01:03, 12:06, etc)",
+    type: "static",
+    expression: "utils.BtoI(3 * h2 == (m1 * 10) + m2) * 1",
+  }
+  - {
+    name: "Perfect Square",
+    description: "The hour and minute together form a perfect square (01:21 = 121 = 11², 03:24 = 324 = 18², etc)",
+    type: "static",
+    expression: "utils.BtoI(int(math.Sqrt(float64(h1*1000 + h2*100 + m1*10 + m2))) ** 2 == (h1*1000 + h2*100 + m1*10 + m2)) * 1",
+  }

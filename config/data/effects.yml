@@ -1,0 +1,204 @@
+effects:
+  - {
+    name: "Mul +2",
+    description: "Multiply the base points by 2",
+    type: "random",
+    order: 1,
+    expression: "basePoints * 2",
+  }
+  - {
+    name: "Mul -3",
+    description: "Multiply the points by -3",
+    type: "random",
+    order: 0,
+    expression: "basePoints * -3",
+  }
+  - {
+    name: "Mul -2",
+    description: "Multiply the points by -2",
+    type: "random",
+    order: 0,
+    expression: "basePoints * -2",
+  }
+  - {
+    name: "Mul -1",
+    description: "Multiply the points by -1",
+    type: "random",
+    order: 0,
+    expression: "basePoints * -1",
+  }
+  - {
+    name: "Mul +2",
+    description: "Multiply the points by 2",
+    type: "random",
+    order: 0,
+    expression: "basePoints * 2",
+  }
+  - {
+    name: "Mul +3",
+    description: "Multiply the points by 3",
+    type: "random",
+    order: 0,
+    expression: "basePoints * 3",
+  }
+  - {
+    name: "Mul +5",
+    description: "Multiply the points by 5",
+    type: "random",
+    order: 0,
+    expression: "basePoints * 5",
+  }
+  - {
+    name: "Mul +6",
+    description: "Multiply the points by 6",
+    type: "random",
+    order: 0,
+    expression: "basePoints * 6",
+  }
+  - {
+    name: "Sub 4",
+    description: "Subtract 4 points from the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints - 4",
+  }
+  - {
+    name: "Sub 3",
+    description: "Subtract 3 points from the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints - 3",
+  }
+  - {
+    name: "Sub 2",
+    description: "Subtract 2 points from the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints - 2",
+  }
+  - {
+    name: "Sub 1",
+    description: "Subtract 1 point from the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints - 1",
+  }
+  - {
+    name: "Add 1",
+    description: "Add 1 point to the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints + 1",
+  }
+  - {
+    name: "Add 2",
+    description: "Add 2 points to the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints + 2",
+  }
+  - {
+    name: "Add 3",
+    description: "Add 3 points to the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints + 3",
+  }
+  - {
+    name: "Add 4",
+    description: "Add 4 points to the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints + 4",
+  }
+  - {
+    name: "Add 5",
+    description: "Add 5 points to the total",
+    type: "random",
+    order: 1,
+    expression: "basePoints + 5",
+  }
+  - {
+    name: "Comeback 1",
+    description: "Boost ranking climb by adding 1 point to your total",
+    type: "condition",
+    order: 2,
+    expression: "basePoints + 1",
+  }
+  - {
+    name: "Comeback 2",
+    description: "Boost ranking climb by adding 2 points to your total",
+    type: "condition",
+    order: 2,
+    expression: "basePoints + 2",
+  }
+  - {
+    name: "Comeback 3",
+    description: "Boost ranking climb by adding 3 points to your total",
+    type: "condition",
+    order: 2,
+    expression: "basePoints + 3",
+  }
+  - {
+    name: "Comeback 4",
+    description: "Boost ranking climb by adding 4 points to your total",
+    type: "condition",
+    order: 2,
+    expression: "basePoints + 4",
+  }
+  - {
+    name: "Comeback 5",
+    description: "Boost ranking climb by adding 5 points to your total",
+    type: "condition",
+    order: 2,
+    expression: "basePoints + 5",
+  }
+  - {
+    name: "Last Chance 1",
+    description: "Last chance bonus adding 2 points to your total",
+    type: "condition",
+    order: 2,
+    expression: "basePoints + 2",
+  }
+  - {
+    name: "Last Chance 2",
+    description: "Last chance bonus adding 5 points to your total",
+    type: "condition",
+    order: 2,
+    expression: "basePoints + 5",
+  }
+  - {
+    name: "Reigning Leader",
+    description: "Bonus for the current leader, adds 3 points",
+    type: "condition",
+    order: 3,
+    expression: "basePoints + 3",
+  }
+  - {
+    name: "Reigning Podium",
+    description: "Bonus for being on the podium, adds 2 points",
+    type: "condition",
+    order: 3,
+    expression: "basePoints + 2",
+  }
+  - {
+    name: "No Negative",
+    description: "Prevents any negative point effect",
+    type: "condition",
+    order: 3,
+    expression: "max(basePoints, 0)",
+  }
+  - {
+    name: "Consistent Participant 1",
+    description: "Bonus for consistent participation, adds 3 points",
+    type: "condition",
+    order: 3,
+    expression: "basePoints + 3",
+  }
+  - {
+    name: "Consistent Participant 2",
+    description: "Bonus for consistent participation, adds 5 points",
+    type: "condition",
+    order: 3,
+    expression: "basePoints + 5",
+  }
