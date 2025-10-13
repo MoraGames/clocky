@@ -1,12 +1,16 @@
 package model
 
+import "github.com/expr-lang/expr/vm"
+
 type (
-	//TODO: Rework this shit
 	Effect struct {
-		ID   int64
-		Name string
-		// Type       string
-		Parameters map[string]int
+		ID          int64
+		Name        string
+		Description string
+		Type        string
+		Order       int
+		Expression  string
+		Program     *vm.Program
 	}
 
 	EffectsStack struct {
