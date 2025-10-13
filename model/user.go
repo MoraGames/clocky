@@ -11,15 +11,15 @@ type (
 		Stats        *UserStats
 		MaxStats     *UserMaxStats
 		Inventory    *UserInventory
-		Tracking     *UserTracking
+		// Tracking     *UserTracking
 	}
 
 	UserSettings struct {
-		Language                 string
-		TotalStatsPrivacy        string
-		ChampionshipStatsPrivacy string
+		// Language                 string
 		DailyStatsPrivacy        string
 		RotationStatsPrivacy     string
+		ChampionshipStatsPrivacy string
+		TotalStatsPrivacy        string
 	}
 
 	UserStats struct {
@@ -49,9 +49,9 @@ type (
 		MaxDailyEventsWins           int
 		MaxDailyEventsPartecipations int
 		//Event's Points/Wins/Partecipations in the lifetime of the rotation
-		MaRotationPoints               int
-		MaRotationEventsWins           int
-		MaRotationEventsPartecipations int
+		MaxRotationPoints               int
+		MaxRotationEventsWins           int
+		MaxRotationEventsPartecipations int
 		//Event's Points/Wins/Partecipations in the lifetime of the championship
 		MaxChampionshipPoints               int
 		MaxChampionshipEventsWins           int
@@ -60,11 +60,11 @@ type (
 
 	UserInventory struct {
 		Gems    int
-		Items   [5]*Effect
+		Items   []*EffectsStack
 		Effects []*Effect
 	}
 
-	UserTracking struct {
-		//TODO: Implements anti-cheat tracking system
-	}
+	// UserTracking struct {
+	// 	//TODO: Implements anti-cheat tracking system
+	// }
 )

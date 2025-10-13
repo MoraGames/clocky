@@ -8,16 +8,25 @@ import (
 
 type (
 	Chat struct {
-		ID            int64
-		TelegramChat  *tgbotapi.Chat
-		Type          string
-		Title         string
-		Settings      *ChatSettings
-		Championships []*Championship
+		TelegramChat        *tgbotapi.Chat
+		Settings            *ChatSettings
+		Championships       []*Championship
+		CurrentChampionship int
 	}
 
 	ChatSettings struct {
-		SummaryStats     bool
-		SummaryStatsTime time.Duration
+		SummaryEnabled   []ChatSummarySubject
+		SummaryFrequency time.Duration
+		SummaryLocation  string // "group"|"private"
 	}
+	ChatSummarySubject string
+)
+
+const (
+	SummaryStats  ChatSummarySubject = "stats"
+	SummaryHints  ChatSummarySubject = "hints"
+	SummaryTop3   ChatSummarySubject = "top3"
+	SummaryTop5   ChatSummarySubject = "top5"
+	SummaryTop10  ChatSummarySubject = "top10"
+	SummaryActive ChatSummarySubject = "active"
 )
