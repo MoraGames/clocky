@@ -8,49 +8,49 @@ effects:
   }
   - {
     name: "Mul -3",
-    description: "Multiply the points by -3",
+    description: "Multiply the base points by -3",
     type: "random",
     order: 0,
     expression: "basePoints * -3",
   }
   - {
     name: "Mul -2",
-    description: "Multiply the points by -2",
+    description: "Multiply the base points by -2",
     type: "random",
     order: 0,
     expression: "basePoints * -2",
   }
   - {
     name: "Mul -1",
-    description: "Multiply the points by -1",
+    description: "Multiply the base points by -1",
     type: "random",
     order: 0,
     expression: "basePoints * -1",
   }
   - {
     name: "Mul +2",
-    description: "Multiply the points by 2",
+    description: "Multiply the base points by 2",
     type: "random",
     order: 0,
     expression: "basePoints * 2",
   }
   - {
     name: "Mul +3",
-    description: "Multiply the points by 3",
+    description: "Multiply the base points by 3",
     type: "random",
     order: 0,
     expression: "basePoints * 3",
   }
   - {
     name: "Mul +5",
-    description: "Multiply the points by 5",
+    description: "Multiply the base points by 5",
     type: "random",
     order: 0,
     expression: "basePoints * 5",
   }
   - {
     name: "Mul +6",
-    description: "Multiply the points by 6",
+    description: "Multiply the base points by 6",
     type: "random",
     order: 0,
     expression: "basePoints * 6",
