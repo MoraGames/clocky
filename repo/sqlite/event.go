@@ -23,8 +23,7 @@ var _ repo.EventRepoer = new(EventRepo)
 
 // EventRepo is a mock implementation
 type EventRepo struct {
-	events map[int64]*model.Event
-	lastId int64
+	filePath string
 }
 
 func NewEventRepo() *EventRepo {

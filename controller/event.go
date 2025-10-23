@@ -75,7 +75,7 @@ func (c *Controller) DeleteEvent(message string) error {
 	return c.event.Delete(message)
 }
 
-func (c *Controller) IsEvent(message string) (bool, *model.Event, error) {
+func (c *Controller) GetEventByMessage(message string) (*model.Event, error) {
 	//Check if the event exists
 	event, err := c.event.Get(message)
 	if err != nil {

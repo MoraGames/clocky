@@ -1,16 +1,15 @@
 package model
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-
 type (
 	User struct {
-		ID           int64
-		TelegramUser *tgbotapi.User
-		Nickname     string
-		Settings     *UserSettings
-		Stats        *UserStats
-		MaxStats     *UserMaxStats
-		Inventory    *UserInventory
+		TelegramID       int64
+		TelegramIsBot    bool
+		TelegramUsername string
+		Nickname         string
+		Settings         *UserSettings
+		Stats            *UserStats
+		MaxStats         *UserMaxStats
+		Inventory        *UserInventory
 		// Tracking     *UserTracking
 	}
 
