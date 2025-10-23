@@ -39,8 +39,10 @@ type (
 func NewConfig() (*Config, error) {
 	cfg := &Config{}
 
-	if err := godotenv.Load("./config/.env"); err != nil {
-		return nil, err
+	if _, err := os.Stat("./config/.env"); err == nil {
+		if err := godotenv.Load("./config/.env"); err != nil {
+			return nil, err
+		}
 	}
 	if err := cfg.ReadConfig("./config/config.yml"); err != nil {
 		return nil, err
