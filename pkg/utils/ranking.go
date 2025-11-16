@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/MoraGames/clockyuwu/structs"
@@ -19,7 +20,7 @@ func GetRanking(Users map[int64]*structs.User) []Rank {
 	ranking := make([]Rank, 0)
 	for _, u := range Users {
 		if u != nil {
-			ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+			ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.ChampionshipPoints, u.TotalEventPartecipations})
 		}
 	}
 
@@ -33,6 +34,9 @@ func GetRanking(Users map[int64]*structs.User) []Rank {
 			return ranking[i].Points > ranking[j].Points
 		},
 	)
+
+	fmt.Printf(">>>>>>> Users: %+v\n", Users)
+	fmt.Printf(">>>>>>> Generated ranking: %+v\n", ranking)
 
 	return ranking
 }
