@@ -16,7 +16,7 @@ import (
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/MoraGames/clockyuwu/pkg/utils"
 	"github.com/MoraGames/clockyuwu/structs"
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -110,8 +110,7 @@ func init() {
 	}
 
 	//get current time location
-	timeLocation, err := time.LoadLocation("Local")
-	if err != nil {
+	if _, err = time.LoadLocation("Local"); err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Warn("Time location not get (using UTC)")
@@ -119,46 +118,58 @@ func init() {
 
 	App.TimeFormat = "15:04:05.000000 MST -07:00"
 
-	//set the gocron events reset
-	App.GocronScheduler = gocron.NewScheduler(timeLocation)
-	if championshipsJob, err := App.GocronScheduler.Every(2).Weekday(time.Sunday).At("23:59:40").Name("ChampionshipsJob").Do(func() {
-		// Reward the users based on their performance
-		// Then reset the championship user's stats (unconditionally)
-		ChampionshipUserRewardAndReset(
-			Users,
-			&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
-			types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
-		)
-	}); err != nil {
+	//create the gocron scheduler
+	App.GocronScheduler, err = gocron.NewScheduler()
+	if err != nil {
 		App.Logger.WithFields(logrus.Fields{
-			"gcJob": utils.StringifyJobs([]*gocron.Job{championshipsJob}),
-			"error": err,
+			"err": err,
+		}).Error("Error while creating GoCron scheduler")
+	}
+
+	//define the default cron jobs for the application scheduler
+	if _, err = App.GocronScheduler.NewJob(
+		gocron.DailyJob(2, gocron.NewAtTimes(gocron.NewAtTime(23, 59, 50))),
+		gocron.NewTask(func() {
+			// Get the number of enabled events for the ended day
+			dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
+
+			// Reset the events
+			events.Events.Reset(
+				true,
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+			)
+
+			// Reward the users based on their performance
+			// Then reset the daily user's stats (unconditionally)
+			DailyUserRewardAndReset(
+				Users,
+				dailyEnabledEvents,
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+			)
+		}),
+	); err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"job": "DailyResetCronjob",
+			"err": err,
 		}).Error("GoCron job not set")
 	}
-	if dailyEventsJob, err := App.GocronScheduler.Every(1).Day().At("23:59:50").Name("DailyEventsJob").Do(func() {
-		// Get the number of enabled events for the ended day
-		dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
-
-		// Reset the events
-		events.Events.Reset(
-			true,
-			&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
-			types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
-		)
-
-		// Reward the users based on their performance
-		// Then reset the daily user's stats (unconditionally)
-		DailyUserRewardAndReset(
-			Users,
-			dailyEnabledEvents,
-			&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
-			types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
-		)
-	}); err != nil {
+	if _, err = App.GocronScheduler.NewJob(
+		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 40))),
+		gocron.NewTask(func() {
+			ChampionshipUserRewardAndReset(
+				Users,
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+			)
+		}),
+		//gocron.WithStartAt(gocron.WithStartDateTimePast())
+	); err != nil {
 		App.Logger.WithFields(logrus.Fields{
-			"gcJob": utils.StringifyJobs([]*gocron.Job{dailyEventsJob}),
-			"error": err,
-		}).Error("GoCron jobs not set")
+			"job": "ChampionshipResetCronjob",
+			"err": err,
+		}).Error("GoCron job not set")
 	}
 	App.Logger.WithFields(logrus.Fields{
 		"gcJobs": utils.StringifyJobs(App.GocronScheduler.Jobs()),
@@ -179,9 +190,9 @@ func main() {
 	)
 	manageMigrations()
 
-	App.GocronScheduler.StartAsync()
+	App.GocronScheduler.Start()
 	run(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: App.BotAPI, Updates: App.Updates})
-	App.GocronScheduler.Stop()
+	App.GocronScheduler.Shutdown()
 }
 
 func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData *types.WriteMessageData, utilsVar types.Utils) {
