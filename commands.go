@@ -294,33 +294,138 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 			"chat":    update.Message.Chat.Title,
 		}).Debug("Response to \"/ping\" command sent successfully")
 	case "ranking":
-		// Respond with the ranking based on users' points
-		// Generate the ranking
-		ranking := utils.GetRanking(Users)
+		/*
+			Description:
+				Get the ranking for a specific time period based on users' points.
 
-		// Generate the string to send
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ancora nessun utente ha partecipato agli eventi della season.")
-		if len(ranking) != 0 {
-			leadersPoints := ranking[0].Points
-			rankingString := ""
-			for i, r := range ranking {
-				rankingString += fmt.Sprintf("%v] %v: %v (-%v)\n", i+1, r.Username, r.Points, leadersPoints-r.Points)
+			Forms:
+				/ranking
+				/ranking [scope]
+				/ranking ["pov" <user>]
+				/ranking [scope] ["pov" <user>]
+		*/
+
+		var ranking []utils.Rank
+		var povTelegramUserID int64
+		var commandOkay bool = true
+		if update.Message.CommandArguments() == "" {
+			ranking = utils.GetRanking(Users, utils.DefaultRankScope)
+			povTelegramUserID = update.Message.From.ID
+		} else {
+			// Split the command arguments
+			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+
+			if (len(cmdArgs) > 3) || (len(cmdArgs) == 1 && cmdArgs[0] != string(utils.RankScopeDay) && cmdArgs[0] != string(utils.RankScopeChampionship) && cmdArgs[0] != string(utils.RankScopeTotal)) || (len(cmdArgs) == 2 && cmdArgs[0] != "pov") || (len(cmdArgs) == 3 && cmdArgs[1] != "pov") {
+				commandOkay = false
+				// Respond with a message indicating that the command arguments are wrong
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Il comando è /ranking [scope] [\"pov\" <user>]")
+				msg.ReplyToMessageID = update.Message.MessageID
+				message, error := dataVar.Bot.Send(msg)
+				if error != nil {
+					utilsVar.Logger.WithFields(logrus.Fields{
+						"err": error,
+						"msg": message,
+					}).Error("Error while sending message")
+				}
+				utilsVar.Logger.WithFields(logrus.Fields{
+					"usr": update.Message.From.UserName,
+					"msg": update.Message.Text,
+				}).Debug("Wrong command")
+			} else {
+				if len(cmdArgs) == 1 {
+					switch cmdArgs[0] {
+					case string(utils.RankScopeDay):
+						ranking = utils.GetRanking(Users, utils.RankScopeDay)
+					case string(utils.RankScopeChampionship):
+						ranking = utils.GetRanking(Users, utils.RankScopeChampionship)
+					case string(utils.RankScopeTotal):
+						ranking = utils.GetRanking(Users, utils.RankScopeTotal)
+					}
+					povTelegramUserID = update.Message.From.ID
+				} else if len(cmdArgs) == 2 && cmdArgs[0] == "pov" {
+					// Get and check if the user exists
+					username := cmdArgs[1]
+					var userId int64
+					var founded bool
+					for userID, user := range Users {
+						if user.UserName == username {
+							founded = true
+							userId = userID
+							break
+						}
+					}
+					if !founded {
+						commandOkay = false
+						// Respond with a message indicating that the user does not exist
+						SendEntityNotFoundMessage("Utente", username, update, dataVar, utilsVar)
+						// Log the command failed execution
+						FinalCommandLog("User not found", update, utilsVar)
+					} else {
+						ranking = utils.GetRanking(Users, utils.DefaultRankScope)
+						povTelegramUserID = userId
+					}
+				} else if len(cmdArgs) == 3 && (cmdArgs[0] == string(utils.RankScopeDay) || cmdArgs[0] == string(utils.RankScopeChampionship) || cmdArgs[0] == string(utils.RankScopeTotal)) && cmdArgs[1] == "pov" {
+					// Get and check if the user exists
+					username := cmdArgs[2]
+					var userId int64
+					var founded bool
+					for userID, user := range Users {
+						if user.UserName == username {
+							founded = true
+							userId = userID
+							break
+						}
+					}
+					if !founded {
+						commandOkay = false
+						// Respond with a message indicating that the user does not exist
+						SendEntityNotFoundMessage("Utente", username, update, dataVar, utilsVar)
+						// Log the command failed execution
+						FinalCommandLog("User not found", update, utilsVar)
+					} else {
+						switch cmdArgs[0] {
+						case string(utils.RankScopeDay):
+							ranking = utils.GetRanking(Users, utils.RankScopeDay)
+						case string(utils.RankScopeChampionship):
+							ranking = utils.GetRanking(Users, utils.RankScopeChampionship)
+						case string(utils.RankScopeTotal):
+							ranking = utils.GetRanking(Users, utils.RankScopeTotal)
+						}
+						povTelegramUserID = userId
+					}
+				}
+			}
+		}
+		if commandOkay {
+			// Generate the string to send
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ancora nessun utente ha partecipato agli eventi della season.")
+			if len(ranking) != 0 {
+				var povPoints int
+				for _, r := range ranking {
+					if r.UserTelegramID == povTelegramUserID {
+						povPoints = r.Points
+					}
+				}
+				rankingString := ""
+				for i, r := range ranking {
+					rankingString += fmt.Sprintf("%v] %v: %v (-%v)\n", i+1, r.Username, r.Points, povPoints-r.Points)
+				}
+
+				// Send the message
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
+			}
+			msg.ReplyToMessageID = update.Message.MessageID
+			message, error := dataVar.Bot.Send(msg)
+			if error != nil {
+				utilsVar.Logger.WithFields(logrus.Fields{
+					"err": error,
+					"msg": message,
+				}).Error("Error while sending message")
 			}
 
-			// Send the message
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("La classifica è la seguente:\n\n%v", rankingString))
+			// Log the /ranking command sent
+			utilsVar.Logger.Debug("Ranking sent")
 		}
-		msg.ReplyToMessageID = update.Message.MessageID
-		message, error := dataVar.Bot.Send(msg)
-		if error != nil {
-			utilsVar.Logger.WithFields(logrus.Fields{
-				"err": error,
-				"msg": message,
-			}).Error("Error while sending message")
-		}
-
-		// Log the /ranking command sent
-		utilsVar.Logger.Debug("Ranking sent")
 	case "reset":
 		// Reset the events or users data structure
 		// Check if the user is an bot-admin
@@ -632,7 +737,7 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 		} else {
 			// Split the command arguments
 			cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
-			if len(cmdArgs) > 2 || len(cmdArgs) == 2 && cmdArgs[1] != "expand" {
+			if len(cmdArgs) > 2 || (len(cmdArgs) == 2 && cmdArgs[1] != "expand") {
 				// Respond with a message indicating that the command arguments are wrong
 				cmdSyntax := "/stats [user [\"expand\"]]"
 				SendWrongCommandSyntaxMessage(cmdSyntax, update, dataVar, utilsVar)
