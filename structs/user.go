@@ -50,7 +50,7 @@ func (u *User) RemoveEffect(effectToRemove *Effect) {
 	u.Effects = newUserEffects
 }
 
-func (u *User) StringifyEffects() string {
+func (u *User) StringifyEffects(brackets bool) string {
 	stringifiedEffects := ""
 	for i, e := range u.Effects {
 		if i != len(u.Effects)-1 {
@@ -59,5 +59,8 @@ func (u *User) StringifyEffects() string {
 			stringifiedEffects += fmt.Sprintf("%q", e.Name)
 		}
 	}
-	return "[" + stringifiedEffects + "]"
+	if brackets {
+		return "[" + stringifiedEffects + "]"
+	}
+	return stringifiedEffects
 }
