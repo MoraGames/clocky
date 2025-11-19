@@ -267,39 +267,40 @@ func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData 
 func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents int, writeMsgData *types.WriteMessageData, utilsVar types.Utils) {
 	// Reward the users where DailyEventWins >= 30% of TotalDailyEventWins
 	// Then reset the daily user's stats (unconditionally)
-	todayRewardedUsers := make([]*structs.UserMinimal, 0)
+	todayRewardedUsers := make([]events.DailyRewardedUser, 0)
 	for userId := range Users {
 		if user, ok := Users[userId]; ok && user != nil {
-			// Check if the user has participated in at least 15% of the enabled events of the day
-			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.15)) {
+			// Check if the user has participated in at least 10% of the enabled events of the day
+			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.10)) {
 				// Update the data structure of deserving users
 				Users[userId].DailyPartecipationStreak++
+
+				// Reward the user (hints)
+				choosenSets := ManageDailyRewardMessage(userId, writeMsgData, utilsVar)
+				todayRewardedUsers = append(todayRewardedUsers, events.DailyRewardedUser{User: user.Minimize(), Sets: choosenSets})
+
+				// Check if the user has won at least 25% of the events in which he participated
+				if Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.25)) {
+					Users[userId].DailyActivityStreak++
+				} else {
+					Users[userId].DailyActivityStreak = 0
+				}
 			} else {
 				Users[userId].DailyPartecipationStreak = 0
 			}
 
-			// Check if the user has participated in at least 15% of the enabled events of the day and if he has won at least 25% of the events in which he participated
-			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.15)) && Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.25)) {
-				// Update the data structure of deserving users
-				todayRewardedUsers = append(todayRewardedUsers, user.Minimize())
-				Users[userId].DailyActivityStreak++
-
-				// Reward the user
-				ManageDailyRewardMessage(userId, writeMsgData, utilsVar)
-			} else {
-				Users[userId].DailyActivityStreak = 0
-			}
-
+			// Reward the user (activity streak)
 			Users[userId].RemoveEffect(structs.NoNegative)
 			Users[userId].RemoveEffect(structs.ConsistentParticipant1)
 			Users[userId].RemoveEffect(structs.ConsistentParticipant2)
-
-			// Check if the user have an active activity streak of at least 7/21 days
+			if Users[userId].DailyActivityStreak >= 7 {
+				Users[userId].AddEffect(structs.ConsistentParticipant1)
+			}
+			if Users[userId].DailyActivityStreak >= 14 {
+				Users[userId].AddEffect(structs.ConsistentParticipant2)
+			}
 			if Users[userId].DailyActivityStreak >= 21 {
 				Users[userId].AddEffect(structs.NoNegative)
-				Users[userId].AddEffect(structs.ConsistentParticipant2)
-			} else if Users[userId].DailyActivityStreak >= 7 {
-				Users[userId].AddEffect(structs.ConsistentParticipant1)
 			}
 
 			// Reset the daily user's stats
@@ -377,7 +378,7 @@ func ManageChampionshipRewardMessage(userId int64, rankPosition int, writeMsgDat
 	}
 }
 
-func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) {
+func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) []string {
 	// Generate the reward message informations
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
@@ -407,6 +408,8 @@ func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData
 			"msg": message,
 		}).Error("Error while sending message")
 	}
+
+	return []string{randomSet}
 }
 
 func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text string) {

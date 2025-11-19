@@ -18,10 +18,10 @@
 - ~~Implements reset message in the group chat~~
 
 **Hints and Activity Streak buff:**
-- Reduce the requirments to be considered a "participant user"
-- Link hints to the partecipation (not the activity)
+- ~~Reduce the requirments to be considered a "participant user"~~
+- ~~Link hints to the partecipation (not the activity)~~
 - Produce the hints message with 3 different sets (that must have at least a total of 20 events)
-- Add and rebalance the bonus given by Activity Streak (one for each 7 days: 7, 14, 21, 28, ...)
+- ~~Add and rebalance the bonus given by Activity Streak (one for each 7 days: 7, 14, 21, 28, ...)~~
 
 **Other:**
 - Implements summary message with some stats on daily time base.

@@ -39,11 +39,16 @@ type (
 		ChatID    int64
 		MessageID int
 	}
+
+	DailyRewardedUser struct {
+		User *structs.UserMinimal
+		Sets []string
+	}
 )
 
 var (
 	PinnedResetMessage      EventsResetPinnedMessage
-	HintRewardedUsers       = make(map[string][]*structs.UserMinimal)
+	HintRewardedUsers       = make(map[string][]DailyRewardedUser)
 	Events                  *EventsData
 	AssignEventsWithDefault = func(utils types.Utils) {
 		Events = NewEventsData(true, utils)
