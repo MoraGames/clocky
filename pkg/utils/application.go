@@ -12,6 +12,7 @@ type Application struct {
 	Logger          *logrus.Logger
 	BotAPI          *tgbotapi.BotAPI
 	Updates         tgbotapi.UpdatesChannel
+	DefaultChatID   int64
 	GocronScheduler gocron.Scheduler
 	TimeFormat      string
 }

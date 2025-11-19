@@ -18,6 +18,7 @@ import (
 	"github.com/MoraGames/clockyuwu/structs"
 	"github.com/go-co-op/gocron/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -102,7 +103,7 @@ func init() {
 		}).Warn("Env not set")
 	}
 
-	defaultChatID, err := strconv.ParseInt(defaultChatEnv, 10, 64)
+	App.DefaultChatID, err = strconv.ParseInt(defaultChatEnv, 10, 64)
 	if err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"err": err,
@@ -136,7 +137,7 @@ func init() {
 			// Reset the events
 			events.Events.Reset(
 				true,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 			)
 
@@ -145,10 +146,11 @@ func init() {
 			DailyUserRewardAndReset(
 				Users,
 				dailyEnabledEvents,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 			)
 		}),
+		gocron.WithName("DailyResetCronjob"),
 	); err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"job": "DailyResetCronjob",
@@ -160,11 +162,12 @@ func init() {
 		gocron.NewTask(func() {
 			ChampionshipUserRewardAndReset(
 				Users,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: defaultChatID, ReplyMessageID: -1},
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 			)
 		}),
-		//gocron.WithStartAt(gocron.WithStartDateTimePast())
+		gocron.WithName("ChampionshipResetCronjob"),
+		//gocron.WithStartAt(gocron.WithStartDateTimePast()) //Add by reload if successful
 	); err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"job": "ChampionshipResetCronjob",
@@ -184,7 +187,7 @@ func main() {
 			{FileName: "files/users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
 			{FileName: "files/pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
 			{FileName: "files/hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
-			// {FileName: "files/championship.json", DataStruct: &events.CurrentChampionship, IfOkay: events.AssignChampionshipFromJson, IfFail: events.AssignChampionshipWithDefault},
+			{FileName: "files/championship.json", DataStruct: &events.CurrentChampionship, IfOkay: UpdateChampionshipResetCronjob, IfFail: events.AssignChampionshipWithDefault},
 		},
 		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
@@ -399,4 +402,58 @@ func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text s
 		msg.ReplyToMessageID = replyMessageID
 	}
 	bot.Send(msg)
+}
+
+// This function was supposed to be written in events/championship.go, but due to dependencies with App variable, it's here instead.
+func UpdateChampionshipResetCronjob(utils types.Utils) {
+	// Check if the scheduler is initialized
+	if App.GocronScheduler == nil {
+		App.Logger.Error("Scheduler not initialized before reload")
+		return
+	}
+
+	// Find the job
+	var found bool
+	var jobID uuid.UUID
+	for _, job := range App.GocronScheduler.Jobs() {
+		if job.Name() == "ChampionshipResetCronjob" {
+			found = true
+			jobID = job.ID()
+			break
+		}
+	}
+	if !found {
+		App.Logger.Error("ChampionshipResetCronjob not found in scheduler")
+		return
+	}
+
+	// Update the cronjob
+	job, err := App.GocronScheduler.Update(
+		jobID,
+		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 40))),
+		gocron.NewTask(func() {
+			ChampionshipUserRewardAndReset(
+				Users,
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+			)
+		}),
+		gocron.WithName("ChampionshipResetCronjob"),
+		gocron.WithStartAt(gocron.WithStartDateTimePast(
+			events.CurrentChampionship.StartDate,
+		)),
+	)
+
+	jobNextRun, err := job.NextRun()
+	if err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Warn("Error while getting next run time of ChampionshipResetCronjob")
+		return
+	}
+	App.Logger.WithFields(logrus.Fields{
+		"name": events.CurrentChampionship.Name,
+		"date": events.CurrentChampionship.StartDate,
+		"next": jobNextRun,
+	}).Info("Championship schedule restored from reload")
 }
