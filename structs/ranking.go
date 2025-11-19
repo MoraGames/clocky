@@ -1,10 +1,8 @@
-package utils
+package structs
 
 import (
 	"fmt"
 	"sort"
-
-	"github.com/MoraGames/clockyuwu/structs"
 )
 
 // RankScope is the type used for define the ranking scope (daily, championship, total) during the /ranking command execution
@@ -27,7 +25,7 @@ type Rank struct {
 	Partecipations int
 }
 
-func GetRanking(Users map[int64]*structs.User, scope RankScope) []Rank {
+func GetRanking(Users map[int64]*User, scope RankScope) []Rank {
 	// Generate the ranking
 	ranking := make([]Rank, 0)
 	for _, u := range Users {
