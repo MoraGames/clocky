@@ -34,7 +34,7 @@ type (
 		EnabledEffects    map[string]int
 	}
 
-	EventsResetMessage struct {
+	EventsResetPinnedMessage struct {
 		Exist     bool
 		ChatID    int64
 		MessageID int
@@ -42,7 +42,7 @@ type (
 )
 
 var (
-	PinnedResetMessage      EventsResetMessage
+	PinnedResetMessage      EventsResetPinnedMessage
 	HintRewardedUsers       = make(map[string][]*structs.UserMinimal)
 	Events                  *EventsData
 	AssignEventsWithDefault = func(utils types.Utils) {
@@ -380,7 +380,7 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 	}
 
 	// Update the pinned reset message
-	PinnedResetMessage = EventsResetMessage{
+	PinnedResetMessage = EventsResetPinnedMessage{
 		true,
 		msgToPin.Chat.ID,
 		msgToPin.MessageID,
