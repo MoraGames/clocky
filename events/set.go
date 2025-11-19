@@ -25,7 +25,7 @@ type SetJson struct {
 
 var (
 	SetsFunctions = FuncMap{
-		"Equal":            equal,
+		//"Equal":            equal,
 		"Short Equal":      shortEqual,
 		"Repeat":           repeat,
 		"Mirror":           mirror,
@@ -38,9 +38,10 @@ var (
 		"Double":           double,
 		"Short Triple":     shortTriple,
 		"Perfect Square":   perfectSquare,
+		"Equal Twins":      equalTwins,
 	}
 	Sets = SetSlice{
-		{"Equal", "aa:aa", "static", false, equal},
+		//{"Equal", "aa:aa", "static", false, equal},
 		{"Short Equal", "?a:aa", "static", false, shortEqual},
 		{"Repeat", "ab:ab", "static", false, repeat},
 		{"Mirror", "ab:ba", "static", false, mirror},
@@ -53,6 +54,7 @@ var (
 		{"double", "n:2*n", "static", false, double},
 		{"shortTriple", "[unnamed]", "static", false, shortTriple},
 		{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
+		{"Equal Twins", "aa:bb", "static", false, equalTwins},
 	}
 	SetsJson = SetJsonSlice{}
 
@@ -61,7 +63,7 @@ var (
 	}
 	AssignSetsWithDefault = func(utils types.Utils) {
 		Sets = SetSlice{
-			{"Equal", "aa:aa", "static", false, equal},
+			//{"Equal", "aa:aa", "static", false, equal},
 			{"Short Equal", "?a:aa", "static", false, shortEqual},
 			{"Repeat", "ab:ab", "static", false, repeat},
 			{"Mirror", "ab:ba", "static", false, mirror},
@@ -74,6 +76,7 @@ var (
 			{"Double", "n:2*n", "static", false, double},
 			{"Short Triple", "[unnamed]", "static", false, shortTriple},
 			{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
+			{"Equal Twins", "aa:bb", "static", false, equalTwins},
 		}
 	}
 )
@@ -105,10 +108,11 @@ func (sj SetJsonSlice) ToSlice() SetSlice {
 	return slice
 }
 
+// Notes: The set is replaced by edits on repeat and mirror sets and the new "equal twins" set
 // aa:aa
-func equal(h1, h2, m1, m2 int) bool {
-	return h1 == h2 && h2 == m1 && m1 == m2
-}
+// func equal(h1, h2, m1, m2 int) bool {
+// 	return h1 == h2 && h2 == m1 && m1 == m2
+// }
 
 // ?a:aa
 func shortEqual(_, h2, m1, m2 int) bool {
@@ -117,12 +121,12 @@ func shortEqual(_, h2, m1, m2 int) bool {
 
 // ab:ab
 func repeat(h1, h2, m1, m2 int) bool {
-	return h1 == m1 && h2 == m2 && h1 != h2
+	return h1 == m1 && h2 == m2
 }
 
 // ab:ba
 func mirror(h1, h2, m1, m2 int) bool {
-	return h1 == m2 && h2 == m1 && h1 != h2
+	return h1 == m2 && h2 == m1
 }
 
 // ab:cd
@@ -170,4 +174,9 @@ func perfectSquare(h1, h2, m1, m2 int) bool {
 	total := (h1 * 1000) + (h2 * 100) + (m1 * 10) + (m2)
 	sqrt := int(math.Sqrt(float64(total)))
 	return (sqrt * sqrt) == total
+}
+
+// aa:bb
+func equalTwins(h1, h2, m1, m2 int) bool {
+	return h1 == h2 && m1 == m2
 }
