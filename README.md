@@ -15,7 +15,7 @@
 **Fix Championship visualization bugs:**
 - ~~Edit the command /stats~~
 - ~~Edit the command /ranking and related GetRanking function~~
-- Implements reset message in the group chat
+- ~~Implements reset message in the group chat~~
 
 **Hints and Activity Streak buff:**
 - Reduce the requirments to be considered a "participant user"
