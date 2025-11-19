@@ -230,12 +230,7 @@ func run(utils types.Utils, data types.Data) {
 
 func UpdateUserEffects(userID int64) {
 	// Generate the ranking
-	ranking := make([]structs.Rank, 0)
-	for _, u := range Users {
-		if u != nil {
-			ranking = append(ranking, structs.Rank{UserTelegramID: u.TelegramID, Username: u.UserName, Points: u.TotalPoints, Partecipations: u.TotalEventPartecipations})
-		}
-	}
+	ranking := structs.GetRanking(Users, structs.RankScopeChampionship, false)
 
 	// Sort the ranking by points (and partecipations if points are equal)
 	sort.Slice(
