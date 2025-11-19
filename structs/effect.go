@@ -47,8 +47,7 @@ var (
 	ComebackBonus5         = &Effect{"Comeback 5", "User", "+", 5}
 	LastChanceBonus        = &Effect{"Last Chance 1", "User", "+", 2}
 	LastChanceBonus2       = &Effect{"Last Chance 2", "User", "+", 5}
-	ReigningLeader         = &Effect{"Reigning Leader", "User", "+", 3}
-	ReigningPodium         = &Effect{"Reigning Podium", "User", "+", 2}
+	ReigningLeader         = &Effect{"Reigning Leader", "User", "+", 1}
 	NoNegative             = &Effect{"No Negative", "User", "+", 0}
 	ConsistentParticipant1 = &Effect{"Consistent Participant 1", "User", "+", 3}
 	ConsistentParticipant2 = &Effect{"Consistent Participant 2", "User", "+", 5}
@@ -80,7 +79,6 @@ var (
 		"Last Chance":              LastChanceBonus,
 		"Last Chance 2":            LastChanceBonus2,
 		"Reigning Leader":          ReigningLeader,
-		"Reigning Podium":          ReigningPodium,
 		"No Negative":              NoNegative,
 		"Consistent Participant 1": ConsistentParticipant1,
 		"Consistent Participant 2": ConsistentParticipant2,

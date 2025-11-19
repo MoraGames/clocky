@@ -205,17 +205,20 @@ func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData 
 		if user, ok := Users[userId]; ok && user != nil {
 			// Remove the reigning leader and reigning podium effects
 			Users[userId].RemoveEffect(structs.ReigningLeader)
-			Users[userId].RemoveEffect(structs.ReigningPodium)
 
+			// Check if the user is the winner of the championship
+			if ranking[0].UserTelegramID == userId {
+				// Update the data structure of deserving users
+				Users[userId].TotalChampionshipWins++
+				Users[userId].AddEffect(structs.ReigningLeader)
+			}
 			// Check if the user is in the top 3 of the ranking
 			for r := 0; r < 3 && r < len(ranking); r++ {
 				if ranking[r].UserTelegramID == userId {
-					// Update the data structure of deserving users
+
 					if r == 0 {
 						Users[userId].TotalChampionshipWins++
 						Users[userId].AddEffect(structs.ReigningLeader)
-					} else {
-						Users[userId].AddEffect(structs.ReigningPodium)
 					}
 
 					// Reward the user
@@ -339,19 +342,20 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 
 func ManageChampionshipRewardMessage(userId int64, rankPosition int, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	// Generate the reward message
-	var finalPositionMessage, effectAppliedMessage string
+	var finalPositionMessage, effectRewardMessage, effectAppliedMessage string
 	switch rankPosition {
 	case 0:
-		finalPositionMessage = "You are the new Clocky Champion! For"
-		effectAppliedMessage = "You are the proud owner of the effect \"Reigning Leader\", wich grants you a +3 points bonus to every event you will participate.\n Congratulations again!"
+		finalPositionMessage = "You are the new Clocky Champion!"
+		effectRewardMessage = "For this you are rewarded with a special bonus effects for the entire duration of the next championship (if you choose to participate in it)"
+		effectAppliedMessage = "\n\nYou are the proud owner of the effect \"Reigning Leader\", wich grants you a +1 points bonus to every event you will win.\n Congratulations again!"
 	case 1:
-		finalPositionMessage = "You're standing on the 2nd step of the podium, and for"
-		effectAppliedMessage = "You are an owner of the effect \"Reigning Podium\", wich grants you a +2 points bonus to every event you will participate."
+		finalPositionMessage = "You're standing on the 2nd step of the podium."
+		effectRewardMessage = "Unfortunately, you were so close to victory, but that wasn't enough to obtain any special effects. We're sure we'll see you with victory in your grasp next season!"
 	case 2:
-		finalPositionMessage = "You're standing on the 3rd step of the podium, and for"
-		effectAppliedMessage = "You are an owner of the effect \"Reigning Podium\", wich grants you a +2 points bonus to every event you will participate."
+		finalPositionMessage = "You're standing on the 3rd step of the podium."
+		effectRewardMessage = "Unfortunately, you were so close to victory, but that wasn't enough to obtain any special effects. We're sure we'll see you with victory in your grasp next season!"
 	}
-	text := fmt.Sprintf("Congratulations %v!\n%v this you are rewarded with a special bonus effect for the entire duration of the next championship (if you choose to participate in it):\n\n%v", Users[userId].UserName, finalPositionMessage, effectAppliedMessage)
+	text := fmt.Sprintf("Congratulations %v!\n%v %v%v", Users[userId].UserName, finalPositionMessage, effectRewardMessage, effectAppliedMessage)
 
 	// Send the reward message
 	msg := tgbotapi.NewMessage(userId, text)
