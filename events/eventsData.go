@@ -79,23 +79,22 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 	if newEffects {
 		ed.AssignRandomEffects(
 			utils,
-			structs.EffectPresence{Effect: structs.QuintupleNegativePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.TripleNegativePoints, Possible: 0.20, Amount: types.Interval{Min: 0.02, Max: 0.03}},    //71E ->  20% of 01-02 effects.  |  119E ->  20% of 02-04 effects.
-			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 0.30, Amount: types.Interval{Min: 0.03, Max: 0.05}},    //71E ->  30% of 02-03 effects.  |  119E ->  30% of 04-05 effects.
-			structs.EffectPresence{Effect: structs.SingleNegativePoints, Possible: 1.00, Amount: types.Interval{Min: 0.05, Max: 0.15}},    //71E -> 100% of 03-10 effects.  |  119E -> 100% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},    //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.25, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  25% of 01-03 effects.  |  119E ->  25% of 02-05 effects.
-			structs.EffectPresence{Effect: structs.QuintuplePositivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SixtuplePositivePoints, Possible: 0.05, Amount: types.Interval{Min: 0.01, Max: 0.02}},  //71E ->   5% of 00-01 effects.  |  119E ->   5% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SubFourPoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},           //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SubThreePoints, Possible: 0.30, Amount: types.Interval{Min: 0.03, Max: 0.05}},          //71E ->  30% of 02-03 effects.  |  119E ->  30% of 04-05 effects.
-			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},            //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.SubOnePoint, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},             //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.AddOnePoint, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.25}},             //71E -> 100% of 07-17 effects.  |  119E -> 100% of 11-29 effects.
-			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},            //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},          //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.AddFourPoints, Possible: 0.30, Amount: types.Interval{Min: 0.03, Max: 0.05}},           //71E ->  30% of 02-03 effects.  |  119E ->  30% of 04-05 effects.
-			structs.EffectPresence{Effect: structs.AddFivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},           //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
+			structs.EffectPresence{Effect: structs.QuintupleNegativePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, // "Mul-5" ->  10% of (95E: 01-02 | 218E: 02-04)
+			structs.EffectPresence{Effect: structs.QuadrupleNegativePoints, Possible: 0.40, Amount: types.Interval{Min: 0.02, Max: 0.05}}, // "Mul-4" ->  40% of (95E: 02-05 | 218E: 04-11)
+			structs.EffectPresence{Effect: structs.TripleNegativePoints, Possible: 0.70, Amount: types.Interval{Min: 0.03, Max: 0.10}},    // "Mul-3" ->  70% of (95E: 03-10 | 218E: 07-22)
+			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 1.00, Amount: types.Interval{Min: 0.05, Max: 0.15}},    // "Mul-2" -> 100% of (95E: 05-14 | 218E: 11-33)
+			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.20}},    // "Mul+2" -> 100% of (95E: 10-19 | 218E: 22-44)
+			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.75, Amount: types.Interval{Min: 0.08, Max: 0.15}},    // "Mul+3" ->  75% of (95E: 08-14 | 218E: 17-33)
+			structs.EffectPresence{Effect: structs.QuadruplePositivePoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.10}}, // "Mul+4" ->  50% of (95E: 05-10 | 218E: 11-22)
+			structs.EffectPresence{Effect: structs.QuintuplePositivePoints, Possible: 0.25, Amount: types.Interval{Min: 0.03, Max: 0.05}}, // "Mul+5" ->  25% of (95E: 03-05 | 218E: 07-11)
+			structs.EffectPresence{Effect: structs.SixtuplePositivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},  // "Mul+6" ->  10% of (95E: 01-02 | 218E: 02-04)
+			structs.EffectPresence{Effect: structs.SubFourPoints, Possible: 0.25, Amount: types.Interval{Min: 0.04, Max: 0.10}},           // "Sub 4" ->  25% of (95E: 04-10 | 218E: 09-22)
+			structs.EffectPresence{Effect: structs.SubThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.07, Max: 0.15}},          // "Sub 3" ->  50% of (95E: 07-14 | 218E: 15-33)
+			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.20}},            // "Sub 2" -> 100% of (95E: 10-19 | 218E: 22-44)
+			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.20}},            // "Add 2" -> 100% of (95E: 10-19 | 218E: 22-44)
+			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.07, Max: 0.15}},          // "Add 3" ->  50% of (95E: 07-14 | 218E: 15-33)
+			structs.EffectPresence{Effect: structs.AddFourPoints, Possible: 0.25, Amount: types.Interval{Min: 0.04, Max: 0.10}},           // "Add 4" ->  25% of (95E: 04-10 | 218E: 09-22)
+			structs.EffectPresence{Effect: structs.AddFivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.05}},           // "Add 5" ->  10% of (95E: 01-05 | 218E: 02-11)
 		)
 	}
 
@@ -119,23 +118,22 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	if newEffects {
 		ed.AssignRandomEffects(
 			utils,
-			structs.EffectPresence{Effect: structs.QuintupleNegativePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.TripleNegativePoints, Possible: 0.20, Amount: types.Interval{Min: 0.02, Max: 0.03}},    //71E ->  20% of 01-02 effects.  |  119E ->  20% of 02-04 effects.
-			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 0.30, Amount: types.Interval{Min: 0.03, Max: 0.05}},    //71E ->  30% of 02-03 effects.  |  119E ->  30% of 04-05 effects.
-			structs.EffectPresence{Effect: structs.SingleNegativePoints, Possible: 1.00, Amount: types.Interval{Min: 0.05, Max: 0.15}},    //71E -> 100% of 03-10 effects.  |  119E -> 100% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},    //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.25, Amount: types.Interval{Min: 0.02, Max: 0.05}},    //71E ->  25% of 01-03 effects.  |  119E ->  25% of 02-05 effects.
-			structs.EffectPresence{Effect: structs.QuintuplePositivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SixtuplePositivePoints, Possible: 0.05, Amount: types.Interval{Min: 0.01, Max: 0.02}},  //71E ->   5% of 00-01 effects.  |  119E ->   5% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SubFourPoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},           //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
-			structs.EffectPresence{Effect: structs.SubThreePoints, Possible: 0.30, Amount: types.Interval{Min: 0.03, Max: 0.05}},          //71E ->  30% of 02-03 effects.  |  119E ->  30% of 04-05 effects.
-			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},            //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.SubOnePoint, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},             //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.AddOnePoint, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.25}},             //71E -> 100% of 07-17 effects.  |  119E -> 100% of 11-29 effects.
-			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 0.95, Amount: types.Interval{Min: 0.10, Max: 0.20}},            //71E ->  95% of 07-14 effects.  |  119E ->  95% of 11-23 effects.
-			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.15}},          //71E ->  50% of 03-10 effects.  |  119E ->  50% of 05-17 effects.
-			structs.EffectPresence{Effect: structs.AddFourPoints, Possible: 0.30, Amount: types.Interval{Min: 0.03, Max: 0.05}},           //71E ->  30% of 02-03 effects.  |  119E ->  30% of 04-05 effects.
-			structs.EffectPresence{Effect: structs.AddFivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},           //71E ->  10% of 00-01 effects.  |  119E ->  10% of 01-02 effects.
+			structs.EffectPresence{Effect: structs.QuintupleNegativePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}}, // "Mul-5" -> (95E: 01-02 | 218E: 02-04)
+			structs.EffectPresence{Effect: structs.QuadrupleNegativePoints, Possible: 0.40, Amount: types.Interval{Min: 0.02, Max: 0.05}}, // "Mul-4" -> (95E: 02-05 | 218E: 04-11)
+			structs.EffectPresence{Effect: structs.TripleNegativePoints, Possible: 0.70, Amount: types.Interval{Min: 0.03, Max: 0.10}},    // "Mul-3" -> (95E: 03-10 | 218E: 07-22)
+			structs.EffectPresence{Effect: structs.DoubleNegativePoints, Possible: 1.00, Amount: types.Interval{Min: 0.05, Max: 0.15}},    // "Mul-2" -> (95E: 05-14 | 218E: 11-33)
+			structs.EffectPresence{Effect: structs.DoublePositivePoints, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.20}},    // "Mul+2" -> (95E: 10-19 | 218E: 22-44)
+			structs.EffectPresence{Effect: structs.TriplePositivePoints, Possible: 0.75, Amount: types.Interval{Min: 0.08, Max: 0.15}},    // "Mul+3" -> (95E: 08-14 | 218E: 17-33)
+			structs.EffectPresence{Effect: structs.QuadruplePositivePoints, Possible: 0.50, Amount: types.Interval{Min: 0.05, Max: 0.10}}, // "Mul+4" -> (95E: 05-10 | 218E: 11-22)
+			structs.EffectPresence{Effect: structs.QuintuplePositivePoints, Possible: 0.25, Amount: types.Interval{Min: 0.03, Max: 0.05}}, // "Mul+5" -> (95E: 03-05 | 218E: 07-11)
+			structs.EffectPresence{Effect: structs.SixtuplePositivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},  // "Mul+6" -> (95E: 01-02 | 218E: 02-04)
+			structs.EffectPresence{Effect: structs.SubFourPoints, Possible: 0.25, Amount: types.Interval{Min: 0.04, Max: 0.10}},           // "Sub 4" -> (95E: 04-10 | 218E: 09-22)
+			structs.EffectPresence{Effect: structs.SubThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.07, Max: 0.15}},          // "Sub 3" -> (95E: 07-14 | 218E: 15-33)
+			structs.EffectPresence{Effect: structs.SubTwoPoints, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.20}},            // "Sub 2" -> (95E: 10-19 | 218E: 22-44)
+			structs.EffectPresence{Effect: structs.AddTwoPoints, Possible: 1.00, Amount: types.Interval{Min: 0.10, Max: 0.20}},            // "Add 2" -> (95E: 10-19 | 218E: 22-44)
+			structs.EffectPresence{Effect: structs.AddThreePoints, Possible: 0.50, Amount: types.Interval{Min: 0.07, Max: 0.15}},          // "Add 3" -> (95E: 07-14 | 218E: 15-33)
+			structs.EffectPresence{Effect: structs.AddFourPoints, Possible: 0.25, Amount: types.Interval{Min: 0.04, Max: 0.10}},           // "Add 4" -> (95E: 04-10 | 218E: 09-22)
+			structs.EffectPresence{Effect: structs.AddFivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.05}},           // "Add 5" -> (95E: 01-05 | 218E: 02-11)
 		)
 	}
 

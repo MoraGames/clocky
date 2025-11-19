@@ -18,11 +18,13 @@ type EffectPresence struct {
 var (
 	// Multiplier
 	QuintupleNegativePoints = &Effect{"Mul -5", "Event", "*", -5}
+	QuadrupleNegativePoints = &Effect{"Mul -4", "Event", "*", -4}
 	TripleNegativePoints    = &Effect{"Mul -3", "Event", "*", -3}
 	DoubleNegativePoints    = &Effect{"Mul -2", "Event", "*", -2}
 	SingleNegativePoints    = &Effect{"Mul -1", "Event", "*", -1}
 	DoublePositivePoints    = &Effect{"Mul +2", "Event", "*", 2}
 	TriplePositivePoints    = &Effect{"Mul +3", "Event", "*", 3}
+	QuadruplePositivePoints = &Effect{"Mul +4", "Event", "*", 4}
 	QuintuplePositivePoints = &Effect{"Mul +5", "Event", "*", 5}
 	SixtuplePositivePoints  = &Effect{"Mul +6", "Event", "*", 6}
 
