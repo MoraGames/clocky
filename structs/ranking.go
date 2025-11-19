@@ -25,19 +25,31 @@ type Rank struct {
 	Partecipations int
 }
 
-func GetRanking(Users map[int64]*User, scope RankScope) []Rank {
+func GetRanking(Users map[int64]*User, scope RankScope, excludeNonParticipants bool) []Rank {
 	// Generate the ranking
 	ranking := make([]Rank, 0)
 	for _, u := range Users {
 		if u != nil {
 			switch scope {
 			case RankScopeDay:
+				if excludeNonParticipants && u.DailyEventPartecipations == 0 {
+					continue
+				}
 				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.DailyPoints, u.DailyEventPartecipations})
 			case RankScopeChampionship:
+				if excludeNonParticipants && u.ChampionshipEventPartecipations == 0 {
+					continue
+				}
 				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.ChampionshipPoints, u.ChampionshipEventPartecipations})
 			case RankScopeTotal:
+				if excludeNonParticipants && u.TotalEventPartecipations == 0 {
+					continue
+				}
 				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.TotalPoints, u.TotalEventPartecipations})
 			default:
+				if u.ChampionshipEventPartecipations == 0 {
+					continue
+				}
 				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.ChampionshipPoints, u.ChampionshipEventPartecipations})
 			}
 		}

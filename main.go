@@ -161,7 +161,7 @@ func init() {
 		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 40))),
 		gocron.NewTask(func() {
 			events.CurrentChampionship.Reset(
-				structs.GetRanking(Users, structs.RankScopeChampionship),
+				structs.GetRanking(Users, structs.RankScopeChampionship, true),
 				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 			)
@@ -208,7 +208,7 @@ func main() {
 
 func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData *types.WriteMessageData, utilsVar types.Utils) {
 	// Reward the user that have won the championship
-	ranking := structs.GetRanking(Users, structs.RankScopeChampionship)
+	ranking := structs.GetRanking(Users, structs.RankScopeChampionship, true)
 	for userId := range Users {
 		if user, ok := Users[userId]; ok && user != nil {
 			// Remove the reigning leader and reigning podium effects

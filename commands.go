@@ -308,7 +308,7 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 		var povTelegramUserID int64
 		var commandOkay bool = true
 		if update.Message.CommandArguments() == "" {
-			ranking = structs.GetRanking(Users, structs.DefaultRankScope)
+			ranking = structs.GetRanking(Users, structs.DefaultRankScope, true)
 			povTelegramUserID = update.Message.From.ID
 		} else {
 			// Split the command arguments
@@ -334,11 +334,11 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 				if len(cmdArgs) == 1 {
 					switch cmdArgs[0] {
 					case string(structs.RankScopeDay):
-						ranking = structs.GetRanking(Users, structs.RankScopeDay)
+						ranking = structs.GetRanking(Users, structs.RankScopeDay, true)
 					case string(structs.RankScopeChampionship):
-						ranking = structs.GetRanking(Users, structs.RankScopeChampionship)
+						ranking = structs.GetRanking(Users, structs.RankScopeChampionship, true)
 					case string(structs.RankScopeTotal):
-						ranking = structs.GetRanking(Users, structs.RankScopeTotal)
+						ranking = structs.GetRanking(Users, structs.RankScopeTotal, false)
 					}
 					povTelegramUserID = update.Message.From.ID
 				} else if len(cmdArgs) == 2 && cmdArgs[0] == "pov" {
@@ -360,7 +360,7 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 						// Log the command failed execution
 						FinalCommandLog("User not found", update, utilsVar)
 					} else {
-						ranking = structs.GetRanking(Users, structs.DefaultRankScope)
+						ranking = structs.GetRanking(Users, structs.DefaultRankScope, true)
 						povTelegramUserID = userId
 					}
 				} else if len(cmdArgs) == 3 && (cmdArgs[0] == string(structs.RankScopeDay) || cmdArgs[0] == string(structs.RankScopeChampionship) || cmdArgs[0] == string(structs.RankScopeTotal)) && cmdArgs[1] == "pov" {
@@ -384,11 +384,11 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 					} else {
 						switch cmdArgs[0] {
 						case string(structs.RankScopeDay):
-							ranking = structs.GetRanking(Users, structs.RankScopeDay)
+							ranking = structs.GetRanking(Users, structs.RankScopeDay, true)
 						case string(structs.RankScopeChampionship):
-							ranking = structs.GetRanking(Users, structs.RankScopeChampionship)
+							ranking = structs.GetRanking(Users, structs.RankScopeChampionship, true)
 						case string(structs.RankScopeTotal):
-							ranking = structs.GetRanking(Users, structs.RankScopeTotal)
+							ranking = structs.GetRanking(Users, structs.RankScopeTotal, false)
 						}
 						povTelegramUserID = userId
 					}
