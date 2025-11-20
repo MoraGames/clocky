@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/MoraGames/clockyuwu/events"
+	"github.com/MoraGames/clockyuwu/internal/app"
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/MoraGames/clockyuwu/structs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -209,7 +210,7 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 				"- /reset: Force the execution of a specific Reset() function.\n",
 				"- /update: Update the value of a data structure.",
 				"- /send: Send a message to a specific user.",
-			}, utilsVar.Config.Application.Name, utilsVar.Config.Application.Version),
+			}, app.Name, app.Version),
 		)
 		msg.ReplyToMessageID = update.Message.MessageID
 		message, error := dataVar.Bot.Send(msg)
@@ -671,7 +672,7 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 				"Once the bot is added, the game mainly (but not exclusively) involves sending messages in the \"hh:mm\" format at certain times of the day, in exchange for valuable points.",
 				"The person who has earned the most points at the end of the championship will be the new Clocky Champion!\n",
 				"Use /help to get a list of all commands or /credits for more information about the project.\n\n- %v, a bot from @MoraGames.",
-			}, utilsVar.Config.Application.Name, utilsVar.Config.Application.Name),
+			}, app.Name, app.Version),
 		)
 		SendMessage(msg, update, dataVar, utilsVar)
 		// Log the command executed successfully

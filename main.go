@@ -13,6 +13,7 @@ import (
 
 	"github.com/MoraGames/clockyuwu/config"
 	"github.com/MoraGames/clockyuwu/events"
+	"github.com/MoraGames/clockyuwu/internal/app"
 	"github.com/MoraGames/clockyuwu/pkg/logger"
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/MoraGames/clockyuwu/pkg/utils"
@@ -24,22 +25,22 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var App utils.Application
-var AppEnvFlag string
+var App app.Application
+var envModeFlag string
 
 func init() {
 	//define the flags and their aliases
-	flag.StringVar(&AppEnvFlag, "appenv", "", "Select the environment to use (matches .env.<appenv>)")
-	flag.StringVar(&AppEnvFlag, "env", "", "Alias of \"appenv\"")
+	flag.StringVar(&envModeFlag, "envmode", "", "Select the environment to use (matches .env.<envmode>)")
+	flag.StringVar(&envModeFlag, "env", "", "Alias of \"envmode\"")
 }
 
 func main() {
 	//get the configurations
 	flag.Parse()
-	appEnvMode := config.ResolveEnvMode(AppEnvFlag)
+	App.EnvMode = config.ResolveEnvMode(envModeFlag)
 
 	var err error
-	App.Config, err = config.NewConfig(appEnvMode)
+	App.Config, err = config.NewConfig(App.EnvMode)
 	if err != nil {
 		log.Fatalln(err)
 	}

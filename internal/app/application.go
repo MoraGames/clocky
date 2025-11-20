@@ -1,4 +1,4 @@
-package utils
+package app
 
 import (
 	"github.com/MoraGames/clockyuwu/config"
@@ -7,7 +7,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	Name    = "Clocky"
+	Version = "0.4.1"
+)
+
 type Application struct {
+	EnvMode         string
 	Config          *config.Config
 	Logger          *logrus.Logger
 	BotAPI          *tgbotapi.BotAPI

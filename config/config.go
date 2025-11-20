@@ -10,13 +10,7 @@ import (
 
 type (
 	Config struct {
-		Application `env-required:"true" yaml:"application"`
-		Logger      `env-required:"true" yaml:"logger"`
-	}
-
-	Application struct {
-		Name    string `env-required:"true" yaml:"name"    env:"APP_NAME"`
-		Version string `env-required:"true" yaml:"version" env:"APP_VERSION"`
+		Logger `env-required:"true" yaml:"logger"`
 	}
 
 	Logger struct {
