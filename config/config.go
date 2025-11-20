@@ -36,10 +36,28 @@ type (
 	}
 )
 
-func NewConfig() (*Config, error) {
+const (
+	DefaultEnvMode = "dev"
+)
+
+func ResolveEnvMode(appEnvFlag string) string {
+	if appEnvFlag != "" {
+		return appEnvFlag
+	}
+	if envMode, exist := os.LookupEnv("APP_ENV"); exist {
+		return envMode
+	}
+	return DefaultEnvMode
+}
+
+func NewConfig(envMode string) (*Config, error) {
 	cfg := &Config{}
 
-	if _, err := os.Stat("./config/.env"); err == nil {
+	if _, err := os.Stat(fmt.Sprintf("./config/.env.%s", envMode)); err == nil {
+		if err := godotenv.Load(fmt.Sprintf("./config/.env.%s", envMode)); err != nil {
+			return nil, err
+		}
+	} else if _, err := os.Stat("./config/.env"); err == nil {
 		if err := godotenv.Load("./config/.env"); err != nil {
 			return nil, err
 		}

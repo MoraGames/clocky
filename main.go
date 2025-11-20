@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"math"
@@ -24,11 +25,21 @@ import (
 )
 
 var App utils.Application
+var AppEnvFlag string
 
 func init() {
+	//define the flags and their aliases
+	flag.StringVar(&AppEnvFlag, "appenv", "", "Select the environment to use (matches .env.<appenv>)")
+	flag.StringVar(&AppEnvFlag, "env", "", "Alias of \"appenv\"")
+}
+
+func main() {
 	//get the configurations
+	flag.Parse()
+	appEnvMode := config.ResolveEnvMode(AppEnvFlag)
+
 	var err error
-	App.Config, err = config.NewConfig()
+	App.Config, err = config.NewConfig(appEnvMode)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -185,9 +196,8 @@ func init() {
 	App.Logger.WithFields(logrus.Fields{
 		"gcJobs": utils.StringifyJobs(App.GocronScheduler.Jobs()),
 	}).Info("GoCron jobs set")
-}
 
-func main() {
+	//try to reload the status from files
 	reloadStatus(
 		[]types.Reload{
 			{FileName: "files/sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
@@ -200,9 +210,20 @@ func main() {
 		},
 		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
+
+	//manage data migrations
 	manageMigrations()
 
+	//start the scheduler and run the bot
 	App.GocronScheduler.Start()
+	for _, job := range App.GocronScheduler.Jobs() {
+		t, err := job.NextRun()
+		if err != nil {
+			fmt.Println("DIOCAZZAFA")
+		}
+		fmt.Printf("Job: %v - Next run: %v\n", job.Name(), t)
+	}
+	fmt.Println(App.GocronScheduler.Jobs())
 	run(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: App.BotAPI, Updates: App.Updates})
 	App.GocronScheduler.Shutdown()
 }
