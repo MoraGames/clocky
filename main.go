@@ -44,6 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Println("Configurations loaded for environment:", App.EnvMode)
 
 	//setup the logger
 	App.Logger = logger.NewLogger(
