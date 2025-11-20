@@ -218,14 +218,6 @@ func main() {
 
 	//start the scheduler and run the bot
 	App.GocronScheduler.Start()
-	for _, job := range App.GocronScheduler.Jobs() {
-		t, err := job.NextRun()
-		if err != nil {
-			fmt.Println("DIOCAZZAFA")
-		}
-		fmt.Printf("Job: %v - Next run: %v\n", job.Name(), t)
-	}
-	fmt.Println(App.GocronScheduler.Jobs())
 	run(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: App.BotAPI, Updates: App.Updates})
 	App.GocronScheduler.Shutdown()
 }
@@ -479,20 +471,15 @@ func UpdateChampionshipResetCronjob(utils types.Utils) {
 		}),
 		gocron.WithName("ChampionshipResetCronjob"),
 		gocron.WithStartAt(gocron.WithStartDateTimePast(
-			events.CurrentChampionship.StartDate,
+			events.CurrentChampionship.StartDate.In(time.Local),
 		)),
 	)
 
-	jobNextRun, err := job.NextRun()
+	_, err = job.NextRun()
 	if err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Warn("Error while getting next run time of ChampionshipResetCronjob")
 		return
 	}
-	App.Logger.WithFields(logrus.Fields{
-		"name": events.CurrentChampionship.Name,
-		"date": events.CurrentChampionship.StartDate,
-		"next": jobNextRun,
-	}).Info("Championship schedule restored from reload")
 }

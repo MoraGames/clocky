@@ -24,5 +24,6 @@
 - ~~Add and rebalance the bonus given by Activity Streak (one for each 7 days: 7, 14, 21, 28, ...)~~
 
 **Other:**
+- [!] TODO: Resolve cronjob 2-weekly WithStartDateTimePast() execute instantly.
 - Implements summary message with some stats on daily time base.
 - Implements summary message with some stats on championship time base.
