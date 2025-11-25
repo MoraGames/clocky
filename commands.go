@@ -6,11 +6,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/internal/app"
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/MoraGames/clockyuwu/structs"
+	"github.com/go-co-op/gocron/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -275,6 +277,54 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 				// Log the command failed execution
 				FinalCommandLog("Wrong command syntax", update, utilsVar)
 			}
+		}
+	case "nextrun":
+		// Split the command arguments
+		cmdArgs := strings.Split(update.Message.CommandArguments(), " ")
+		if len(cmdArgs) != 1 {
+			// Respond with a message indicating that the command arguments are wrong
+			SendWrongCommandSyntaxMessage("/list <cronjob>", update, dataVar, utilsVar)
+			// Log the command failed execution
+			FinalCommandLog("Wrong command syntax", update, utilsVar)
+		} else {
+			// Check if the scheduler is initialized
+			if App.GocronScheduler == nil {
+				App.Logger.Error("Scheduler not initialized before reload")
+				FinalCommandLog("Scheduler not initialized", update, utilsVar)
+				return
+			}
+
+			// Find the job
+			var found bool
+			var job gocron.Job
+			for _, j := range App.GocronScheduler.Jobs() {
+				if j.Name() == cmdArgs[0] {
+					found = true
+					job = j
+					break
+				}
+			}
+			if !found {
+				App.Logger.Error(cmdArgs[0] + " not found in scheduler")
+				FinalCommandLog("cronjob not found in scheduler", update, utilsVar)
+				return
+			}
+
+			nextRun, err := job.NextRun()
+			if err != nil {
+				App.Logger.WithFields(logrus.Fields{
+					"err": err,
+				}).Error("Error while getting next run time for job " + cmdArgs[0])
+				FinalCommandLog("Error while getting next run time", update, utilsVar)
+				return
+			}
+
+			// Respond with the next run time of the job
+			text := "Il prossimo run di \"" + cmdArgs[0] + "\" è previsto per:\n" + nextRun.In(time.Local).Format("02-01-2006 15:04:05")
+			SendMessage(tgbotapi.NewMessage(update.Message.Chat.ID, text), update, dataVar, utilsVar)
+			// Log the command executed successfully
+			FinalCommandLog("Gocron.NextRun sent", update, utilsVar)
+			SuccessResponseLog(update, utilsVar)
 		}
 	case "ping":
 		// Respond with a "pong" message. Useful for checking if the bot is online
