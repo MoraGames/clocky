@@ -390,20 +390,32 @@ func ManageChampionshipRewardMessage(userId int64, rankPosition int, writeMsgDat
 func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) []string {
 	// Generate the reward message informations
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	randomSet := events.Events.Stats.EnabledSets[r.Intn(events.Events.Stats.EnabledSetsNum)]
-	setEvents := events.EventsOf(events.SetsFunctions[randomSet])
-	numEffects := 0
-	for _, event := range setEvents {
-		numEffects += len(event.Effects)
+
+	var availableSets, choosedSets []string
+	var setsEvents [][]*events.Event
+	availableSets = append(availableSets, events.Events.Stats.EnabledSets...)
+	for (len(choosedSets) < 3 && len(choosedSets) < len(availableSets)) || (len(setsEvents) < 20 && len(choosedSets) < len(availableSets)) {
+		choosedSets = append(choosedSets, availableSets[r.Intn(events.Events.Stats.EnabledSetsNum-len(choosedSets))])
+		setsEvents = append(setsEvents, events.EventsOf(events.SetsFunctions[choosedSets[len(choosedSets)-1]]))
+	}
+	var numEffects []int
+	for _, setEvents := range setsEvents {
+		for _, event := range setEvents {
+			numEffects = append(numEffects, len(event.Effects))
+		}
 	}
 
 	// Generate the reward message
-	text := fmt.Sprintf("Congratulations %v!\nYou have won %v/%v events you entered and for this you are rewarded with an hint for the new day.\nHere are some of the events and relative effects that are surely active in the next 24 hours:\n\nEvents of the Set %q (%v events with %v effects):\n", Users[userId].UserName, Users[userId].DailyEventWins, Users[userId].DailyEventPartecipations, randomSet, len(setEvents), numEffects)
-	for _, event := range setEvents {
-		text += fmt.Sprintf(" | %q", event.Name)
-		eventEffects := event.StringifyEffects()
-		if eventEffects != "[]" {
-			text += fmt.Sprintf("  with %v", eventEffects)
+	text := fmt.Sprintf("Congratulations %v!\nYou have won %v events and for this you are rewarded with an hint for the new day.\nHere are some of the events and relative effects that are surely active in the next 24 hours:\n\n", Users[userId].UserName, Users[userId].DailyEventWins)
+	for i, setEvents := range setsEvents {
+		text += fmt.Sprintf("Events of the Set %q (%v events with %v effects):\n", choosedSets[i], len(setEvents), numEffects[i])
+		for _, event := range setEvents {
+			text += fmt.Sprintf(" | %q", event.Name)
+			eventEffects := event.StringifyEffects()
+			if eventEffects != "[]" {
+				text += fmt.Sprintf("  with %v", eventEffects)
+			}
+			text += "\n"
 		}
 		text += "\n"
 	}
@@ -418,7 +430,7 @@ func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData
 		}).Error("Error while sending message")
 	}
 
-	return []string{randomSet}
+	return choosedSets
 }
 
 func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text string) {
