@@ -142,7 +142,7 @@ func main() {
 
 	//define the default cron jobs for the application scheduler
 	if _, err = App.GocronScheduler.NewJob(
-		gocron.DailyJob(2, gocron.NewAtTimes(gocron.NewAtTime(23, 59, 50))),
+		gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(23, 59, 30))),
 		gocron.NewTask(func() {
 			// Get the number of enabled events for the ended day
 			dailyEnabledEvents := events.Events.Stats.EnabledEventsNum
@@ -171,7 +171,7 @@ func main() {
 		}).Error("GoCron job not set")
 	}
 	if _, err = App.GocronScheduler.NewJob(
-		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 40))),
+		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Tuesday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 25))),
 		gocron.NewTask(func() {
 			events.CurrentChampionship.Reset(
 				structs.GetRanking(Users, structs.RankScopeChampionship, true),
@@ -231,7 +231,7 @@ func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData 
 			Users[userId].RemoveEffect(structs.ReigningLeader)
 
 			// Check if the user is the winner of the championship
-			if ranking[0].UserTelegramID == userId {
+			if len(ranking) > 0 && ranking[0].UserTelegramID == userId {
 				// Update the data structure of deserving users
 				Users[userId].TotalChampionshipWins++
 				Users[userId].AddEffect(structs.ReigningLeader)
@@ -239,12 +239,6 @@ func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData 
 			// Check if the user is in the top 3 of the ranking
 			for r := 0; r < 3 && r < len(ranking); r++ {
 				if ranking[r].UserTelegramID == userId {
-
-					if r == 0 {
-						Users[userId].TotalChampionshipWins++
-						Users[userId].AddEffect(structs.ReigningLeader)
-					}
-
 					// Reward the user
 					ManageChampionshipRewardMessage(userId, r, writeMsgData, utilsVar)
 				}
@@ -459,10 +453,21 @@ func UpdateChampionshipResetCronjob(utils types.Utils) {
 	}
 
 	// Update the cronjob
+	champStartDate := events.CurrentChampionship.StartDate.In(time.Local)
 	job, err := App.GocronScheduler.Update(
 		jobID,
-		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 40))),
+		gocron.WeeklyJob(1, gocron.NewWeekdays(time.Tuesday), gocron.NewAtTimes(gocron.NewAtTime(uint(champStartDate.Hour()), uint(champStartDate.Minute()), uint(champStartDate.Second())))),
 		gocron.NewTask(func() {
+			App.Logger.Info("Championship reset (updated) cronjob triggered")
+
+			events.CurrentChampionship.Reset(
+				structs.GetRanking(Users, structs.RankScopeChampionship, true),
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+			)
+
+			// Reward the users based on their performance
+			// Then reset the championship user's stats
 			ChampionshipUserRewardAndReset(
 				Users,
 				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},

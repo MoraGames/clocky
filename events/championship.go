@@ -15,7 +15,7 @@ var (
 )
 
 func FirstWeekdayFrom(start time.Time, weekday time.Weekday) time.Time {
-	newDate := time.Date(start.Year(), start.Month(), start.Day(), 23, 59, 50, 0, start.Location())
+	newDate := time.Date(start.Year(), start.Month(), start.Day(), 23, 59, 25, 0, start.Location())
 	for newDate.Weekday() != weekday {
 		newDate = newDate.AddDate(0, 0, 1)
 	}
