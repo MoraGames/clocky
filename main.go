@@ -171,7 +171,7 @@ func main() {
 		}).Error("GoCron job not set")
 	}
 	if _, err = App.GocronScheduler.NewJob(
-		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Tuesday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 25))),
+		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 25))),
 		gocron.NewTask(func() {
 			events.CurrentChampionship.Reset(
 				structs.GetRanking(Users, structs.RankScopeChampionship, true),
@@ -468,7 +468,7 @@ func UpdateChampionshipResetCronjob(utils types.Utils) {
 	champStartDate := events.CurrentChampionship.StartDate.In(time.Local)
 	job, err := App.GocronScheduler.Update(
 		jobID,
-		gocron.WeeklyJob(1, gocron.NewWeekdays(time.Tuesday), gocron.NewAtTimes(gocron.NewAtTime(uint(champStartDate.Hour()), uint(champStartDate.Minute()), uint(champStartDate.Second())))),
+		gocron.WeeklyJob(1, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(uint(champStartDate.Hour()), uint(champStartDate.Minute()), uint(champStartDate.Second())))),
 		gocron.NewTask(func() {
 			App.Logger.Info("Championship reset (updated) cronjob triggered")
 
