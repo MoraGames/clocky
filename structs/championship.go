@@ -107,7 +107,7 @@ func WriteChampionshipResetMessage(curChamp, prevChamp *Championship, writeMsgDa
 	var improvedPlayers, wrosenedPlayers, newPlayers []Rank
 
 	var text string
-	if curChamp.FinalRanking == nil || len(curChamp.FinalRanking) == 0 {
+	if len(curChamp.FinalRanking) == 0 {
 		text = "Il campionato è giunto al termine, ma nessun giocatore ha partecipato questa volta.\n\nForza giocatori! Vogliamo vedere più duelli nel campionato che sta per iniziare!"
 	} else {
 		for curPosition, curRank := range curChamp.FinalRanking {
