@@ -11,6 +11,7 @@ import (
 	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/internal/app"
 	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/MoraGames/clockyuwu/pkg/utils"
 	"github.com/MoraGames/clockyuwu/structs"
 	"github.com/go-co-op/gocron/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -747,38 +748,26 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 			// Send the message with user's stats
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Non hai ancora partecipato a nessun evento.")
 			if u != nil {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID,
-					tgbotapi.EscapeText(tgbotapi.ModeMarkdownV2, ComposeMessage(
-						// []string{
-						// 	"Le tue statistiche sono:\n\n",
-						// 	"Statistiche odierne:\n",
-						// 	"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-						// 	"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
-						// 	"Statistiche totali:\n",
-						// 	"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-						// 	"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
-						// 	"Effetti attivi: %v",
-						// },
-						// u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, u.DailyEventPartecipations-u.DailyEventWins,
-						// float64(u.DailyPoints)/float64(u.DailyEventPartecipations), float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations-u.DailyEventWins),
-						// u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.TotalEventPartecipations-u.TotalEventWins,
-						// float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins),
-						//u.StringifyEffects(),
-						[]string{
-							"📊 __**Le tue statistiche sono:**__\n\n",
-							"**Statistiche di oggi:**\n",
-							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
-							"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-							"**Statistiche del campionato:**\n",
-							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
-							"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-						},
-						u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins,
-						float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations),
-						u.ChampionshipPoints, u.ChampionshipEventPartecipations, u.ChampionshipEventWins,
-						float64(u.ChampionshipPoints)/float64(u.ChampionshipEventWins), float64(u.ChampionshipEventWins)/float64(u.ChampionshipEventPartecipations),
-					)),
-				)
+				msgEntities, cleanTxt := utils.ParseToEntities(ComposeMessage(
+					[]string{
+						"📊 __**Le tue statistiche sono:**__\n\n",
+						"**Statistiche di oggi:**\n",
+						"- Punti: %v\n- ~~Partecipazioni: %v\n- Vittorie~~: %v\n\n",
+						"- ~~Punti/Vittorie~~: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+						"**Statistiche del campionato:**\n",
+						"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
+						"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+						"**Statistiche di sempre:**\n",
+						"- Streak partecipazioni: %v\n- Streak attività: %v\n\n",
+					},
+					u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins,
+					float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations),
+					u.ChampionshipPoints, u.ChampionshipEventPartecipations, u.ChampionshipEventWins,
+					float64(u.ChampionshipPoints)/float64(u.ChampionshipEventWins), float64(u.ChampionshipEventWins)/float64(u.ChampionshipEventPartecipations),
+					u.DailyPartecipationStreak, u.DailyActivityStreak,
+				))
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, cleanTxt)
+				msg.Entities = msgEntities
 			}
 			SendMessage(msg, update, dataVar, utilsVar)
 			// Log the command executed successfully
@@ -818,67 +807,58 @@ func manageCommands(update tgbotapi.Update, utilsVar types.Utils, dataVar types.
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("%v non ha ancora partecipato a nessun evento.", username))
 					if u != nil {
 						if len(cmdArgs) == 1 {
-							msg = tgbotapi.NewMessage(update.Message.Chat.ID,
-								tgbotapi.EscapeText(tgbotapi.ModeMarkdownV2, ComposeMessage(
-									// []string{
-									// 	"Le statistiche di %v sono:\n\n",
-									// 	"Statistiche odierne:\n",
-									// 	"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-									// 	"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
-									// 	"Statistiche totali:\n",
-									// 	"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-									// 	"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n- Vittorie/Sconfitte: %.2f\n\n",
-									// 	"Effetti attivi: %v",
-									// },
-									// u.UserName,
-									// u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, u.DailyEventPartecipations-u.DailyEventWins,
-									// float64(u.DailyPoints)/float64(u.DailyEventPartecipations), float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations-u.DailyEventWins),
-									// u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.TotalEventPartecipations-u.TotalEventWins,
-									// float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations-u.TotalEventWins),
-									// u.StringifyEffects(),
-									[]string{
-										"📊 __**Le tue statistiche sono:**__\n\n",
-										"**Statistiche di oggi:**\n",
-										"- Punti: %v\n- Partecipazioni: %v\n- Vittorie:%v\n\n",
-										"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-										"**Statistiche del campionato:**\n",
-										"- Punti: %v\n- Partecipazioni: %v\n- Vittorie:\n\n",
-										"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-									},
-									u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins,
-									float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations),
-									u.ChampionshipPoints, u.ChampionshipEventPartecipations, u.ChampionshipEventWins,
-									float64(u.ChampionshipPoints)/float64(u.ChampionshipEventWins), float64(u.ChampionshipEventWins)/float64(u.ChampionshipEventPartecipations),
-								)),
-							)
+							msgEntities, cleanTxt := utils.ParseToEntities(ComposeMessage(
+								[]string{
+									"📊 __**Le statistiche di %v sono:**__\n\n",
+									"**Statistiche di oggi:**\n",
+									"- Punti: %v\n- ~~Partecipazioni: %v\n- Vittorie~~: %v\n\n",
+									"- ~~Punti/Vittorie~~: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+									"**Statistiche del campionato:**\n",
+									"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
+									"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+									"**Statistiche di sempre:**\n",
+									"- Streak partecipazioni: %v\n- Streak attività: %v\n\n",
+								},
+								username,
+								u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins,
+								float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations),
+								u.ChampionshipPoints, u.ChampionshipEventPartecipations, u.ChampionshipEventWins,
+								float64(u.ChampionshipPoints)/float64(u.ChampionshipEventWins), float64(u.ChampionshipEventWins)/float64(u.ChampionshipEventPartecipations),
+								u.DailyPartecipationStreak, u.DailyActivityStreak,
+							))
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, cleanTxt)
+							msg.Entities = msgEntities
 						} else {
-							msg = tgbotapi.NewMessage(update.Message.Chat.ID,
-								tgbotapi.EscapeText(tgbotapi.ModeMarkdownV2, ComposeMessage(
-									[]string{
-										"📊 __**Le tue statistiche sono:**__\n\n",
-										"**Statistiche di oggi:**\n",
-										"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-										"- Punti/Partecipazioni: %v\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-										"**Statistiche del campionato:**\n",
-										"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-										"- Punti/Partecipazioni: %v\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-										"**Statistiche di sempre:**\n",
-										"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-										"- Punti/Partecipazioni: %v\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-										"- Campionati svolti: %v\n- Campionati vinti: %v\n\n",
-										"**Effetti attivi:**\n",
-										"- %v",
-									},
-									u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, u.DailyEventPartecipations-u.DailyEventWins,
-									float64(u.DailyPoints)/float64(u.DailyEventPartecipations), float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations),
-									u.ChampionshipPoints, u.ChampionshipEventPartecipations, u.ChampionshipEventWins, u.ChampionshipEventPartecipations-u.ChampionshipEventWins,
-									float64(u.ChampionshipPoints)/float64(u.ChampionshipEventPartecipations), float64(u.ChampionshipPoints)/float64(u.ChampionshipEventWins), float64(u.ChampionshipEventWins)/float64(u.ChampionshipEventPartecipations),
-									u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.TotalEventPartecipations-u.TotalEventWins,
-									float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations),
-									u.TotalChampionshipPartecipations, u.TotalChampionshipWins,
-									u.StringifyEffects(false),
-								)),
-							)
+							msgEntities, cleanTxt := utils.ParseToEntities(ComposeMessage(
+								[]string{
+									"📊 __**Le statistiche di %v sono:**__\n\n",
+									"**Statistiche di oggi:**\n",
+									"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
+									"- Punti/Partecipazioni: %v\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+									"**Statistiche del campionato:**\n",
+									"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
+									"- Punti/Partecipazioni: %v\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+									"**Statistiche di sempre:**\n",
+									"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
+									"- Punti/Partecipazioni: %v\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+									"- Campionati svolti: %v\n- Campionati vinti: %v\n",
+									"- Streak partecipazioni: %v\n- Streak attività: %v\n\n",
+									"**Effetti attivi:**\n",
+									"- %v",
+								},
+								username,
+								u.DailyPoints, u.DailyEventPartecipations, u.DailyEventWins, u.DailyEventPartecipations-u.DailyEventWins,
+								float64(u.DailyPoints)/float64(u.DailyEventPartecipations), float64(u.DailyPoints)/float64(u.DailyEventWins), float64(u.DailyEventWins)/float64(u.DailyEventPartecipations),
+								u.ChampionshipPoints, u.ChampionshipEventPartecipations, u.ChampionshipEventWins, u.ChampionshipEventPartecipations-u.ChampionshipEventWins,
+								float64(u.ChampionshipPoints)/float64(u.ChampionshipEventPartecipations), float64(u.ChampionshipPoints)/float64(u.ChampionshipEventWins), float64(u.ChampionshipEventWins)/float64(u.ChampionshipEventPartecipations),
+								u.TotalPoints, u.TotalEventPartecipations, u.TotalEventWins, u.TotalEventPartecipations-u.TotalEventWins,
+								float64(u.TotalPoints)/float64(u.TotalEventPartecipations), float64(u.TotalPoints)/float64(u.TotalEventWins), float64(u.TotalEventWins)/float64(u.TotalEventPartecipations),
+								u.TotalChampionshipPartecipations, u.TotalChampionshipWins,
+								u.DailyPartecipationStreak, u.DailyActivityStreak,
+								u.StringifyEffects(false),
+							))
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, cleanTxt)
+							msg.Entities = msgEntities
 						}
 					}
 					SendMessage(msg, update, dataVar, utilsVar)
