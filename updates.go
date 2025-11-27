@@ -94,6 +94,9 @@ func run(utils types.Utils, data types.Data) {
 					// Add the user to the data structure if they have never participated before
 					if _, ok := Users[update.Message.From.ID]; !ok {
 						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+					} else if Users[update.Message.From.ID].UserName != update.Message.From.UserName {
+						// Update the username in case it has changed
+						Users[update.Message.From.ID].UserName = update.Message.From.UserName
 					}
 
 					// Check (and eventually update) the user effects
