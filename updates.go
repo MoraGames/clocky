@@ -92,18 +92,19 @@ func run(utils types.Utils, data types.Data) {
 				// Check if the user has already partecipated
 				if event.Activation == nil {
 					// Add the user to the data structure if they have never participated before
-					if _, ok := Users[update.Message.From.ID]; !ok {
-						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
-					} else if Users[update.Message.From.ID].UserName != update.Message.From.UserName {
+					user, exist := Users[update.Message.From.ID]
+					if !exist {
+						user = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+					} else if user.UserName != update.Message.From.UserName {
 						// Update the username in case it has changed
-						Users[update.Message.From.ID].UserName = update.Message.From.UserName
+						user.UserName = update.Message.From.UserName
 					}
 
 					// Check (and eventually update) the user effects
 					UpdateUserEffects(update.Message.From.ID)
 
 					// Activate the event and calculate the delay from o' clock
-					event.Activate(Users[update.Message.From.ID], curTime, update.Message.Time(), event.Points)
+					event.Activate(user, curTime, update.Message.Time(), event.Points)
 					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
 
 					if event.Activation.ArrivedAt.Second() == 58 {
@@ -114,7 +115,7 @@ func run(utils types.Utils, data types.Data) {
 
 					// Apply all effects
 					effectText := ""
-					curEffects := append(event.Effects, Users[update.Message.From.ID].Effects...)
+					curEffects := append(event.Effects, user.Effects...)
 					if len(curEffects) != 0 {
 						effectText += " grazie agli effetti:\n"
 						for i := 0; i < len(curEffects); i++ {
@@ -167,17 +168,20 @@ func run(utils types.Utils, data types.Data) {
 
 					// Add points to the user if they have never participated the event before
 					if !event.HasPartecipated(update.Message.From.ID) {
-						event.Partecipate(Users[update.Message.From.ID], curTime)
-						Users[update.Message.From.ID].TotalPoints += event.Activation.EarnedPoints
-						Users[update.Message.From.ID].TotalEventPartecipations++
-						Users[update.Message.From.ID].TotalEventWins++
-						Users[update.Message.From.ID].ChampionshipPoints += event.Activation.EarnedPoints
-						Users[update.Message.From.ID].ChampionshipEventPartecipations++
-						Users[update.Message.From.ID].ChampionshipEventWins++
-						Users[update.Message.From.ID].DailyPoints += event.Activation.EarnedPoints
-						Users[update.Message.From.ID].DailyEventPartecipations++
-						Users[update.Message.From.ID].DailyEventWins++
+						event.Partecipate(user, curTime)
+						user.TotalPoints += event.Activation.EarnedPoints
+						user.TotalEventPartecipations++
+						user.TotalEventWins++
+						user.ChampionshipPoints += event.Activation.EarnedPoints
+						user.ChampionshipEventPartecipations++
+						user.ChampionshipEventWins++
+						user.DailyPoints += event.Activation.EarnedPoints
+						user.DailyEventPartecipations++
+						user.DailyEventWins++
 					}
+
+					// Update the user in the data structure
+					Users[update.Message.From.ID] = user
 				} else {
 					// Calculate the delay from o' clock and winner user
 					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
@@ -197,16 +201,23 @@ func run(utils types.Utils, data types.Data) {
 					}).Debug("Event already activated")
 
 					// Add the user to the data structure if they have never participated before
-					if _, ok := Users[update.Message.From.ID]; !ok {
-						Users[update.Message.From.ID] = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+					user, exist := Users[update.Message.From.ID]
+					if !exist {
+						user = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+					} else if user.UserName != update.Message.From.UserName {
+						// Update the username in case it has changed
+						user.UserName = update.Message.From.UserName
 					}
 					// Add partecipations to the user if they have never participated the event before
 					if !event.HasPartecipated(update.Message.From.ID) {
-						event.Partecipate(Users[update.Message.From.ID], curTime)
-						Users[update.Message.From.ID].TotalEventPartecipations++
-						Users[update.Message.From.ID].ChampionshipEventPartecipations++
-						Users[update.Message.From.ID].DailyEventPartecipations++
+						event.Partecipate(user, curTime)
+						user.TotalEventPartecipations++
+						user.ChampionshipEventPartecipations++
+						user.DailyEventPartecipations++
 					}
+
+					// Update the user in the data structure
+					Users[update.Message.From.ID] = user
 				}
 
 				// Save the users file with updated Users data structure
