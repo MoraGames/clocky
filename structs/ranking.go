@@ -1,7 +1,6 @@
 package structs
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -66,8 +65,7 @@ func GetRanking(Users map[int64]*User, scope RankScope, excludeNonParticipants b
 		},
 	)
 
-	fmt.Printf(">>>>>>> Users: %+v\n", Users)
-	fmt.Printf(">>>>>>> Generated ranking: %+v\n", ranking)
+	// fmt.Printf("\n>>> DEBUG <<<\n |- %+vq (%v)\n |- %+v (%v)\n\n", Users, len(Users), ranking, len(ranking))
 
 	return ranking
 }
