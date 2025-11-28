@@ -385,7 +385,7 @@ func init() {
 					}
 					rankingString := ""
 					for i, r := range ranking {
-						rankingString += fmt.Sprintf("**%v] %v:** %v %%%%(-%v)%%%%\n", i+1, r.Username, r.Points, povPoints-r.Points)
+						rankingString += fmt.Sprintf("**%v] %v:** %v %%%%(%+d)%%%%\n", i+1, r.Username, r.Points, r.Points-povPoints)
 					}
 
 					// Send the message
