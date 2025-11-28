@@ -76,8 +76,8 @@ func run(utils types.Utils, data types.Data) {
 			eventKey := update.Message.Time().Format("15:04")
 
 			// Check if the message is a command (and ignore other actions)
-			if update.Message.IsCommand() {
-				manageCommands(update, utils, data)
+			if types.IsCommand(update.Message) {
+				manageCommands(update)
 				continue
 			}
 
