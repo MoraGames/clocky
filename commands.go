@@ -35,7 +35,7 @@ func init() {
 	Commands = map[string]Command{
 		"alias": {
 			Name:             "alias",
-			ShortDescription: "Mostra la lista dei vecchi nomi degli schemi",
+			ShortDescription: "Mostra la lista di tutti gli schemi e dei loro vecchi nomi",
 			LongDescription:  "Mostra la lista di tutti gli schemi disponibili in gioco, per ciascuno di essi indica (se disponibile) il vecchio nome che rispecchiava il pattern dello schema.",
 			Category:         "di gioco",
 			Syntax:           "/alias",
@@ -58,7 +58,7 @@ func init() {
 		},
 		"credits": {
 			Name:             "credits",
-			ShortDescription: "Mostra i crediti del bot",
+			ShortDescription: "Mostra informazioni sul progetto e il suo autore",
 			LongDescription:  "Fornisce informazioni sul bot e il suo scopo, link utili dell'autore e del progetto oltre ai ringraziamenti speciali.",
 			Category:         "generali",
 			Syntax:           "/credits",
@@ -455,28 +455,31 @@ func init() {
 							continue
 						}
 
-						if category == "championship" {
-							if action == "reset" {
+						switch category {
+						case "championship":
+							switch action {
+							case "reset":
 								events.CurrentChampionship.Reset(
 									structs.GetRanking(Users, structs.RankScopeChampionship, true),
 									&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 									types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 								)
-							} else if action == "rewards" {
+							case "rewards":
 								ChampionshipUserRewardAndReset(
 									Users,
 									&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 									types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 								)
 							}
-						} else if category == "events" {
-							if action == "reset" {
+						case "events":
+							switch action {
+							case "reset":
 								events.Events.Reset(
 									true,
 									&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 									types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 								)
-							} else if action == "rewards" {
+							case "rewards":
 								DailyUserRewardAndReset(
 									Users,
 									dailyEnabledEvents,
@@ -493,7 +496,7 @@ func init() {
 		},
 		"stats": {
 			Name:             "stats",
-			ShortDescription: "Mostra le statistiche di gioco",
+			ShortDescription: "Mostra le statistiche dei giocatori",
 			LongDescription:  "Fornisce una panoramica delle statistiche di gioco dell'utente indicato in forma classica oppure in forma estesa. Se non viene specificato alcun utente, verranno mostrate le statistiche classiche dell'utente che ha inviato il comando.",
 			Category:         "di gioco",
 			Syntax:           "/stats [username [\"expand\"]]",
