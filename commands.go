@@ -45,7 +45,7 @@ func init() {
 					sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "Nessuno schema trovato."), msg.MessageID)
 					return nil
 				}
-				rawText := "Nome nuovo => %%Nome vecchio%%\n\n"
+				rawText := "**Nome nuovo => %%Nome vecchio%%**\n\n"
 				for _, set := range events.Sets {
 					rawText += fmt.Sprintf("%v => %%%%%v%%%%\n", set.Name, set.Pattern)
 				}
@@ -385,7 +385,11 @@ func init() {
 					}
 					rankingString := ""
 					for i, r := range ranking {
-						rankingString += fmt.Sprintf("**%v] %v:** %v %%%%(%+d)%%%%\n", i+1, r.Username, r.Points, r.Points-povPoints)
+						if r.UserTelegramID == povTelegramUserID {
+							rankingString += fmt.Sprintf("**%v] %v:** %v\n", i+1, r.Username, r.Points)
+						} else {
+							rankingString += fmt.Sprintf("%v] %v: %v %%%%(%+d)%%%%\n", i+1, r.Username, r.Points, r.Points-povPoints)
+						}
 					}
 
 					// Send the message
