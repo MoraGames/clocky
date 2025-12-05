@@ -3,9 +3,12 @@ package structs
 import (
 	"fmt"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type User struct {
+	TelegramUser                    *tgbotapi.User
 	TelegramID                      int64
 	UserName                        string
 	TotalPoints                     int
@@ -30,8 +33,12 @@ type UserMinimal struct {
 	UserName   string
 }
 
-func NewUser(telegramID int64, username string) *User {
-	return &User{telegramID, username, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, make([]*Effect, 0), time.Now()}
+func NewUser(telegramUser *tgbotapi.User) *User {
+	username := telegramUser.UserName
+	if username == "" {
+		username = fmt.Sprintf("%s %s", telegramUser.FirstName, telegramUser.LastName)
+	}
+	return &User{telegramUser, telegramUser.ID, username, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, make([]*Effect, 0), time.Now()}
 }
 
 func (u *User) Minimize() *UserMinimal {

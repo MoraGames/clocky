@@ -94,10 +94,13 @@ func run(utils types.Utils, data types.Data) {
 					// Add the user to the data structure if they have never participated before
 					user, exist := Users[update.Message.From.ID]
 					if !exist {
-						user = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+						user = structs.NewUser(update.Message.From)
 					} else if user.UserName != update.Message.From.UserName {
 						// Update the username in case it has changed
 						user.UserName = update.Message.From.UserName
+					}
+					if user.TelegramUser == nil {
+						AddTelegramUserToExistingUser(update.Message.From)
 					}
 
 					// Check (and eventually update) the user effects
@@ -203,10 +206,13 @@ func run(utils types.Utils, data types.Data) {
 					// Add the user to the data structure if they have never participated before
 					user, exist := Users[update.Message.From.ID]
 					if !exist {
-						user = structs.NewUser(update.Message.From.ID, update.Message.From.UserName)
+						user = structs.NewUser(update.Message.From)
 					} else if user.UserName != update.Message.From.UserName {
 						// Update the username in case it has changed
 						user.UserName = update.Message.From.UserName
+					}
+					if user.TelegramUser == nil {
+						AddTelegramUserToExistingUser(update.Message.From)
 					}
 					// Add partecipations to the user if they have never participated the event before
 					if !event.HasPartecipated(update.Message.From.ID) {
