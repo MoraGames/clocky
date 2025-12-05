@@ -69,11 +69,11 @@ func init() {
 			Execute: func(msg tgbotapi.Message) error {
 				entities, text := utils.ParseToEntities(ComposeMessage(
 					[]string{
-						"**%v è un giochino perdi-tempo interamente gestito da questo bot.**\n",
-						"Una volta che il bot è stato aggiunto ad un gruppo, il gioco consiste principalmente (ma non esclusivamente) nell'inviare messaggi nel formato \"hh:mm\" a determinati orari del giorno in cambio di punti. ",
+						"**%v è un gioco perdi-tempo interamente gestito da questo bot.**\n",
+						"Una volta che il bot è stato aggiunto ad un gruppo, il gioco consiste principalmente nell'inviare messaggi nel formato `hh:mm` a determinati orari del giorno in cambio di punti.\n",
 						"La persona che totalizza più punti alla fine del campionato viene proclamata __Clocky Champion!__\n\n",
 						"Il codice sorgente, disponibile su [GitHub](!https://github.com/MoraGames/clocky), è scritto interamente in GoLang e fa uso della libreria \"telegram-bot-api\". Per ogni suggerimento o problema, riferisciti al progetto GitHub.\n\n",
-						"- Telegram: [MoraGames](@MoraGames)\n-GitHub: [MoraGames](!https://github.com/MoraGames)\n- Discord: [moragames](!https://discordapp.com/users/438730716608462848)\n\n",
+						"- Telegram: [@MoraGames](@MoraGames)\n-GitHub: [MoraGames](!https://github.com/MoraGames)\n- Discord: [moragames](!https://discordapp.com/users/438730716608462848)\n\n",
 						"Un ringraziamento speciale ai primi beta tester (e giocatori) del minigioco, **\"Vano\"**, **\"Ale\"** e **\"Alex\"**.",
 					},
 					app.Name,
