@@ -221,7 +221,10 @@ func ParseToEntities(rawText string, usersList []*tgbotapi.User) ([]tgbotapi.Mes
 					//search for the user in the known users
 					var mentionedUser *tgbotapi.User
 					for _, u := range usersList {
-						if (isUserId && u.ID == userId) || (!isUserId && u.UserName == username) {
+						if u == nil {
+							continue
+						}
+						if (isUserId && u.ID == userId) || (!isUserId && u.UserName != "" && u.UserName == username) {
 							mentionedUser = u
 							break
 						}

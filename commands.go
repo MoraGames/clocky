@@ -35,9 +35,6 @@ var (
 )
 
 func init() {
-	for _, user := range Users {
-		TelegramUsersList = append(TelegramUsersList, user.TelegramUser)
-	}
 	Commands = map[string]Command{
 		"alias": {
 			Name:             "alias",
@@ -759,4 +756,10 @@ func ComposeMessage(subMessages []string, args ...any) string {
 		msg += subMessage
 	}
 	return fmt.Sprintf(msg, args...)
+}
+
+func GenerateTelegramUsersList() {
+	for _, user := range Users {
+		TelegramUsersList = append(TelegramUsersList, user.TelegramUser)
+	}
 }
