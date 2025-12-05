@@ -24,6 +24,16 @@
 - ~~Add and rebalance the bonus given by Activity Streak (one for each 7 days: 7, 14, 21, 28, ...)~~
 
 **Other:**
-- ~~[!] TODO: Resolve cronjob 2-weekly WithStartDateTimePast() execute instantly.~~
-- Implements summary message with some stats on daily time base.
-- Implements summary message with some stats on championship time base.
+- ~~Resolve cronjob 2-weekly WithStartDateTimePast() execute instantly~~
+- Implements summary message with some stats on daily time base
+- Implements summary message with some stats on championship time base
+
+<ins>**v0.4.2 - It's not the v2, Balancing Update 2**</ins>
+
+**Rebalance number of less/more impacting effects:**
+- Slightly reduce amount of Add3, Add4, Sub3, Sub4
+- Reduce amount of Mul2, Mul3, Mul4, Mul5, Mul6, Mul-2, Mul-3, Mul-4 and Mul-5 effects
+
+**Other:**
+- ~~Rewrite the entire message entity parser~~
+- ~~Rewrite the handling of commands, their descriptions and their responses~~

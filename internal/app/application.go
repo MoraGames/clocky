@@ -9,7 +9,7 @@ import (
 
 const (
 	Name    = "Clocky"
-	Version = "0.4.1"
+	Version = "0.4.2"
 )
 
 type Application struct {
