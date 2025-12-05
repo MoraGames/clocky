@@ -72,12 +72,12 @@ func init() {
 			Execute: func(msg tgbotapi.Message) error {
 				entities, text := utils.ParseToEntities(ComposeMessage(
 					[]string{
-						"%v è un giochino perdi-tempo interamente gestito da questo bot.\n",
+						"**%v è un giochino perdi-tempo interamente gestito da questo bot.**\n",
 						"Una volta che il bot è stato aggiunto ad un gruppo, il gioco consiste principalmente (ma non esclusivamente) nell'inviare messaggi nel formato \"hh:mm\" a determinati orari del giorno in cambio di punti. ",
-						"La persona che totalizza più punti alla fine del campionato viene proclamata Clocky Champion!\n\n",
-						"Il codice sorgente, disponibile su GitHub, è scritto interamente in GoLang e fa uso della libreria \"telegram-bot-api\". Per ogni suggerimento o problema, riferisciti al progetto GitHub.\n\n",
-						"- Telegram: MoraGames\n- Discord: moragames - Instagram: moragames.dev\n\n",
-						"Un ringraziamento speciale ai primi beta tester (e giocatori) del minigioco, \"Vano\", \"Ale\" e \"Alex\".",
+						"La persona che totalizza più punti alla fine del campionato viene proclamata __Clocky Champion!__\n\n",
+						"Il codice sorgente, disponibile su [GitHub](!https://github.com/MoraGames/clocky), è scritto interamente in GoLang e fa uso della libreria \"telegram-bot-api\". Per ogni suggerimento o problema, riferisciti al progetto GitHub.\n\n",
+						"- Telegram: [MoraGames](@MoraGames)\n-GitHub: [MoraGames](!https://github.com/MoraGames)\n- Discord: [moragames](!https://discordapp.com/users/438730716608462848)\n\n",
+						"Un ringraziamento speciale ai primi beta tester (e giocatori) del minigioco, **\"Vano\"**, **\"Ale\"** e **\"Alex\"**.",
 					},
 					app.Name,
 				), TelegramUsersList)
@@ -580,8 +580,8 @@ func init() {
 					rawText += ComposeMessage(
 						[]string{
 							"**Statistiche di oggi:**\n",
-							"- Punti: %v\n- ~~Partecipazioni: %v\n- Vittorie~~: %v\n\n",
-							"- ~~Punti/Vittorie~~: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
+							"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
 							"**Statistiche del campionato:**\n",
 							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
 							"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
