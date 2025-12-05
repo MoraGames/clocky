@@ -1,15 +1,31 @@
 package utils
 
 import (
+	"strconv"
 	"unicode/utf16"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-type MarkdownState struct {
-	Type   string
-	Offset int
-}
+type (
+	BasicMarkdown struct {
+		Symbol string
+		Type   string
+	}
+	BasicMarkdownState struct {
+		Markdown          BasicMarkdown
+		StartIndex        int
+		BurnedIndexes     int
+		DelimitersCounted int
+	}
+
+	OpenMarkdownLink struct {
+		inTextUntil           int
+		insideDelimitersCount int
+		jumpAfterIndex        int
+		entity                tgbotapi.MessageEntity
+	}
+)
 
 const (
 	MarkdownBoldDelimiter          = "**"
@@ -17,7 +33,10 @@ const (
 	MarkdownUnderlineDelimiter     = "__"
 	MarkdownStrikethroughDelimiter = "~~"
 	MarkdownSpoilerDelimiter       = "||"
-	MarkdownCodeDelimiter          = "```"
+	MarkdownCodeDelimiter          = "`"
+	MarkdownPreDelimiter           = "```"
+	MarkdownTextLinkDelimiter      = "!"
+	MarkdownTextMentionDelimiter   = "@"
 
 	MarkdownBoldEntityType          = "bold"
 	MarkdownItalicEntityType        = "italic"
@@ -25,66 +44,284 @@ const (
 	MarkdownStrikethroughEntityType = "strikethrough"
 	MarkdownSpoilerEntityType       = "spoiler"
 	MarkdownCodeEntityType          = "code"
+	MarkdownPreEntityType           = "pre"
+	MarkdownTextLinkEntityType      = "text_link"
+	MarkdownTextMentionEntityType   = "text_mention"
 )
 
 var (
-	Markdowns = map[string]string{
-		MarkdownBoldEntityType:          MarkdownBoldDelimiter,
-		MarkdownItalicEntityType:        MarkdownItalicDelimiter,
-		MarkdownUnderlineEntityType:     MarkdownUnderlineDelimiter,
-		MarkdownStrikethroughEntityType: MarkdownStrikethroughDelimiter,
-		MarkdownSpoilerEntityType:       MarkdownSpoilerDelimiter,
-		MarkdownCodeEntityType:          MarkdownCodeDelimiter,
+	basicMarkdowns = []BasicMarkdown{
+		{Symbol: MarkdownBoldDelimiter, Type: MarkdownBoldEntityType},
+		{Symbol: MarkdownItalicDelimiter, Type: MarkdownItalicEntityType},
+		{Symbol: MarkdownUnderlineDelimiter, Type: MarkdownUnderlineEntityType},
+		{Symbol: MarkdownStrikethroughDelimiter, Type: MarkdownStrikethroughEntityType},
+		{Symbol: MarkdownSpoilerDelimiter, Type: MarkdownSpoilerEntityType},
 	}
+	basicMarkdownsStack = make([]BasicMarkdownState, 0)
 )
 
-func ParseToEntities(rawText string) ([]tgbotapi.MessageEntity, string) {
+func ParseToEntities(rawText string, usersList []*tgbotapi.User) ([]tgbotapi.MessageEntity, string) {
 	var entities []tgbotapi.MessageEntity
-	var states []MarkdownState
 	var text []uint16
 
 	utf16RawText := utf16.Encode([]rune(rawText))
-	for i := 0; i < len(utf16RawText); {
-		var delimiterFound string
-		for entityType, delimiter := range Markdowns {
-			if CheckFullDelimiter(utf16RawText, i, delimiter) {
-				if len(states) > 0 && states[len(states)-1].Type == entityType { // closing tag
-					entities = append(entities, tgbotapi.MessageEntity{
-						Type:   entityType,
-						Offset: states[len(states)-1].Offset,
-						Length: len(text) - states[len(states)-1].Offset,
-					})
-					states = states[:len(states)-1]
-				} else { // opening tag
-					states = append(states, MarkdownState{
-						Type:   entityType,
-						Offset: len(text),
-					})
+	i := 0
+
+	write := func(cp []uint16) {
+		text = append(text, cp...)
+		i += len(cp)
+	}
+	hasAheadIndex := func(str string, si int) bool {
+		if si+len(str)-1 >= len(utf16RawText) {
+			return false
+		}
+		for stri := 0; stri < len(str); stri++ {
+			if utf16RawText[si+stri] != uint16(str[stri]) {
+				return false
+			}
+		}
+		return true
+	}
+	findAheadIndex := func(str string, si int) int {
+		for ei := si; ei < len(utf16RawText); ei++ {
+			if hasAheadIndex(str, ei) {
+				return ei
+			}
+		}
+		return -1
+	}
+
+	currentOpenLink := OpenMarkdownLink{
+		inTextUntil:           -1,
+		insideDelimitersCount: 0,
+		jumpAfterIndex:        -1,
+		entity:                tgbotapi.MessageEntity{},
+	}
+	markdownDelimiterCounter := 0
+
+	for i = 0; i < len(utf16RawText); {
+		if currentOpenLink.inTextUntil == -1 {
+			//pre
+			if hasAheadIndex(MarkdownPreDelimiter, i) {
+				ei := findAheadIndex(MarkdownPreDelimiter, i+len(MarkdownPreDelimiter))
+				if ei == -1 {
+					//is not a pre entity
+					//still can be a code entity (reason to shift by 2, not 3)
+					write(utf16RawText[i : i+len(MarkdownPreDelimiter)-len(MarkdownCodeDelimiter)])
+					continue
 				}
-				delimiterFound = delimiter
-				break
+
+				//extract language if any
+				lang := ""
+				j := i + len(MarkdownPreDelimiter)
+				for ; j < ei; j++ {
+					if utf16RawText[j] == uint16(' ') {
+						lang = string(utf16.Decode(utf16RawText[i+len(MarkdownPreDelimiter) : j]))
+						break
+					}
+				}
+
+				//add opening markdown delimiter in the counter
+				markdownDelimiterCounter += len(MarkdownPreDelimiter) + len(lang) + 1
+
+				//define the pre entity
+				entities = append(entities, tgbotapi.MessageEntity{
+					Type:     "pre",
+					Offset:   j + 1 - markdownDelimiterCounter,
+					Length:   ei - (j + 1),
+					Language: lang,
+				})
+
+				//add closing markdown delimiter in the counter and burn indexes for open basic markdowns
+				markdownDelimiterCounter += len(MarkdownPreDelimiter)
+				for bmdi := 0; bmdi < len(basicMarkdownsStack); bmdi++ {
+					basicMarkdownsStack[bmdi].BurnedIndexes += 2 * len(MarkdownPreDelimiter)
+				}
+
+				//write the pre content and move forward
+				write(utf16RawText[j+1 : ei])
+				i = ei + len(MarkdownPreDelimiter)
+				continue
+			}
+
+			//code
+			if hasAheadIndex(MarkdownCodeDelimiter, i) {
+				ei := findAheadIndex(MarkdownCodeDelimiter, i+len(MarkdownCodeDelimiter))
+				if ei == -1 {
+					//is not a code string
+					write(utf16RawText[i : i+len(MarkdownCodeDelimiter)])
+					continue
+				}
+
+				//add opening markdown delimiter in the counter
+				markdownDelimiterCounter += 1
+
+				//define the code entity
+				entities = append(entities, tgbotapi.MessageEntity{
+					Type:   "code",
+					Offset: i + 1 - markdownDelimiterCounter,
+					Length: ei - (i + 1),
+				})
+
+				//add closing markdown delimiter in the counter and burn indexes for open basic markdowns
+				markdownDelimiterCounter += len(MarkdownCodeDelimiter)
+				for bmdi := 0; bmdi < len(basicMarkdownsStack); bmdi++ {
+					basicMarkdownsStack[bmdi].BurnedIndexes += 2 * len(MarkdownCodeDelimiter)
+				}
+
+				//write the code content and move forward
+				write(utf16RawText[i+len(MarkdownCodeDelimiter) : ei])
+				i = ei + len(MarkdownCodeDelimiter)
+				continue
+			}
+
+			//text link or text mention
+			if hasAheadIndex("[", i) {
+				mi := findAheadIndex("](", i+1)
+				ei := findAheadIndex(")", mi+2)
+				if mi == -1 || ei == -1 {
+					//is not a text link or text mention
+					write(utf16RawText[i : i+1])
+					continue
+				}
+
+				//add opening markdown delimiter in the counter
+				markdownDelimiterCounter += 1
+
+				//initialize the open link state
+				currentOpenLink.inTextUntil = mi
+				currentOpenLink.jumpAfterIndex = ei + 1
+				currentOpenLink.insideDelimitersCount = 0
+
+				//check if is text link or text mention
+				if hasAheadIndex(MarkdownTextMentionDelimiter, mi+2) {
+					//text mention
+
+					//parse the user id
+					userId, err := strconv.ParseInt(string(utf16.Decode(utf16RawText[mi+2+len(MarkdownTextMentionDelimiter):ei])), 10, 64)
+					if err != nil {
+						panic(err)
+					}
+
+					//search for the user in the known users
+					var mentionedUser *tgbotapi.User
+					for _, u := range usersList {
+						if u.ID == userId {
+							mentionedUser = u
+							break
+						}
+					}
+
+					//valorize the mention entity
+					currentOpenLink.entity = tgbotapi.MessageEntity{
+						Type:   MarkdownTextMentionEntityType,
+						Offset: i + 1 - markdownDelimiterCounter,
+						Length: mi - (i + 1),
+						User:   mentionedUser,
+					}
+				} else if hasAheadIndex(MarkdownTextLinkDelimiter, mi+2) {
+					//text link
+
+					//valorize the link entity
+					currentOpenLink.entity = tgbotapi.MessageEntity{
+						Type:   MarkdownTextLinkEntityType,
+						Offset: i + 1 - markdownDelimiterCounter,
+						Length: mi - (i + 1),
+						URL:    string(utf16.Decode(utf16RawText[mi+2+len(MarkdownTextLinkDelimiter) : ei])),
+					}
+				}
+
+				//move forward to the text of the link/mention
+				i++
+				continue
 			}
 		}
 
-		if delimiterFound == "" {
-			text = append(text, utf16RawText[i])
-			i++
-		} else {
-			i += len(delimiterFound)
+		//end of text link or text mention
+		if currentOpenLink.inTextUntil != -1 && i == currentOpenLink.inTextUntil {
+			//add closing markdown delimiter in the counter
+			markdownDelimiterCounter += 3 + ((currentOpenLink.jumpAfterIndex - 1) - (currentOpenLink.inTextUntil + 2))
+
+			//update the current open link state
+			currentOpenLink.entity.Length -= currentOpenLink.insideDelimitersCount
+			entities = append(entities, currentOpenLink.entity)
+
+			//move forward after the link/mention
+			i = currentOpenLink.jumpAfterIndex
+
+			//reset the current open link state
+			currentOpenLink = OpenMarkdownLink{
+				inTextUntil:           -1,
+				insideDelimitersCount: 0,
+				jumpAfterIndex:        -1,
+				entity:                tgbotapi.MessageEntity{},
+			}
+			continue
 		}
+
+		//basic markdowns
+		var neededContinue bool
+		for _, bmd := range basicMarkdowns {
+			if hasAheadIndex(bmd.Symbol, i) {
+				ei := findAheadIndex(bmd.Symbol, i+len(bmd.Symbol))
+				if ei == -1 && !(len(basicMarkdownsStack) > 0 && basicMarkdownsStack[len(basicMarkdownsStack)-1].Markdown.Type == bmd.Type) {
+					// Isn't this markdown
+					write(utf16RawText[i : i+len(bmd.Symbol)])
+					neededContinue = true
+					break
+				}
+
+				//check if is opening or closing markdown
+				if len(basicMarkdownsStack) > 0 && basicMarkdownsStack[len(basicMarkdownsStack)-1].Markdown.Type == bmd.Type {
+					//closing markdown
+
+					//retrieve and remove last basic markdown status from the stack and create the entity
+					bmds := basicMarkdownsStack[len(basicMarkdownsStack)-1]
+					basicMarkdownsStack = basicMarkdownsStack[:len(basicMarkdownsStack)-1]
+					entities = append(entities, tgbotapi.MessageEntity{
+						Type:   bmds.Markdown.Type,
+						Offset: bmds.StartIndex - bmds.DelimitersCounted,
+						Length: i - bmds.StartIndex - bmds.BurnedIndexes,
+					})
+
+					//add closing markdown delimiter in the counter and burn indexes for open basic markdowns
+					for bmdi := 0; bmdi < len(basicMarkdownsStack); bmdi++ {
+						basicMarkdownsStack[bmdi].BurnedIndexes += len(bmd.Symbol)
+					}
+					currentOpenLink.insideDelimitersCount += len(bmd.Symbol)
+					markdownDelimiterCounter += len(bmd.Symbol)
+				} else {
+					//opening markdown
+
+					//add opening markdown delimiter in the counter and burn indexes for open basic markdowns
+					markdownDelimiterCounter += len(bmd.Symbol)
+					currentOpenLink.insideDelimitersCount += len(bmd.Symbol)
+					for bmdi := 0; bmdi < len(basicMarkdownsStack); bmdi++ {
+						basicMarkdownsStack[bmdi].BurnedIndexes += len(bmd.Symbol)
+					}
+
+					//push to the stack the basic markdown status
+					basicMarkdownsStack = append(basicMarkdownsStack, BasicMarkdownState{
+						Markdown:          bmd,
+						StartIndex:        i + len(bmd.Symbol),
+						DelimitersCounted: markdownDelimiterCounter,
+						BurnedIndexes:     0,
+					})
+				}
+
+				//move forward
+				i += len(bmd.Symbol)
+				neededContinue = true
+				break
+			}
+		}
+		if neededContinue {
+			continue
+		}
+
+		//write normal character
+		write(utf16RawText[i : i+1])
 	}
 
 	return entities, string(utf16.Decode(text))
-}
-
-func CheckFullDelimiter(utf16Text []uint16, index int, delimiter string) bool {
-	if index+len(delimiter)-1 >= len(utf16Text) {
-		return false
-	}
-	for dc := 0; dc < len(delimiter); dc++ {
-		if utf16Text[index+dc] != uint16(delimiter[dc]) {
-			return false
-		}
-	}
-	return true
 }

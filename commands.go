@@ -29,9 +29,15 @@ type Command struct {
 	Execute          func(msg tgbotapi.Message) error
 }
 
-var Commands map[string]Command
+var (
+	TelegramUsersList []*tgbotapi.User
+	Commands          map[string]Command
+)
 
 func init() {
+	for _, user := range Users {
+		TelegramUsersList = append(TelegramUsersList, user.TelegramUser)
+	}
 	Commands = map[string]Command{
 		"alias": {
 			Name:             "alias",
@@ -49,7 +55,7 @@ func init() {
 				for _, set := range events.Sets {
 					rawText += fmt.Sprintf("%v => %%%%%v%%%%\n", set.Name, set.Pattern)
 				}
-				entities, text := utils.ParseToEntities(rawText)
+				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 				respMsg.Entities = entities
 				sendMessage(respMsg, msg.MessageID)
@@ -74,7 +80,7 @@ func init() {
 						"Un ringraziamento speciale ai primi beta tester (e giocatori) del minigioco, \"Vano\", \"Ale\" e \"Alex\".",
 					},
 					app.Name,
-				))
+				), TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 				respMsg.Entities = entities
 				sendMessage(respMsg, msg.MessageID)
@@ -213,7 +219,7 @@ func init() {
 						}
 						rawText += "\n"
 					}
-					entities, text = utils.ParseToEntities(rawText)
+					entities, text = utils.ParseToEntities(rawText, TelegramUsersList)
 					respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 					respMsg.Entities = entities
 					sendMessage(respMsg, msg.MessageID)
@@ -223,7 +229,7 @@ func init() {
 					sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "Argomento sconosciuto. Usa /help per maggiori informazioni."), msg.MessageID)
 					return fmt.Errorf("unknown argument")
 				} else {
-					entities, text := utils.ParseToEntities(fmt.Sprintf("**/%v - %v**\n\nDescrizione: %%%%%v%%%%\n\nCategoria: %%%%%v%%%%\nSintassi: %%%%%v%%%%\n", cmd.Name, cmd.ShortDescription, cmd.LongDescription, cmd.Category, cmd.Syntax))
+					entities, text := utils.ParseToEntities(fmt.Sprintf("**/%v - %v**\n\nDescrizione: %%%%%v%%%%\n\nCategoria: %%%%%v%%%%\nSintassi: %%%%%v%%%%\n", cmd.Name, cmd.ShortDescription, cmd.LongDescription, cmd.Category, cmd.Syntax), TelegramUsersList)
 					respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 					respMsg.Entities = entities
 					sendMessage(respMsg, msg.MessageID)
@@ -273,7 +279,7 @@ func init() {
 					}
 					rawText += "\n"
 				}
-				entities, text := utils.ParseToEntities(rawText)
+				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 				respMsg.Entities = entities
 				sendMessage(respMsg, msg.MessageID)
@@ -395,7 +401,7 @@ func init() {
 					// Send the message
 					rawText = fmt.Sprintf("__**La classifica è la seguente:**__\n\n%v", rankingString)
 				}
-				entities, text := utils.ParseToEntities(rawText)
+				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 				respMsg.Entities = entities
 				sendMessage(respMsg, msg.MessageID)
@@ -590,7 +596,7 @@ func init() {
 					)
 				}
 
-				entities, text := utils.ParseToEntities(rawText)
+				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 				respMsg.Entities = entities
 				sendMessage(respMsg, msg.MessageID)
