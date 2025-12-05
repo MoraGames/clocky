@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"regexp"
 	"strconv"
 	"unicode/utf16"
 
@@ -58,6 +59,8 @@ var (
 		{Symbol: MarkdownSpoilerDelimiter, Type: MarkdownSpoilerEntityType},
 	}
 	basicMarkdownsStack = make([]BasicMarkdownState, 0)
+
+	idRegexp = regexp.MustCompile(`^[0-9]+$`)
 )
 
 func ParseToEntities(rawText string, usersList []*tgbotapi.User) ([]tgbotapi.MessageEntity, string) {
@@ -197,16 +200,28 @@ func ParseToEntities(rawText string, usersList []*tgbotapi.User) ([]tgbotapi.Mes
 				if hasAheadIndex(MarkdownTextMentionDelimiter, mi+2) {
 					//text mention
 
-					//parse the user id
-					userId, err := strconv.ParseInt(string(utf16.Decode(utf16RawText[mi+2+len(MarkdownTextMentionDelimiter):ei])), 10, 64)
-					if err != nil {
-						panic(err)
+					//retrieve the text mention tag
+					tag := string(utf16.Decode(utf16RawText[mi+2+len(MarkdownTextMentionDelimiter) : ei]))
+					isUserId := idRegexp.MatchString(tag)
+
+					var userId int64
+					var username string
+					if isUserId {
+						//parse user's id
+						var err error
+						userId, err = strconv.ParseInt(tag, 10, 64)
+						if err != nil {
+							panic(err)
+						}
+					} else {
+						//parse user's username
+						username = tag
 					}
 
 					//search for the user in the known users
 					var mentionedUser *tgbotapi.User
 					for _, u := range usersList {
-						if u.ID == userId {
+						if (isUserId && u.ID == userId) || (!isUserId && u.UserName == username) {
 							mentionedUser = u
 							break
 						}
