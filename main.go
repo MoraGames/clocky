@@ -126,15 +126,13 @@ func main() {
 
 	App.TimeFormat = "15:04:05.000000 MST -07:00"
 
-	//create the gocron scheduler
+	//create the gocron scheduler and define the default cron jobs
 	App.GocronScheduler, err = gocron.NewScheduler()
 	if err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Error while creating GoCron scheduler")
 	}
-
-	//define the default cron jobs for the application scheduler
 	DefineDefaultCronJobs()
 
 	//try to reload the status from files

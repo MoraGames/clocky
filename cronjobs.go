@@ -246,7 +246,6 @@ func ManageChampionshipRewardMessage(userId int64, rankPosition int, writeMsgDat
 	}
 }
 
-// ManageDailyRewardMessage generates the daily hints for the user and sends him the reward message
 func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) []string {
 	// Generate the reward message informations
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -320,7 +319,7 @@ func UpdateChampionshipResetCronjob(utils types.Utils) {
 	champStartDate := events.CurrentChampionship.StartDate.In(time.Local)
 	job, err := App.GocronScheduler.Update(
 		jobID,
-		gocron.WeeklyJob(1, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(uint(champStartDate.Hour()), uint(champStartDate.Minute()), uint(champStartDate.Second())))),
+		gocron.WeeklyJob(2, gocron.NewWeekdays(champStartDate.Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(champStartDate.Hour()), uint(champStartDate.Minute()), uint(champStartDate.Second())))),
 		gocron.NewTask(func() {
 			App.Logger.Info("Championship reset (updated) cronjob triggered")
 
