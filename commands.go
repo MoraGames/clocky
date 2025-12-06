@@ -165,7 +165,7 @@ func init() {
 						case "hints.json":
 							err = updateData(msg, "files/"+fileName, &events.HintRewardedUsers, nil, overwrite)
 						case "championship.json":
-							err = updateData(msg, "files/"+fileName, &events.CurrentChampionship, UpdateChampionshipResetCronjob, overwrite)
+							err = updateData(msg, "files/"+fileName, &events.CurrentChampionship, UpdateChampionshipCronjobs, overwrite)
 						case "pinnedChampionshipMessage.json":
 							err = updateData(msg, "files/"+fileName, &structs.PinnedChampionshipResetMessage, nil, overwrite)
 						default:

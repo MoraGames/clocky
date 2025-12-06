@@ -143,7 +143,7 @@ func main() {
 			{FileName: "files/users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
 			{FileName: "files/pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
 			{FileName: "files/hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
-			{FileName: "files/championship.json", DataStruct: &events.CurrentChampionship, IfOkay: UpdateChampionshipResetCronjob, IfFail: events.AssignChampionshipWithDefault},
+			{FileName: "files/championship.json", DataStruct: &events.CurrentChampionship, IfOkay: UpdateChampionshipCronjobs, IfFail: events.AssignChampionshipWithDefault},
 			{FileName: "files/pinnedChampionshipMessage.json", DataStruct: &structs.PinnedChampionshipResetMessage, IfOkay: nil, IfFail: nil},
 		},
 		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},

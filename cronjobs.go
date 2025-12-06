@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
+	"github.com/MoraGames/clockyuwu/internal/app"
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/MoraGames/clockyuwu/pkg/utils"
 	"github.com/MoraGames/clockyuwu/structs"
@@ -43,6 +44,12 @@ func DefineDefaultCronJobs() {
 			)
 		}),
 		gocron.WithName("DailyResetCronjob"),
+		gocron.WithEventListeners(
+			// Daily summary report
+			gocron.BeforeJobRuns(func(jobID uuid.UUID, jobName string) {
+
+			}),
+		),
 	); err != nil {
 		App.Logger.WithFields(logrus.Fields{
 			"job": "DailyResetCronjob",
@@ -76,6 +83,62 @@ func DefineDefaultCronJobs() {
 			"err": err,
 		}).Error("GoCron job not set")
 	}
+
+	// Championship 7 days reminder cronjob - every 2 Sundays at 23:59:25
+	if _, err := App.GocronScheduler.NewJob(
+		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Sunday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 25))),
+		gocron.NewTask(func() {
+			entities, text := utils.ParseToEntities(ComposeMessage(
+				[]string{
+					"📯 __**A tutti i giocatori e giocatrici:**__\n",
+					"Siamo già a metà dell'opera! __Rimangono 7 giorni alla fine del campionato__.\n",
+					"Ricordiamo tutti che una volta proclamato il vincitore, __egli avrà diritto esclusivo ad un bonus__ per l'intera durata del campionato successivo!\n",
+					"Affrettatevi dunque, nulla ancora è perduto!",
+				},
+				app.Name,
+			), TelegramUsersList)
+			respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)
+			respMsg.Entities = entities
+			App.BotAPI.Send(respMsg)
+		}),
+		gocron.WithName("Championship7DaysReminderCronjob"),
+		gocron.JobOption(gocron.WithStartDateTimePast(
+			utils.NextInWeekdayAtTime(time.Now(), time.Sunday, 23, 59, 25).AddDate(0, 0, -7),
+		)),
+	); err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"job": "Championship7DaysReminderCronjob",
+			"err": err,
+		}).Error("GoCron job not set")
+	}
+
+	// Championship 1 day reminder cronjob - every 2 Saturdays at 23:59:25
+	if _, err := App.GocronScheduler.NewJob(
+		gocron.WeeklyJob(2, gocron.NewWeekdays(time.Saturday), gocron.NewAtTimes(gocron.NewAtTime(23, 59, 25))),
+		gocron.NewTask(func() {
+			entities, text := utils.ParseToEntities(ComposeMessage(
+				[]string{
+					"🔥 __**Attenzione giocatori!**__\n",
+					"Mancano esattamente 24 ore alla fine del Campionato in corso!\n",
+					"Questa è la vostra ultima occasione per __scalare la classifica e conquistare il titolo di **Clocky Champion**__!\n",
+					"Buon divertimento a tutti e che vinca il migliore! 🏆\n\n",
+					"P.S.:\n",
+					"//Per chi non dovesse riuscirci, non preoccupatevi: presto tutti i punteggi verranno azzerati e la sfida ricomincerà da capo.//\n",
+				},
+				app.Name,
+			), TelegramUsersList)
+			respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)
+			respMsg.Entities = entities
+			App.BotAPI.Send(respMsg)
+		}),
+		gocron.WithName("Championship1DayReminderCronjob"),
+	); err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"job": "Championship1DayReminderCronjob",
+			"err": err,
+		}).Error("GoCron job not set")
+	}
+
 	App.Logger.WithFields(logrus.Fields{
 		"gcJobs": utils.StringifyJobs(App.GocronScheduler.Jobs()),
 	}).Info("GoCron jobs set")
@@ -293,61 +356,125 @@ func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData
 }
 
 // This function was supposed to be written in events/championship.go, but due to dependencies with App variable, it's here instead.
-func UpdateChampionshipResetCronjob(utils types.Utils) {
+func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 	// Check if the scheduler is initialized
 	if App.GocronScheduler == nil {
 		App.Logger.Error("Scheduler not initialized before reload")
 		return
 	}
 
-	// Find the job
-	var found bool
+	// Find the job IDs
+	jobIDs := map[string]uuid.UUID{
+		"ChampionshipResetCronjob":         uuid.Nil,
+		"Championship7DaysReminderCronjob": uuid.Nil,
+		"Championship1DayReminderCronjob":  uuid.Nil,
+	}
 	var jobID uuid.UUID
 	for _, job := range App.GocronScheduler.Jobs() {
-		if job.Name() == "ChampionshipResetCronjob" {
-			found = true
-			jobID = job.ID()
-			break
+		if _, exist := jobIDs[job.Name()]; exist {
+			jobIDs[job.Name()] = job.ID()
 		}
 	}
-	if !found {
-		App.Logger.Error("ChampionshipResetCronjob not found in scheduler")
-		return
+	for name, id := range jobIDs {
+		if id == uuid.Nil {
+			App.Logger.WithFields(logrus.Fields{
+				"job": name,
+			}).Error("GoCron job not found during reload")
+		}
 	}
 
-	// Update the cronjob
-	champStartDate := events.CurrentChampionship.StartDate.In(time.Local)
-	job, err := App.GocronScheduler.Update(
-		jobID,
-		gocron.WeeklyJob(2, gocron.NewWeekdays(champStartDate.Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(champStartDate.Hour()), uint(champStartDate.Minute()), uint(champStartDate.Second())))),
-		gocron.NewTask(func() {
-			App.Logger.Info("Championship reset (updated) cronjob triggered")
+	// Update the cronjobs
+	championshipStartDate := events.CurrentChampionship.StartDate.In(time.Local)
 
-			events.CurrentChampionship.Reset(
-				structs.GetRanking(Users, structs.RankScopeChampionship, true),
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
-				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
-			)
+	for name, id := range jobIDs {
+		if id != uuid.Nil {
+			switch name {
+			case "ChampionshipResetCronjob":
+				if _, err := App.GocronScheduler.Update(
+					jobID,
+					gocron.WeeklyJob(2, gocron.NewWeekdays(championshipStartDate.Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(championshipStartDate.Hour()), uint(championshipStartDate.Minute()), uint(championshipStartDate.Second())))),
+					gocron.NewTask(func() {
+						events.CurrentChampionship.Reset(
+							structs.GetRanking(Users, structs.RankScopeChampionship, true),
+							&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
+							types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+						)
 
-			// Reward the users based on their performance
-			// Then reset the championship user's stats
-			ChampionshipUserRewardAndReset(
-				Users,
-				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
-				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
-			)
-		}),
-		gocron.WithName("ChampionshipResetCronjob"),
-		gocron.WithStartAt(gocron.WithStartDateTimePast(
-			events.CurrentChampionship.StartDate.In(time.Local),
-		)),
-	)
-
-	_, err = job.NextRun()
-	if err != nil {
-		App.Logger.WithFields(logrus.Fields{
-			"err": err,
-		}).Warn("Error while getting next run time of ChampionshipResetCronjob")
-		return
+						// Reward the users based on their performance
+						// Then reset the championship user's stats
+						ChampionshipUserRewardAndReset(
+							Users,
+							&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
+							types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+						)
+					}),
+					gocron.WithName("ChampionshipResetCronjob"),
+					gocron.WithStartAt(gocron.WithStartDateTimePast(
+						events.CurrentChampionship.StartDate.In(time.Local),
+					)),
+				); err != nil {
+					App.Logger.WithFields(logrus.Fields{
+						"job": "ChampionshipResetCronjob",
+						"err": err,
+					}).Error("GoCron job not updated during reload")
+				}
+			case "Championship7DaysReminderCronjob":
+				if _, err := App.GocronScheduler.NewJob(
+					gocron.WeeklyJob(2, gocron.NewWeekdays(championshipStartDate.Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(championshipStartDate.Hour()), uint(championshipStartDate.Minute()), uint(championshipStartDate.Second())))),
+					gocron.NewTask(func() {
+						entities, text := utils.ParseToEntities(ComposeMessage(
+							[]string{
+								"📯 __**A tutti i giocatori e giocatrici:**__\n",
+								"Siamo già a metà dell'opera! __Rimangono 7 giorni alla fine del campionato__.\n",
+								"Ricordiamo tutti che una volta proclamato il vincitore, __egli avrà diritto esclusivo ad un bonus__ per l'intera durata del campionato successivo!\n",
+								"Affrettatevi dunque, nulla ancora è perduto!",
+							},
+							app.Name,
+						), TelegramUsersList)
+						respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)
+						respMsg.Entities = entities
+						App.BotAPI.Send(respMsg)
+					}),
+					gocron.WithName("Championship7DaysReminderCronjob"),
+					gocron.WithStartAt(gocron.WithStartDateTimePast(
+						events.CurrentChampionship.StartDate.AddDate(0, 0, -7).In(time.Local),
+					)),
+				); err != nil {
+					App.Logger.WithFields(logrus.Fields{
+						"job": "Championship7DaysReminderCronjob",
+						"err": err,
+					}).Error("GoCron job not updated during reload")
+				}
+			case "Championship1DayReminderCronjob":
+				if _, err := App.GocronScheduler.NewJob(
+					gocron.WeeklyJob(2, gocron.NewWeekdays(championshipStartDate.AddDate(0, 0, -1).Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(championshipStartDate.Hour()), uint(championshipStartDate.Minute()), uint(championshipStartDate.Second())))),
+					gocron.NewTask(func() {
+						entities, text := utils.ParseToEntities(ComposeMessage(
+							[]string{
+								"🔥 __**Attenzione giocatori!**__\n",
+								"Mancano esattamente 24 ore alla fine del Campionato in corso!\n",
+								"Questa è la vostra ultima occasione per __scalare la classifica e conquistare il titolo di **Clocky Champion**__!\n",
+								"Buon divertimento a tutti e che vinca il migliore! 🏆\n\n",
+								"P.S.:\n",
+								"//Per chi non dovesse riuscirci, non preoccupatevi: presto tutti i punteggi verranno azzerati e la sfida ricomincerà da capo.//\n",
+							},
+							app.Name,
+						), TelegramUsersList)
+						respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)
+						respMsg.Entities = entities
+						App.BotAPI.Send(respMsg)
+					}),
+					gocron.WithName("Championship1DayReminderCronjob"),
+					gocron.WithStartAt(gocron.WithStartDateTimePast(
+						events.CurrentChampionship.StartDate.AddDate(0, 0, -1).In(time.Local),
+					)),
+				); err != nil {
+					App.Logger.WithFields(logrus.Fields{
+						"job": "Championship1DayReminderCronjob",
+						"err": err,
+					}).Error("GoCron job not updated during reload")
+				}
+			}
+		}
 	}
 }
