@@ -55,7 +55,13 @@ func run(utils types.Utils, data types.Data) {
 			}
 		}
 
-		//Log Update
+		// Validate the origin of the update
+		if (updChat.Type != "private" && updChat.ID != App.DefaultChatID) || updChat.Type == "private" {
+			utils.Logger.WithFields(fields).Debug("Update ignored due to invalid chat")
+			continue
+		}
+
+		// Log Update
 		utils.Logger.WithFields(fields).Debug("Update received")
 
 		// Check the type of the update
