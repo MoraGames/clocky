@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
@@ -43,6 +44,11 @@ type (
 	DailyRewardedUser struct {
 		User *structs.UserMinimal
 		Sets []string
+	}
+
+	EffectPresence struct {
+		Name   string
+		Amount int
 	}
 )
 
@@ -336,17 +342,35 @@ func (ed *EventsData) SaveOnFile(utils types.Utils) {
 }
 
 func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, utils types.Utils) {
+	// Sort the data contained by Stats.EnabledSets and Stats.EnabledEffects
+	sortedActiveSets := make([]string, len(ed.Stats.EnabledSets))
+	copy(sortedActiveSets, ed.Stats.EnabledSets)
+	sort.Slice(sortedActiveSets, func(i, j int) bool {
+		return sortedActiveSets[i] < sortedActiveSets[j]
+	})
+
+	sortedEnabledEffects := make([]EffectPresence, 0, len(ed.Stats.EnabledEffects))
+	for effectName, effectNum := range ed.Stats.EnabledEffects {
+		sortedEnabledEffects = append(sortedEnabledEffects, EffectPresence{
+			Name:   effectName,
+			Amount: effectNum,
+		})
+	}
+	sort.Slice(sortedEnabledEffects, func(i, j int) bool {
+		return sortedEnabledEffects[i].Name < sortedEnabledEffects[j].Name
+	})
+
 	// Generate text
 	text := "Gli eventi son stati resettati.\nEcco alcune informazioni:\n\n"
 	text += fmt.Sprintf("Schemi: %v/%v\nEventi: %v/%v\nPunti ottenibili: %v\n", ed.Stats.EnabledSetsNum, ed.Stats.TotalSetsNum, ed.Stats.EnabledEventsNum, ed.Stats.TotalEventsNum, ed.Stats.EnabledPointsSum)
 
 	text += fmt.Sprintf("\nSchemi Attivi (%v):\n", ed.Stats.EnabledSetsNum)
-	for _, setName := range ed.Stats.EnabledSets {
+	for _, setName := range sortedActiveSets {
 		text += fmt.Sprintf(" | %q\n", setName)
 	}
 
 	text += fmt.Sprintf("\nEffetti Attivi (%v):\n", ed.Stats.EnabledEffectsNum)
-	for effectName, effectNum := range ed.Stats.EnabledEffects {
+	for effectName, effectNum := range sortedEnabledEffects {
 		text += fmt.Sprintf(" | %q = %v\n", effectName, effectNum)
 	}
 
