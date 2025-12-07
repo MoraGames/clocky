@@ -31,8 +31,11 @@
 <ins>**v0.4.2 - It's not the v2, Balancing Update 2**</ins>
 
 **Rebalance number of less/more impacting effects:**
-- Slightly reduce amount of Add3, Add4, Sub3, Sub4
-- Reduce amount of Mul2, Mul3, Mul4, Mul5, Mul6, Mul-2, Mul-3, Mul-4 and Mul-5 effects
+- ~~Slightly reduce amount of Add3, Add4, Sub3, Sub4~~
+- ~~Reduce amount of Mul2, Mul3, Mul4, Mul5, Mul6, Mul-2, Mul-3, Mul-4 and Mul-5 effects~~
+
+**Reduce the necessity of an external utility:**
+- Make effects counters decrease during the day in both reset message and /list command.
 
 **Other:**
 - ~~Rewrite the entire message entity parser~~
