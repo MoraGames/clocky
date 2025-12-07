@@ -369,7 +369,6 @@ func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 		"Championship7DaysReminderCronjob": uuid.Nil,
 		"Championship1DayReminderCronjob":  uuid.Nil,
 	}
-	var jobID uuid.UUID
 	for _, job := range App.GocronScheduler.Jobs() {
 		if _, exist := jobIDs[job.Name()]; exist {
 			jobIDs[job.Name()] = job.ID()
@@ -382,7 +381,6 @@ func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 			}).Error("GoCron job not found during reload")
 		}
 	}
-
 	// Update the cronjobs
 	championshipStartDate := events.CurrentChampionship.StartDate.In(time.Local)
 
@@ -391,7 +389,7 @@ func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 			switch name {
 			case "ChampionshipResetCronjob":
 				if _, err := App.GocronScheduler.Update(
-					jobID,
+					id,
 					gocron.WeeklyJob(2, gocron.NewWeekdays(championshipStartDate.Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(championshipStartDate.Hour()), uint(championshipStartDate.Minute()), uint(championshipStartDate.Second())))),
 					gocron.NewTask(func() {
 						events.CurrentChampionship.Reset(
@@ -419,7 +417,8 @@ func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 					}).Error("GoCron job not updated during reload")
 				}
 			case "Championship7DaysReminderCronjob":
-				if _, err := App.GocronScheduler.NewJob(
+				if _, err := App.GocronScheduler.Update(
+					id,
 					gocron.WeeklyJob(2, gocron.NewWeekdays(championshipStartDate.Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(championshipStartDate.Hour()), uint(championshipStartDate.Minute()), uint(championshipStartDate.Second())))),
 					gocron.NewTask(func() {
 						entities, text := utils.ParseToEntities(ComposeMessage(
@@ -437,7 +436,7 @@ func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 					}),
 					gocron.WithName("Championship7DaysReminderCronjob"),
 					gocron.WithStartAt(gocron.WithStartDateTimePast(
-						events.CurrentChampionship.StartDate.AddDate(0, 0, -7).In(time.Local),
+						events.CurrentChampionship.StartDate.In(time.Local).AddDate(0, 0, -7),
 					)),
 				); err != nil {
 					App.Logger.WithFields(logrus.Fields{
@@ -446,7 +445,8 @@ func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 					}).Error("GoCron job not updated during reload")
 				}
 			case "Championship1DayReminderCronjob":
-				if _, err := App.GocronScheduler.NewJob(
+				if _, err := App.GocronScheduler.Update(
+					id,
 					gocron.WeeklyJob(2, gocron.NewWeekdays(championshipStartDate.AddDate(0, 0, -1).Weekday()), gocron.NewAtTimes(gocron.NewAtTime(uint(championshipStartDate.Hour()), uint(championshipStartDate.Minute()), uint(championshipStartDate.Second())))),
 					gocron.NewTask(func() {
 						entities, text := utils.ParseToEntities(ComposeMessage(
@@ -466,7 +466,7 @@ func UpdateChampionshipCronjobs(utilsVar types.Utils) {
 					}),
 					gocron.WithName("Championship1DayReminderCronjob"),
 					gocron.WithStartAt(gocron.WithStartDateTimePast(
-						events.CurrentChampionship.StartDate.AddDate(0, 0, -1).In(time.Local),
+						events.CurrentChampionship.StartDate.In(time.Local).AddDate(0, 0, -1),
 					)),
 				); err != nil {
 					App.Logger.WithFields(logrus.Fields{
