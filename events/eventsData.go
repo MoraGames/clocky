@@ -370,8 +370,8 @@ func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, ut
 	}
 
 	text += fmt.Sprintf("\nEffetti Attivi (%v):\n", ed.Stats.EnabledEffectsNum)
-	for effectName, effectNum := range sortedEnabledEffects {
-		text += fmt.Sprintf(" | %q = %v\n", effectName, effectNum)
+	for _, effect := range sortedEnabledEffects {
+		text += fmt.Sprintf(" | %q = %v\n", effect.Name, effect.Amount)
 	}
 
 	text += "\nBuona fortuna!"
