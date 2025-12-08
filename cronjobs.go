@@ -47,7 +47,21 @@ func DefineDefaultCronJobs() {
 		gocron.WithEventListeners(
 			// Daily summary report
 			gocron.BeforeJobRuns(func(jobID uuid.UUID, jobName string) {
-
+				rankingString := ""
+				ranking := structs.GetRanking(Users, structs.RankScopeDay, true)
+				for i, rankEntry := range ranking {
+					rankingString += fmt.Sprintf("%d] %s: %d\n", i+1, rankEntry.Username, rankEntry.Points)
+				}
+				entities, text := utils.ParseToEntities(ComposeMessage(
+					[]string{
+						"__**Ecco la classifica di giornata:**__\n\n",
+						rankingString + "\n",
+						"Un giro di applausi per tutti i partecipanti di oggi, ma adesso preparatevi tutti, un nuovo giorno di sfide sta già per sorgere!",
+					},
+				), TelegramUsersList)
+				respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)
+				respMsg.Entities = entities
+				App.BotAPI.Send(respMsg)
 			}),
 		),
 	); err != nil {

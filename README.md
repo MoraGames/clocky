@@ -25,7 +25,7 @@
 
 **Other:**
 - ~~Resolve cronjob 2-weekly WithStartDateTimePast() execute instantly~~
-- Implements summary message with some stats on daily time base
+- ~~Implements summary message with some stats on daily time base~~
 - Implements summary message with some stats on championship time base
 
 <ins>**v0.4.2 - It's not the v2, Balancing Update 2**</ins>
@@ -36,6 +36,8 @@
 
 **Reduce the necessity of an external utility:**
 - Make effects counters decrease during the day in both reset message and /list command.
+- Show the amount of remaining available points in the day
+- Show the remaining neccessary participations/wins to obtain the daily hint/streak bonuses
 
 **Other:**
 - ~~Rewrite the entire message entity parser~~
