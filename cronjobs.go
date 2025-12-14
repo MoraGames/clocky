@@ -109,7 +109,6 @@ func DefineDefaultCronJobs() {
 					"Ricordiamo tutti che una volta proclamato il vincitore, __egli avrà diritto esclusivo ad un bonus__ per l'intera durata del campionato successivo!\n",
 					"Affrettatevi dunque, nulla ancora è perduto!",
 				},
-				app.Name,
 			), TelegramUsersList)
 			respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)
 			respMsg.Entities = entities
@@ -139,7 +138,6 @@ func DefineDefaultCronJobs() {
 					"P.S.:\n",
 					"//Per chi non dovesse riuscirci, non preoccupatevi: presto tutti i punteggi verranno azzerati e la sfida ricomincerà da capo.//\n",
 				},
-				app.Name,
 			), TelegramUsersList)
 			respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)
 			respMsg.Entities = entities
