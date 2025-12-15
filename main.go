@@ -97,7 +97,7 @@ func main() {
 	upd.Timeout = 180
 
 	//get the updates channel
-	App.Updates = App.BotAPI.GetUpdatesChan(upd)
+	updsChan := App.BotAPI.GetUpdatesChan(upd)
 	App.Logger.WithFields(logrus.Fields{
 		"debugMode": App.BotAPI.Debug,
 		"timeout":   upd.Timeout,
@@ -125,6 +125,12 @@ func main() {
 	}
 
 	App.TimeFormat = "15:04:05.000000 MST -07:00"
+	App.FilesRoot, err = os.OpenRoot("files/")
+	if err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Panic("Error while getting files root")
+	}
 
 	//create the gocron scheduler and define the default cron jobs
 	App.GocronScheduler, err = gocron.NewScheduler()
@@ -138,13 +144,13 @@ func main() {
 	//try to reload the status from files
 	reloadStatus(
 		[]types.Reload{
-			{FileName: "files/sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
-			{FileName: "files/events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
-			{FileName: "files/users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
-			{FileName: "files/pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
-			{FileName: "files/hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
-			{FileName: "files/championship.json", DataStruct: &events.CurrentChampionship, IfOkay: UpdateChampionshipCronjobs, IfFail: events.AssignChampionshipWithDefault},
-			{FileName: "files/pinnedChampionshipMessage.json", DataStruct: &structs.PinnedChampionshipResetMessage, IfOkay: nil, IfFail: nil},
+			{FileName: "sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
+			{FileName: "events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
+			{FileName: "users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
+			{FileName: "pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
+			{FileName: "hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
+			{FileName: "championship.json", DataStruct: &events.CurrentChampionship, IfOkay: UpdateChampionshipCronjobs, IfFail: events.AssignChampionshipWithDefault},
+			{FileName: "pinnedChampionshipMessage.json", DataStruct: &structs.PinnedChampionshipResetMessage, IfOkay: nil, IfFail: nil},
 		},
 		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
@@ -155,7 +161,7 @@ func main() {
 
 	//start the scheduler and run the bot
 	App.GocronScheduler.Start()
-	run(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: App.BotAPI, Updates: App.Updates})
+	run(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"}, types.Data{Bot: App.BotAPI, Updates: updsChan})
 	App.GocronScheduler.Shutdown()
 }
 

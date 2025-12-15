@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/MoraGames/clockyuwu/config"
 	"github.com/go-co-op/gocron/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -9,7 +11,7 @@ import (
 
 const (
 	Name    = "Clocky"
-	Version = "0.4.2"
+	Version = "0.4.3"
 )
 
 type Application struct {
@@ -17,7 +19,7 @@ type Application struct {
 	Config          *config.Config
 	Logger          *logrus.Logger
 	BotAPI          *tgbotapi.BotAPI
-	Updates         tgbotapi.UpdatesChannel
+	FilesRoot       *os.Root
 	DefaultChatID   int64
 	GocronScheduler gocron.Scheduler
 	TimeFormat      string

@@ -137,7 +137,7 @@ func init() {
 
 					switch operation {
 					case "get":
-						file, err := os.ReadFile("files/" + fileName)
+						file, err := App.FilesRoot.ReadFile(fileName)
 						if err != nil {
 							sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "File non trovato."), msg.MessageID)
 							logOutcome("file", fmt.Errorf("file not found"))

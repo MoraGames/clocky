@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"os"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -20,7 +19,7 @@ func reloadStatus(reloads []types.Reload, utils types.Utils) {
 			"IfOkay()": reload.IfOkay != nil,
 		}).Debug("Reloading " + reload.FileName)
 
-		file, err := os.ReadFile(reload.FileName)
+		file, err := App.FilesRoot.ReadFile(reload.FileName)
 		if err != nil {
 			hasFailed = true
 			utils.Logger.WithFields(logrus.Fields{
