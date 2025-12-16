@@ -39,6 +39,7 @@ var (
 		"Short Triple":     shortTriple,
 		"Perfect Square":   perfectSquare,
 		"Equal Twins":      equalTwins,
+		"Half":             half,
 	}
 	Sets = SetSlice{
 		//{"Equal", "aa:aa", "static", false, equal},
@@ -55,6 +56,7 @@ var (
 		{"shortTriple", "[unnamed]", "static", false, shortTriple},
 		{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 		{"Equal Twins", "aa:bb", "static", false, equalTwins},
+		{"Half", "2*n:n", "static", false, half},
 	}
 	SetsJson = SetJsonSlice{}
 
@@ -77,6 +79,7 @@ var (
 			{"Short Triple", "[unnamed]", "static", false, shortTriple},
 			{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 			{"Equal Twins", "aa:bb", "static", false, equalTwins},
+			{"Half", "2*n:n", "static", false, half},
 		}
 	}
 )
@@ -179,4 +182,9 @@ func perfectSquare(h1, h2, m1, m2 int) bool {
 // aa:bb
 func equalTwins(h1, h2, m1, m2 int) bool {
 	return h1 == h2 && m1 == m2
+}
+
+// 2*n:n
+func half(h1, h2, m1, m2 int) bool {
+	return (h1*10 + h2) == (m1*10+m2)*2
 }
