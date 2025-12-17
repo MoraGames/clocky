@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
@@ -327,10 +328,17 @@ func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData
 
 	var availableSets, choosedSets []string
 	var setsEvents [][]*events.Event
+	var eventsNumInChoosedSets int
 	availableSets = append(availableSets, events.Events.Stats.EnabledSets...)
-	for (len(choosedSets) < 3 && len(choosedSets) < len(availableSets)) || (len(setsEvents) < 20 && len(choosedSets) < len(availableSets)) {
-		choosedSets = append(choosedSets, availableSets[r.Intn(events.Events.Stats.EnabledSetsNum-len(choosedSets))])
-		setsEvents = append(setsEvents, events.EventsOf(events.SetsFunctions[choosedSets[len(choosedSets)-1]]))
+
+	for (len(choosedSets) < 3 && len(choosedSets) < len(availableSets)) || (eventsNumInChoosedSets < 20 && len(choosedSets) < len(availableSets)) {
+		randIndex := r.Intn(len(availableSets))
+		choosedSets = append(choosedSets, availableSets[randIndex])
+		availableSets = slices.Delete(availableSets, randIndex, randIndex+1)
+
+		setEvents := events.EventsOf(events.SetsFunctions[choosedSets[len(choosedSets)-1]])
+		setsEvents = append(setsEvents, setEvents)
+		eventsNumInChoosedSets += len(setEvents)
 	}
 	var numEffects []int
 	for _, setEvents := range setsEvents {
@@ -347,7 +355,7 @@ func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData
 			text += fmt.Sprintf(" | %q", event.Name)
 			eventEffects := event.StringifyEffects()
 			if eventEffects != "[]" {
-				text += fmt.Sprintf("  with %v", eventEffects)
+				text += fmt.Sprintf(" with %v", eventEffects)
 			}
 			text += "\n"
 		}
