@@ -231,6 +231,7 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 				}
 			} else {
 				Users[userId].DailyPartecipationStreak = 0
+				Users[userId].DailyActivityStreak = 0
 			}
 
 			// Reward the user (activity streak)
