@@ -21,6 +21,7 @@ type Rank struct {
 	UserTelegramID int64
 	Username       string
 	Points         int
+	Wins           int
 	Partecipations int
 }
 
@@ -34,22 +35,22 @@ func GetRanking(Users map[int64]*User, scope RankScope, excludeNonParticipants b
 				if excludeNonParticipants && u.DailyEventPartecipations == 0 {
 					continue
 				}
-				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.DailyPoints, u.DailyEventPartecipations})
+				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.DailyPoints, u.DailyEventWins, u.DailyEventPartecipations})
 			case RankScopeChampionship:
 				if excludeNonParticipants && u.ChampionshipEventPartecipations == 0 {
 					continue
 				}
-				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.ChampionshipPoints, u.ChampionshipEventPartecipations})
+				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.ChampionshipPoints, u.ChampionshipEventWins, u.ChampionshipEventPartecipations})
 			case RankScopeTotal:
 				if excludeNonParticipants && u.TotalEventPartecipations == 0 {
 					continue
 				}
-				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.TotalPoints, u.TotalEventPartecipations})
+				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.TotalPoints, u.TotalEventWins, u.TotalEventPartecipations})
 			default:
 				if u.ChampionshipEventPartecipations == 0 {
 					continue
 				}
-				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.ChampionshipPoints, u.ChampionshipEventPartecipations})
+				ranking = append(ranking, Rank{u.TelegramID, u.UserName, u.ChampionshipPoints, u.ChampionshipEventWins, u.ChampionshipEventPartecipations})
 			}
 		}
 	}
@@ -59,13 +60,11 @@ func GetRanking(Users map[int64]*User, scope RankScope, excludeNonParticipants b
 		ranking,
 		func(i, j int) bool {
 			if ranking[i].Points == ranking[j].Points {
-				return ranking[i].Partecipations < ranking[j].Partecipations
+				return ranking[i].Wins < ranking[j].Wins
 			}
 			return ranking[i].Points > ranking[j].Points
 		},
 	)
-
-	// fmt.Printf("\n>>> DEBUG <<<\n |- %+vq (%v)\n |- %+v (%v)\n\n", Users, len(Users), ranking, len(ranking))
 
 	return ranking
 }
