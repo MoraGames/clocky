@@ -215,43 +215,59 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 	for userId := range Users {
 		if user, ok := Users[userId]; ok && user != nil {
 			// Check if the user has participated in at least 10% of the enabled events of the day
-			if Users[userId].DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.10)) {
+			if user.DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.10)) {
 				// Update the data structure of deserving users
-				Users[userId].DailyPartecipationStreak++
+				user.DailyPartecipationStreak++
 
-				// Reward the user (hints)
-				choosenSets := ManageDailyRewardMessage(userId, writeMsgData, utilsVar)
+				// Calculate the partecipation level to determine the quality of the hint/activity rewards
+				level := 1
+				if user.DailyEventPartecipations >= 20 {
+					level = 3
+				} else if user.DailyEventPartecipations >= 15 {
+					level = 2
+				}
+
+				// Reward the user (hint) based on the level (10%/15%/20% partecipations of the enabled events)
+				choosenSets := ManageDailyRewardMessage(userId, level, writeMsgData, utilsVar)
 				todayRewardedUsers = append(todayRewardedUsers, events.DailyRewardedUser{User: user.Minimize(), Sets: choosenSets})
 
-				// Check if the user has won at least 25% of the events in which he participated
-				if Users[userId].DailyEventWins >= int(math.Round(float64(Users[userId].DailyEventPartecipations)*0.25)) {
-					Users[userId].DailyActivityStreak++
+				// Check if the user has won at least [50/40/30]% (based on the level) of the events in which he participated, if so increase his activity streak
+				if user.DailyEventWins >= int(math.Round(float64(user.DailyEventPartecipations)*(0.60-(float64(level)*0.10)))) {
+					user.DailyActivityStreak++
 				} else {
-					Users[userId].DailyActivityStreak = 0
+					user.DailyActivityStreak = 0
 				}
 			} else {
-				Users[userId].DailyPartecipationStreak = 0
-				Users[userId].DailyActivityStreak = 0
+				user.DailyPartecipationStreak = 0
+				user.DailyActivityStreak = 0
 			}
 
 			// Reward the user (activity streak)
-			Users[userId].RemoveEffect(structs.NoNegative)
-			Users[userId].RemoveEffect(structs.ConsistentParticipant1)
-			Users[userId].RemoveEffect(structs.ConsistentParticipant2)
-			if Users[userId].DailyActivityStreak >= 7 {
-				Users[userId].AddEffect(structs.ConsistentParticipant1)
-			}
-			if Users[userId].DailyActivityStreak >= 14 {
-				Users[userId].AddEffect(structs.ConsistentParticipant2)
-			}
-			if Users[userId].DailyActivityStreak >= 21 {
-				Users[userId].AddEffect(structs.NoNegative)
+			user.RemoveEffect(structs.NoNegative)
+			user.RemoveEffect(structs.ActivityStreak1)
+			user.RemoveEffect(structs.ActivityStreak2)
+			user.RemoveEffect(structs.ActivityStreak3)
+			if user.DailyActivityStreak >= 28 {
+				user.AddEffect(structs.ActivityStreak3)
+				//From previous streaks bonus
+				user.AddEffect(structs.NoNegative)
+			} else if user.DailyActivityStreak >= 21 {
+				user.AddEffect(structs.NoNegative)
+				//From previous streaks bonus
+				user.AddEffect(structs.ActivityStreak2)
+			} else if user.DailyActivityStreak >= 14 {
+				user.AddEffect(structs.ActivityStreak2)
+			} else if user.DailyActivityStreak >= 7 {
+				user.AddEffect(structs.ActivityStreak1)
 			}
 
 			// Reset the daily user's stats
-			Users[userId].DailyPoints = 0
-			Users[userId].DailyEventPartecipations = 0
-			Users[userId].DailyEventWins = 0
+			user.DailyPoints = 0
+			user.DailyEventPartecipations = 0
+			user.DailyEventWins = 0
+
+			// Sync the updated user data back to the users map
+			Users[userId] = user
 		}
 	}
 
@@ -323,44 +339,64 @@ func ManageChampionshipRewardMessage(userId int64, rankPosition int, writeMsgDat
 	}
 }
 
-func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData, utils types.Utils) []string {
+func ManageDailyRewardMessage(userId int64, level int, writeMsgData *types.WriteMessageData, utils types.Utils) []string {
+	fmt.Printf("\n\nDEBUG >>> Generating daily reward message for user: %v (%v) - Level: %v\n\n", Users[userId].UserName, userId, level)
+
 	// Generate the reward message informations
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	var availableSets, choosedSets []string
-	var setsEvents [][]*events.Event
-	var eventsNumInChoosedSets int
-	availableSets = append(availableSets, events.Events.Stats.EnabledSets...)
+	var availableSets = make([]string, len(events.Events.Stats.EnabledSets))
+	copy(availableSets, events.Events.Stats.EnabledSets)
 
-	for (len(choosedSets) < 3 && len(choosedSets) < len(availableSets)) || (eventsNumInChoosedSets < 20 && len(choosedSets) < len(availableSets)) {
+	var choosedSetsMap = make(map[string]int)
+	var choosedSetsList = make([]string, 0)
+	var eventsMap = make(map[string]*events.Event)
+	var eventNamesList = make([]string, 0)
+
+	for (len(choosedSetsMap) < level && len(choosedSetsMap) < len(availableSets)) || (len(eventsMap) < level*10 && len(choosedSetsMap) < len(availableSets)) {
 		randIndex := r.Intn(len(availableSets))
-		choosedSets = append(choosedSets, availableSets[randIndex])
+		choosedSet := availableSets[randIndex]
 		availableSets = slices.Delete(availableSets, randIndex, randIndex+1)
 
-		setEvents := events.EventsOf(events.SetsFunctions[choosedSets[len(choosedSets)-1]])
-		setsEvents = append(setsEvents, setEvents)
-		eventsNumInChoosedSets += len(setEvents)
-	}
-	var numEffects []int
-	for _, setEvents := range setsEvents {
+		setEvents := events.EventsOf(events.SetsFunctions[choosedSet])
+		choosedSetsMap[choosedSet] = len(setEvents)
+		choosedSetsList = append(choosedSetsList, choosedSet)
+
 		for _, event := range setEvents {
-			numEffects = append(numEffects, len(event.Effects))
+			eventsMap[event.Name] = event
+			if !slices.Contains(eventNamesList, event.Name) {
+				eventNamesList = append(eventNamesList, event.Name)
+			}
 		}
 	}
+
+	slices.Sort(eventNamesList)
 
 	// Generate the reward message
 	text := fmt.Sprintf("Congratulations %v!\nYou have won %v events and for this you are rewarded with an hint for the new day.\nHere are some of the events and relative effects that are surely active in the next 24 hours:\n\n", Users[userId].UserName, Users[userId].DailyEventWins)
-	for i, setEvents := range setsEvents {
-		text += fmt.Sprintf("Events of the Set %q (%v events with %v effects):\n", choosedSets[i], len(setEvents), numEffects[i])
-		for _, event := range setEvents {
-			text += fmt.Sprintf(" | %q", event.Name)
-			eventEffects := event.StringifyEffects()
-			if eventEffects != "[]" {
-				text += fmt.Sprintf(" with %v", eventEffects)
-			}
-			text += "\n"
+
+	text += "Events from the sets "
+	var counter int = 0
+	for setName, setEventsAmount := range choosedSetsMap {
+		text += fmt.Sprintf("%q (%v)", setName, setEventsAmount)
+		if counter < len(choosedSetsMap)-1 {
+			text += ", "
 		}
-		text += "\n"
+		counter++
+	}
+	text += ":\n"
+
+	for _, eventName := range eventNamesList {
+		event := events.Events.Map[eventName]
+
+		eventBasePoints := event.Points
+		eventsFinalPoints := event.CalculateTotalPoints()
+
+		text += fmt.Sprintf(" | %s -> %dpts)", eventName, eventBasePoints)
+		if len(event.Effects) > 0 {
+			text += fmt.Sprintf(" with %v", event.StringifyEffects())
+		}
+		text += fmt.Sprintf(" = %dpts\n", eventsFinalPoints)
 	}
 
 	// Send the reward message
@@ -373,7 +409,7 @@ func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData
 		}).Error("Error while sending message")
 	}
 
-	return choosedSets
+	return choosedSetsList
 }
 
 // This function was supposed to be written in events/championship.go, but due to dependencies with App variable, it's here instead.

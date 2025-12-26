@@ -88,6 +88,25 @@ func (e *Event) StringifyEffects() string {
 	return "[" + stringifiedEffects + "]"
 }
 
+func (e *Event) CalculateTotalPoints() int {
+	totalPoints := e.Points
+	for _, effect := range e.Effects {
+		if (effect.Name == structs.NoNegative.Name) && totalPoints < 0 {
+			totalPoints = 0
+			continue
+		}
+		switch effect.Key {
+		case "*":
+			totalPoints *= effect.Value
+		case "+":
+			totalPoints += effect.Value
+		case "-":
+			totalPoints -= effect.Value
+		}
+	}
+	return totalPoints
+}
+
 func CalculateValid(time time.Time) bool {
 	hour1, hour2, minute1, minute2 := SplitTime(time)
 
