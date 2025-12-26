@@ -12,7 +12,7 @@
 - (TBD) Players tied on points, it may no longer be appropriate to establish a tiebreaker based on the number of participations.
 
 **Quality of Life features:**
-- Enchance the daily before-reset message showing even gained/losed position in the leaderboard from the previous day.
+- ~~Enchance the daily before-reset message showing even gained/losed position in the leaderboard from the previous day.~~
 
 **Documentation:**
 - ~~Update /alias with the newly sets and events introduced.~~

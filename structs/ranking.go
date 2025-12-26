@@ -1,7 +1,13 @@
 package structs
 
 import (
+	"encoding/json"
+	"os"
 	"sort"
+	"time"
+
+	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/sirupsen/logrus"
 )
 
 // RankScope is the type used for define the ranking scope (daily, championship, total) during the /ranking command execution
@@ -67,4 +73,27 @@ func GetRanking(Users map[int64]*User, scope RankScope, excludeNonParticipants b
 	)
 
 	return ranking
+}
+
+var AllRankings Ranking = make(Ranking)
+
+type Ranking map[string][]Rank
+
+func (r Ranking) AddCurrentRanking(Users map[int64]*User) {
+	r[time.Now().Format("02-01-2006")] = GetRanking(Users, DefaultRankScope, true)
+}
+
+func (r Ranking) SaveOnFile(utils types.Utils) {
+	file, err := json.MarshalIndent(r, "", " ")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while marshalling Ranking data")
+	}
+	err = os.WriteFile("files/rankings.json", file, 0644)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while writing Ranking data")
+	}
 }

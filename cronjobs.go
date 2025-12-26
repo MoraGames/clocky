@@ -48,16 +48,75 @@ func DefineDefaultCronJobs() {
 		gocron.WithEventListeners(
 			// Daily summary report
 			gocron.BeforeJobRuns(func(jobID uuid.UUID, jobName string) {
+				// Obtain the ranking of the previous day only if the ChampionshipResetCronjob hasn't run in the last 24 hours (first day of the championship)
+				var withLeaderboardSwaps bool = false
+				var previousChampionshipRanking []structs.Rank
+				var currentChampionshipRanking []structs.Rank
+				if job := utils.GetJobByName(App.GocronScheduler, "ChampionshipResetCronjob"); job != nil {
+					if lastRun, err := job.LastRun(); err != nil {
+						App.Logger.WithFields(logrus.Fields{
+							"err": err,
+						}).Error("Unable to get last run time during daily summary report")
+					} else if !lastRun.After(time.Now().Add(-24 * time.Hour)) {
+						withLeaderboardSwaps = true
+						previousChampionshipRanking = structs.AllRankings[time.Now().Add(-24*time.Hour).Format("02-01-2006")]
+						currentChampionshipRanking = structs.GetRanking(Users, structs.RankScopeChampionship, true)
+					}
+				}
+
+				// Add the current ranking in the AllRankings struct and save it on file
+				structs.AllRankings.AddCurrentRanking(Users)
+				structs.AllRankings.SaveOnFile(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat})
+
+				// Generate the ranking string
 				rankingString := ""
 				ranking := structs.GetRanking(Users, structs.RankScopeDay, true)
 				for i, rankEntry := range ranking {
-					rankingString += fmt.Sprintf("%d] %s: %d\n", i+1, rankEntry.Username, rankEntry.Points)
+					rankingString += fmt.Sprintf("%d] **%s: %d pts** | %d win", i+1, rankEntry.Username, rankEntry.Points, rankEntry.Wins)
+					// If possible, show leaderboard position swaps compared to previous day
+					if withLeaderboardSwaps {
+						var fci, fpi int = -1, -1
+						for ci, cRankEntry := range currentChampionshipRanking {
+							if cRankEntry.UserTelegramID == rankEntry.UserTelegramID {
+								fci = ci
+								break
+							}
+						}
+						for pi, pRankEntry := range previousChampionshipRanking {
+							if pRankEntry.UserTelegramID == rankEntry.UserTelegramID {
+								fpi = pi
+								break
+							}
+						}
+
+						if fci != -1 && fpi != -1 {
+							var symbol string
+							switch {
+							case fci < fpi:
+								symbol = "🡅"
+							case fci == fpi:
+								symbol = "🡆"
+							case fci > fpi:
+								symbol = "🡇"
+							}
+							rankingString += fmt.Sprintf(" (%s %+d)", symbol, fpi-fci)
+						}
+					}
+					rankingString += "\n"
 				}
+
+				// Prepare the bot comment about the ranking message
+				var finalMessage string = "Un giro di applausi per tutti i partecipanti di oggi. Adesso preparatevi tutti, un nuovo giorno di sfide sta già per sorgere!"
+				if len(ranking) == 0 {
+					finalMessage = "Oggi erano tutti così pigri da non partecipare ad alcun evento... Tempo di darsi una svegliata, un nuovo giorno di sfide sta già per sorgere!"
+				}
+
+				// Compose and send the message with appropriate formatting
 				entities, text := utils.ParseToEntities(ComposeMessage(
 					[]string{
 						"__**Ecco la classifica di giornata:**__\n\n",
 						rankingString + "\n",
-						"Un giro di applausi per tutti i partecipanti di oggi, ma adesso preparatevi tutti, un nuovo giorno di sfide sta già per sorgere!",
+						finalMessage,
 					},
 				), TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(App.DefaultChatID, text)

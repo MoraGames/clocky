@@ -146,6 +146,7 @@ func main() {
 		[]types.Reload{
 			{FileName: "sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
 			{FileName: "events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
+			{FileName: "rankings.json", DataStruct: &structs.AllRankings, IfOkay: nil, IfFail: nil},
 			{FileName: "users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
 			{FileName: "pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
 			{FileName: "hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
