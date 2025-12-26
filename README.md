@@ -15,7 +15,10 @@
 - Enchance the daily before-reset message showing even gained/losed position in the leaderboard from the previous day.
 
 **Documentation:**
-- Update /alias with the newly sets and events introduced.
+- ~~Update /alias with the newly sets and events introduced.~~
 
 **Security:**
 - ~~Use OpenRoot() for os operation on file to ensure safeness on the host machine.~~
+
+**Other:**
+- Add an expiration date to each reload file to prevent it from being reloaded after that date.
