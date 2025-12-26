@@ -6,6 +6,9 @@
 - Show the remaining neccessary participations/wins to obtain the daily hint/streak bonuses
 
 **Balancing features:**
+- Make more difficult to obtain both partecipation and activity bonus
+- Reduce the neccessary activity streak for the first bonus and nerf all of them.
+- Introduce more levels of hint based on partecipation grades.
 - (TBD) Players tied on points, it may no longer be appropriate to establish a tiebreaker based on the number of participations.
 
 **Quality of Life features:**
