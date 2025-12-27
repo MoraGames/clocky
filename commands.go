@@ -65,7 +65,7 @@ func init() {
 			ShortDescription: "Mostra l'avanzamento del giocatore verso i bonus giornalieri",
 			LongDescription:  "Mostra il numero di punti/partecipazioni/vittorie giornaliere mancanti per ottenere i diversi bonus di partecipazione e streak attività.",
 			Category:         "di gioco",
-			Syntax:           "/bonus",
+			Syntax:           "/bonus [username]",
 			AdminOnly:        false,
 			Execute: func(msg tgbotapi.Message) error {
 				var args []string
@@ -143,27 +143,6 @@ func init() {
 				}
 				rawText += participationRow1 + participationRow2 + participationRow3 + activityRow1 + activityRow2 + activityRow3
 				rawText += "%%Nota: Il livello partecipazioni stabilisce sia il numero di sets (uno per livello) che ti verranno suggeriti nell'indizio, sia il rapporto partecipazioni/vittorie necessario per avanzare nella streak attività.%%"
-
-				// TODO: Calculate the bonuses progress and generate the rawText string to send
-
-				/* Layout example:
-				 *
-				 * Livello partecipazioni: 0/3
-				 *  |- Prossimo livello (1): 12/34 partecipazioni
-				 * Avanzamento attività: Bloccato.
-				 *  |- Raggiungi il livello 1 delle partecipazioni per sbloccarlo.
-				 *
-				 * %%Nota: Il livello partecipazioni stabilisce sia il numero di sets (uno per livello) che ti verranno suggeriti nell'indizio, sia il rapporto partecipazioni/vittorie necessario per avanzare nella streak attività.%%
-				 */
-				/* Layout example:
-				 *
-				 * Livello partecipazioni: 1/3
-				 *  |- Prossimo livello (2): 36/56 partecipazioni
-				 * Avanzamento attività: 9/18 (50% di 36).
-				 *  |- Raggiungi il livello 2 delle partecipazioni per ridurre il requisito a 40%.
-				 *
-				 * %%Nota: Il livello partecipazioni stabilisce sia il numero di sets (uno per livello) che ti verranno suggeriti nell'indizio, sia il rapporto partecipazioni/vittorie necessario per avanzare nella streak attività.%%
-				 */
 
 				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
