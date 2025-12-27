@@ -280,9 +280,9 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 
 				// Calculate the partecipation level to determine the quality of the hint/activity rewards
 				level := 1
-				if user.DailyEventPartecipations >= 20 {
+				if user.DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.20)) {
 					level = 3
-				} else if user.DailyEventPartecipations >= 15 {
+				} else if user.DailyEventPartecipations >= int(math.Round(float64(dailyEnabledEvents)*0.15)) {
 					level = 2
 				}
 
@@ -290,8 +290,8 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 				choosenSets := ManageDailyRewardMessage(userId, level, writeMsgData, utilsVar)
 				todayRewardedUsers = append(todayRewardedUsers, events.DailyRewardedUser{User: user.Minimize(), Sets: choosenSets})
 
-				// Check if the user has won at least [50/40/30]% (based on the level) of the events in which he participated, if so increase his activity streak
-				if user.DailyEventWins >= int(math.Round(float64(user.DailyEventPartecipations)*(0.60-(float64(level)*0.10)))) {
+				// Check if the user has won at least [70/60/50]% (based on the level) of the events in which he participated, if so increase his activity streak
+				if user.DailyEventWins >= int(math.Round(float64(user.DailyEventPartecipations)*(0.80-(float64(level)*0.10)))) {
 					user.DailyActivityStreak++
 				} else {
 					user.DailyActivityStreak = 0

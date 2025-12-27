@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"sort"
@@ -52,6 +53,118 @@ func init() {
 				for _, set := range events.Sets {
 					rawText += fmt.Sprintf("%v => %%%%%v%%%%\n", set.Name, set.Pattern)
 				}
+				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
+				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
+				respMsg.Entities = entities
+				sendMessage(respMsg, msg.MessageID)
+				return nil
+			},
+		},
+		"bonus": {
+			Name:             "bonus",
+			ShortDescription: "Mostra l'avanzamento del giocatore verso i bonus giornalieri",
+			LongDescription:  "Mostra il numero di punti/partecipazioni/vittorie giornaliere mancanti per ottenere i diversi bonus di partecipazione e streak attività.",
+			Category:         "di gioco",
+			Syntax:           "/bonus",
+			AdminOnly:        false,
+			Execute: func(msg tgbotapi.Message) error {
+				var args []string
+				if cmdArgs := types.CommandArguments(&msg); cmdArgs != "" {
+					args = strings.Split(cmdArgs, " ")
+				}
+				if len(args) > 1 {
+					sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "Uso non valido del comando. Usa /help per maggiori informazioni."), msg.MessageID)
+					return fmt.Errorf("wrong number of arguments")
+				}
+
+				var founded bool
+				var rawText string
+				var user *structs.User
+				if len(args) > 0 {
+					username := args[0]
+					var userId int64
+					var founded bool
+					for uID, u := range Users {
+						if u.UserName == username {
+							founded = true
+							userId = uID
+							break
+						}
+					}
+					if !founded {
+						sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "Utente non trovato."), msg.MessageID)
+						return fmt.Errorf("unknown argument value")
+					}
+					user, founded = Users[userId]
+					rawText = fmt.Sprintf("__**I progressi di %v sono:**__\n\n", user.UserName)
+				} else {
+					user, founded = Users[msg.From.ID]
+					rawText = "__**I tuoi progressi sono:**__\n\n"
+				}
+				if !founded {
+					sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "Utente non trovato."), msg.MessageID)
+					return fmt.Errorf("unknown argument value")
+				}
+
+				// Calculate the partecipation level to determine the quality of the hint/activity rewards
+				level := 0
+				var participationRow1, participationRow2, participationRow3, activityRow1, activityRow2, activityRow3 string
+				if user.DailyEventPartecipations >= int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*0.20)) {
+					level = 3
+					participationRow1 = "**Livello partecipazioni:** 3/3\n"
+					participationRow2 = " |- Hai raggiunto il livello massimo delle partecipazioni.\n"
+					participationRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak partecipazioni.\n", user.DailyPartecipationStreak+1)
+					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (50%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.50)), user.DailyEventPartecipations)
+					activityRow2 = ""
+					activityRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak attività.\n\n", user.DailyActivityStreak+1)
+				} else if user.DailyEventPartecipations >= int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*0.15)) {
+					level = 2
+					participationRow1 = "**Livello partecipazioni:** 2/3\n"
+					participationRow2 = fmt.Sprintf(" |- Prossimo livello (3): %v/%v partecipazioni\n", user.DailyEventPartecipations, int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*(0.05*float64(level+2)))))
+					participationRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak partecipazioni.\n", user.DailyPartecipationStreak+1)
+					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (60%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.60)), user.DailyEventPartecipations)
+					activityRow2 = " |- Raggiungi il livello 3 delle partecipazioni per ridurre il requisito a 50%.\n"
+					activityRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak attività.\n\n", user.DailyActivityStreak+1)
+				} else if user.DailyEventPartecipations >= int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*0.10)) {
+					level = 1
+					participationRow1 = "**Livello partecipazioni:** 1/3\n"
+					participationRow2 = fmt.Sprintf(" |- Prossimo livello (2): %v/%v partecipazioni\n", user.DailyEventPartecipations, int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*(0.05*float64(level+2)))))
+					participationRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak partecipazioni.\n", user.DailyPartecipationStreak+1)
+					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (70%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.70)), user.DailyEventPartecipations)
+					activityRow2 = " |- Raggiungi il livello 2 delle partecipazioni per ridurre il requisito a 60%.\n"
+					activityRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak attività.\n\n", user.DailyActivityStreak+1)
+				} else {
+					participationRow1 = "**Livello partecipazioni:** 0/3\n"
+					participationRow2 = fmt.Sprintf(" |- Prossimo livello (1): %v/%v partecipazioni\n", user.DailyEventPartecipations, int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*(0.05*float64(level+2)))))
+					participationRow3 = " |- Perderai il tuo progresso nella streak partecipazioni.\n"
+					activityRow1 = "**Avanzamento attività:** Bloccato.\n"
+					activityRow2 = " |- Raggiungi il livello 1 delle partecipazioni per sbloccarlo.\n"
+					activityRow3 = " |- Perderai il tuo progresso nella streak attività.\n\n"
+				}
+				rawText += participationRow1 + participationRow2 + participationRow3 + activityRow1 + activityRow2 + activityRow3
+				rawText += "%%Nota: Il livello partecipazioni stabilisce sia il numero di sets (uno per livello) che ti verranno suggeriti nell'indizio, sia il rapporto partecipazioni/vittorie necessario per avanzare nella streak attività.%%"
+
+				// TODO: Calculate the bonuses progress and generate the rawText string to send
+
+				/* Layout example:
+				 *
+				 * Livello partecipazioni: 0/3
+				 *  |- Prossimo livello (1): 12/34 partecipazioni
+				 * Avanzamento attività: Bloccato.
+				 *  |- Raggiungi il livello 1 delle partecipazioni per sbloccarlo.
+				 *
+				 * %%Nota: Il livello partecipazioni stabilisce sia il numero di sets (uno per livello) che ti verranno suggeriti nell'indizio, sia il rapporto partecipazioni/vittorie necessario per avanzare nella streak attività.%%
+				 */
+				/* Layout example:
+				 *
+				 * Livello partecipazioni: 1/3
+				 *  |- Prossimo livello (2): 36/56 partecipazioni
+				 * Avanzamento attività: 9/18 (50% di 36).
+				 *  |- Raggiungi il livello 2 delle partecipazioni per ridurre il requisito a 40%.
+				 *
+				 * %%Nota: Il livello partecipazioni stabilisce sia il numero di sets (uno per livello) che ti verranno suggeriti nell'indizio, sia il rapporto partecipazioni/vittorie necessario per avanzare nella streak attività.%%
+				 */
+
 				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
 				respMsg.Entities = entities

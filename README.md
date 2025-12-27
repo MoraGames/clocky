@@ -1,9 +1,9 @@
 <ins>**v0.4.3 - Dusk till dawn**</ins>
 
 **Reduce the necessity of an external utility:**
-- Make effects counters decrease during the day in both reset message and /list command.
-- Show the amount of remaining available points in the day
-- Show the remaining neccessary participations/wins to obtain the daily hint/streak bonuses
+- ~~Make effects counters decrease during the day in both reset message and /list command.~~
+- ~~Show the amount of remaining available points in the day~~
+- ~~Show the remaining neccessary participations/wins to obtain the daily hint/streak bonuses~~
 
 **Balancing features:**
 - ~~Make more difficult to obtain both partecipation and activity bonus~~
