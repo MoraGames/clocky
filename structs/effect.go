@@ -49,8 +49,8 @@ var (
 	LastChanceBonus2       = &Effect{"Last Chance 2", "User", "+", 5}
 	ReigningLeader         = &Effect{"Reigning Leader", "User", "+", 1}
 	NoNegative             = &Effect{"No Negative", "User", "+", 0}
-	ConsistentParticipant1 = &Effect{"Consistent Participant 1", "User", "+", 3}
-	ConsistentParticipant2 = &Effect{"Consistent Participant 2", "User", "+", 5}
+	ConsistentParticipant1 = &Effect{"Consistent Participant 1", "User", "+", 1}
+	ConsistentParticipant2 = &Effect{"Consistent Participant 2", "User", "+", 3}
 
 	// Map of all the effects
 	Effects = map[string]*Effect{

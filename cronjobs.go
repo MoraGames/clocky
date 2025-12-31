@@ -238,14 +238,12 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 			Users[userId].RemoveEffect(structs.NoNegative)
 			Users[userId].RemoveEffect(structs.ConsistentParticipant1)
 			Users[userId].RemoveEffect(structs.ConsistentParticipant2)
-			if Users[userId].DailyActivityStreak >= 7 {
-				Users[userId].AddEffect(structs.ConsistentParticipant1)
-			}
-			if Users[userId].DailyActivityStreak >= 14 {
-				Users[userId].AddEffect(structs.ConsistentParticipant2)
-			}
 			if Users[userId].DailyActivityStreak >= 21 {
 				Users[userId].AddEffect(structs.NoNegative)
+			} else if Users[userId].DailyActivityStreak >= 14 {
+				Users[userId].AddEffect(structs.ConsistentParticipant2)
+			} else if Users[userId].DailyActivityStreak >= 7 {
+				Users[userId].AddEffect(structs.ConsistentParticipant1)
 			}
 
 			// Reset the daily user's stats
