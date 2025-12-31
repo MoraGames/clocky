@@ -83,7 +83,6 @@ func init() {
 				if len(args) > 0 {
 					username := args[0]
 					var userId int64
-					var founded bool
 					for uID, u := range Users {
 						if u.UserName == username {
 							founded = true
