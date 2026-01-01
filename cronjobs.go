@@ -290,8 +290,8 @@ func DailyUserRewardAndReset(users map[int64]*structs.User, dailyEnabledEvents i
 				choosenSets := ManageDailyRewardMessage(userId, level, writeMsgData, utilsVar)
 				todayRewardedUsers = append(todayRewardedUsers, events.DailyRewardedUser{User: user.Minimize(), Sets: choosenSets})
 
-				// Check if the user has won at least [70/60/50]% (based on the level) of the events in which he participated, if so increase his activity streak
-				if user.DailyEventWins >= int(math.Round(float64(user.DailyEventPartecipations)*(0.80-(float64(level)*0.10)))) {
+				// Check if the user has won at least [90/75/60]% (based on the level) of the events in which he participated, if so increase his activity streak
+				if user.DailyEventWins >= int(math.Round(float64(user.DailyEventPartecipations)*(1.00-(float64(level)*0.15)))) {
 					user.DailyActivityStreak++
 				} else {
 					user.DailyActivityStreak = 0

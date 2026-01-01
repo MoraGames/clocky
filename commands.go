@@ -113,7 +113,7 @@ func init() {
 					participationRow1 = "**Livello partecipazioni:** 3/3\n"
 					participationRow2 = " |- Hai raggiunto il livello massimo delle partecipazioni.\n"
 					participationRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak partecipazioni.\n", user.DailyPartecipationStreak+1)
-					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (50%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.50)), user.DailyEventPartecipations)
+					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (60%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.50)), user.DailyEventPartecipations)
 					activityRow2 = ""
 					activityRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak attività.\n\n", user.DailyActivityStreak+1)
 				} else if user.DailyEventPartecipations >= int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*0.15)) {
@@ -121,16 +121,16 @@ func init() {
 					participationRow1 = "**Livello partecipazioni:** 2/3\n"
 					participationRow2 = fmt.Sprintf(" |- Prossimo livello (3): %v/%v partecipazioni\n", user.DailyEventPartecipations, int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*(0.05*float64(level+2)))))
 					participationRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak partecipazioni.\n", user.DailyPartecipationStreak+1)
-					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (60%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.60)), user.DailyEventPartecipations)
-					activityRow2 = " |- Raggiungi il livello 3 delle partecipazioni per ridurre il requisito a 50%.\n"
+					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (75%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.60)), user.DailyEventPartecipations)
+					activityRow2 = " |- Raggiungi il livello 3 delle partecipazioni per ridurre il requisito a 60%.\n"
 					activityRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak attività.\n\n", user.DailyActivityStreak+1)
 				} else if user.DailyEventPartecipations >= int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*0.10)) {
 					level = 1
 					participationRow1 = "**Livello partecipazioni:** 1/3\n"
 					participationRow2 = fmt.Sprintf(" |- Prossimo livello (2): %v/%v partecipazioni\n", user.DailyEventPartecipations, int(math.Round(float64(events.Events.Stats.EnabledEventsNum)*(0.05*float64(level+2)))))
 					participationRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak partecipazioni.\n", user.DailyPartecipationStreak+1)
-					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (70%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.70)), user.DailyEventPartecipations)
-					activityRow2 = " |- Raggiungi il livello 2 delle partecipazioni per ridurre il requisito a 60%.\n"
+					activityRow1 = fmt.Sprintf("**Avanzamento attività:** %v/%v (90%% di %v).\n", user.DailyEventWins, int(math.Round(float64(user.DailyEventPartecipations)*0.70)), user.DailyEventPartecipations)
+					activityRow2 = " |- Raggiungi il livello 2 delle partecipazioni per ridurre il requisito a 75%.\n"
 					activityRow3 = fmt.Sprintf(" |- Aumenterai a %v la tua streak attività.\n\n", user.DailyActivityStreak+1)
 				} else {
 					participationRow1 = "**Livello partecipazioni:** 0/3\n"
