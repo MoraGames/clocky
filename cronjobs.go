@@ -21,6 +21,59 @@ import (
 )
 
 func DefineDefaultCronJobs() {
+	// Update the events data during the day
+	if _, err := App.GocronScheduler.NewJob(
+		gocron.CronJob(
+			// Every minute at second 59
+			"59 * * * * *",
+			true,
+		),
+		gocron.NewTask(func() {
+			// Extract the current time
+			now := time.Now()
+
+			// Check if the current time is a valid enabled event time (and force skip at 23:59)
+			fmt.Println("DEBUG >>> Checking at ", now.Format("15:04:05"))
+
+			if now.Hour() == 23 && now.Minute() == 59 {
+				return
+			}
+			event, exists := events.Events.Map[fmt.Sprintf("%d%d:%d%d", now.Hour()/10, now.Hour()%10, now.Minute()/10, now.Minute()%10)]
+			if !exists {
+				return
+			}
+			if !event.Enabled {
+				return
+			}
+
+			// Update the events structures
+			fmt.Println("DEBUG >>> Exist at ", now.Format("15:04:05"))
+
+			enablingSets := events.CalculateEnablingSets(now)
+			for _, setName := range enablingSets {
+				events.Events.Curr.EnabledSets[setName]--
+			}
+			for _, effect := range event.Effects {
+				events.Events.Curr.EnabledEffects[effect.Name]--
+			}
+
+			// Update the message data
+			UpdateEventsDataMessage(
+				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
+				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
+			)
+
+			// Save the Events data
+			events.Events.SaveOnFile(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat})
+		}),
+		gocron.WithName("EventsDataUpdateCronjob"),
+	); err != nil {
+		App.Logger.WithFields(logrus.Fields{
+			"job": "EventsDataUpdateCronjob",
+			"err": err,
+		}).Error("GoCron job not set")
+	}
+
 	// Daily reset cronjob - at 23:59:30
 	if _, err := App.GocronScheduler.NewJob(
 		gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(23, 59, 30))),
@@ -214,6 +267,28 @@ func DefineDefaultCronJobs() {
 	App.Logger.WithFields(logrus.Fields{
 		"gcJobs": utils.StringifyJobs(App.GocronScheduler.Jobs()),
 	}).Info("GoCron jobs set")
+}
+
+func UpdateEventsDataMessage(writeMsgData *types.WriteMessageData, utilsVar types.Utils) {
+	// Read PinnedResetMessage
+	pinnedMessageFile, err := os.ReadFile("files/pinnedMessage.json")
+	if err != nil {
+		utilsVar.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while reading Events data")
+		return
+	}
+	var PinnedResetMessage events.EventsResetPinnedMessage
+	err = json.Unmarshal(pinnedMessageFile, &PinnedResetMessage)
+	if err != nil {
+		utilsVar.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while unmarshalling Events data")
+		return
+	}
+
+	// Update the message
+	events.Events.OverwriteResetMessage(PinnedResetMessage.MessageID, writeMsgData, utilsVar)
 }
 
 func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData *types.WriteMessageData, utilsVar types.Utils) {

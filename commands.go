@@ -352,9 +352,13 @@ func init() {
 						return sets[i] < sets[j]
 					})
 
-					rawText += fmt.Sprintf("**Schemi attivi (%v):**\n", len(sets))
+					rawText += fmt.Sprintf("**Set e Eventi attivi (%v):**\n", len(sets))
 					for _, setName := range sets {
-						rawText += fmt.Sprintf(" | %q\n", setName)
+						if events.Events.Curr.EnabledSets[setName] == 0 {
+							rawText += fmt.Sprintf(" | ~~%s -> %v~~\n", setName, events.Events.Curr.EnabledSets[setName])
+						} else {
+							rawText += fmt.Sprintf(" | %s -> %v\n", setName, events.Events.Curr.EnabledSets[setName])
+						}
 					}
 					rawText += "\n"
 				}
@@ -363,7 +367,11 @@ func init() {
 
 					rawText += fmt.Sprintf("**Effetti presenti (%v):**\n", len(effects))
 					for _, effect := range effects {
-						rawText += fmt.Sprintf(" | %q = %v\n", effect.Name, effect.Amount)
+						if effect.Amount == 0 {
+							rawText += fmt.Sprintf(" | ~~%s = %v~~\n", effect.Name, effect.Amount)
+						} else {
+							rawText += fmt.Sprintf(" | %s = %v\n", effect.Name, effect.Amount)
+						}
 					}
 					rawText += "\n"
 				}

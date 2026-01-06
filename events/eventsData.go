@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/MoraGames/clockyuwu/pkg/utils"
 	"github.com/MoraGames/clockyuwu/structs"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sirupsen/logrus"
@@ -20,6 +21,7 @@ type (
 		Map   EventsMap
 		Keys  EventsKeys
 		Stats EventsStats
+		Curr  EventsCurr
 	}
 
 	EventsMap   map[string]*Event
@@ -34,11 +36,19 @@ type (
 		EnabledEffectsNum int
 		EnabledEffects    map[string]int
 	}
+	EventsCurr struct {
+		EnabledSets       map[string]int
+		EnabledEffects    map[string]int
+		EnabledPointsSum  int
+		EnabledEffectsNum int
+	}
 
 	EventsResetPinnedMessage struct {
 		Exist     bool
 		ChatID    int64
 		MessageID int
+		Text      string
+		Entities  []tgbotapi.MessageEntity
 	}
 
 	DailyRewardedUser struct {
@@ -58,14 +68,27 @@ var (
 	Events                  *EventsData
 	AssignEventsWithDefault = func(utils types.Utils) {
 		Events = NewEventsData(true, utils)
+		Events.ResestEventsCurr()
 	}
 )
+
+func (ed *EventsData) ResestEventsCurr() {
+	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0}
+
+	for _, setName := range ed.Stats.EnabledSets {
+		ed.Curr.EnabledSets[setName] = len(EventsOf(Sets.GetByName(setName).Verify))
+	}
+	ed.Curr.EnabledPointsSum = ed.Stats.EnabledPointsSum
+	ed.Curr.EnabledEffects = ed.Stats.EnabledEffects
+	ed.Curr.EnabledEffectsNum = ed.Stats.EnabledEffectsNum
+}
 
 func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 	ed := &EventsData{
 		make(EventsMap),
 		make(EventsKeys, 0),
 		EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)},
+		EventsCurr{make(map[string]int), make(map[string]int), 0, 0},
 	}
 
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
@@ -114,6 +137,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
+	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0}
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, utils)
 
 	for eventName := range ed.Map {
@@ -147,6 +171,9 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 			structs.EffectPresence{Effect: structs.AddFivePoints, Possible: 0.10, Amount: types.Interval{Min: 0.01, Max: 0.02}},           // "Add 5" ->  10% of (95E: 01-02 | 218E: 02-04)
 		)
 	}
+
+	// Update Curr Stats
+	ed.ResestEventsCurr()
 
 	// Save on file the new data
 	ed.SaveOnFile(utils)
@@ -341,7 +368,7 @@ func (ed *EventsData) SaveOnFile(utils types.Utils) {
 	}
 }
 
-func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, utils types.Utils) {
+func (ed *EventsData) GenerateResetMessageContent() (string, []tgbotapi.MessageEntity) {
 	// Sort the data contained by Stats.EnabledSets and Stats.EnabledEffects
 	sortedActiveSets := make([]string, len(ed.Stats.EnabledSets))
 	copy(sortedActiveSets, ed.Stats.EnabledSets)
@@ -349,8 +376,8 @@ func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, ut
 		return sortedActiveSets[i] < sortedActiveSets[j]
 	})
 
-	sortedEnabledEffects := make([]EffectPresence, 0, len(ed.Stats.EnabledEffects))
-	for effectName, effectNum := range ed.Stats.EnabledEffects {
+	sortedEnabledEffects := make([]EffectPresence, 0, len(ed.Curr.EnabledEffects))
+	for effectName, effectNum := range ed.Curr.EnabledEffects {
 		sortedEnabledEffects = append(sortedEnabledEffects, EffectPresence{
 			Name:   effectName,
 			Amount: effectNum,
@@ -361,23 +388,42 @@ func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, ut
 	})
 
 	// Generate text
-	text := "Gli eventi son stati resettati.\nEcco alcune informazioni:\n\n"
-	text += fmt.Sprintf("Schemi: %v/%v\nEventi: %v/%v\nPunti ottenibili: %v\n", ed.Stats.EnabledSetsNum, ed.Stats.TotalSetsNum, ed.Stats.EnabledEventsNum, ed.Stats.TotalEventsNum, ed.Stats.EnabledPointsSum)
+	rawText := "Gli eventi son stati resettati.\nEcco alcune informazioni:\n\n"
+	rawText += fmt.Sprintf("Set: %v/%v\nEventi: %v/%v\nPunti ottenibili: %v\n", ed.Stats.EnabledSetsNum, ed.Stats.TotalSetsNum, ed.Stats.EnabledEventsNum, ed.Stats.TotalEventsNum, ed.Curr.EnabledPointsSum)
 
-	text += fmt.Sprintf("\nSchemi Attivi (%v):\n", ed.Stats.EnabledSetsNum)
+	rawText += fmt.Sprintf("\nSet e Eventi Attivi (%v):\n", ed.Stats.EnabledSetsNum)
 	for _, setName := range sortedActiveSets {
-		text += fmt.Sprintf(" | %q\n", setName)
+		if ed.Curr.EnabledSets[setName] == 0 {
+			rawText += fmt.Sprintf(" | ~~%s -> %v~~\n", setName, ed.Curr.EnabledSets[setName])
+		} else {
+			rawText += fmt.Sprintf(" | %s -> %v\n", setName, ed.Curr.EnabledSets[setName])
+		}
 	}
 
-	text += fmt.Sprintf("\nEffetti Attivi (%v):\n", ed.Stats.EnabledEffectsNum)
+	rawText += fmt.Sprintf("\nEffetti Attivi (%v):\n", ed.Curr.EnabledEffectsNum)
 	for _, effect := range sortedEnabledEffects {
-		text += fmt.Sprintf(" | %q = %v\n", effect.Name, effect.Amount)
+		if effect.Amount == 0 {
+			rawText += fmt.Sprintf(" | ~~%s = %v~~\n", effect.Name, effect.Amount)
+		} else {
+			rawText += fmt.Sprintf(" | %s = %v\n", effect.Name, effect.Amount)
+		}
 	}
 
-	text += "\nBuona fortuna!"
+	rawText += "\nBuona fortuna!"
+
+	entities, text := utils.ParseToEntities(rawText, nil)
+	return text, entities
+}
+
+func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, utils types.Utils) {
+	// Generate message
+	text, entities := ed.GenerateResetMessageContent()
+	message := tgbotapi.NewMessage(writeMsgData.ChatID, text)
+	if entities != nil {
+		message.Entities = entities
+	}
 
 	// Send message
-	message := tgbotapi.NewMessage(writeMsgData.ChatID, text)
 	if writeMsgData.ReplyMessageID != -1 {
 		message.ReplyToMessageID = writeMsgData.ReplyMessageID
 	}
@@ -391,6 +437,24 @@ func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, ut
 
 	// Update the pinned Message
 	UpdatePinnedMessage(writeMsgData, utils, msg)
+}
+
+func (ed *EventsData) OverwriteResetMessage(msgId int, writeMsgData *types.WriteMessageData, utils types.Utils) {
+	// Edit message
+	text, entities := ed.GenerateResetMessageContent()
+	message := tgbotapi.NewEditMessageText(writeMsgData.ChatID, msgId, text)
+	if entities != nil {
+		message.Entities = entities
+	}
+
+	// Update message
+	msg, err := writeMsgData.Bot.Send(message)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": msg,
+		}).Error("Error while editing message")
+	}
 }
 
 func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils, msgToPin tgbotapi.Message) {
@@ -413,6 +477,8 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 		true,
 		msgToPin.Chat.ID,
 		msgToPin.MessageID,
+		msgToPin.Text,
+		msgToPin.Entities,
 	}
 
 	// Save PinnedResetMessage

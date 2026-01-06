@@ -133,6 +133,18 @@ func CalculateStatus(time time.Time) (bool, int) {
 	return enabled, points
 }
 
+func CalculateEnablingSets(time time.Time) []string {
+	hour1, hour2, minute1, minute2 := SplitTime(time)
+
+	enablingSets := make([]string, 0)
+	for _, set := range Sets {
+		if set.Enabled && set.Verify(hour1, hour2, minute1, minute2) {
+			enablingSets = append(enablingSets, set.Name)
+		}
+	}
+	return enablingSets
+}
+
 func SplitTime(time time.Time) (int, int, int, int) {
 	hour := time.Hour()
 	hour1 := hour / 10
