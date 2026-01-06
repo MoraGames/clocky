@@ -33,8 +33,6 @@ func DefineDefaultCronJobs() {
 			now := time.Now()
 
 			// Check if the current time is a valid enabled event time (and force skip at 23:59)
-			fmt.Println("DEBUG >>> Checking at ", now.Format("15:04:05"))
-
 			if now.Hour() == 23 && now.Minute() == 59 {
 				return
 			}
@@ -47,8 +45,6 @@ func DefineDefaultCronJobs() {
 			}
 
 			// Update the events structures
-			fmt.Println("DEBUG >>> Exist at ", now.Format("15:04:05"))
-
 			enablingSets := events.CalculateEnablingSets(now)
 			for _, setName := range enablingSets {
 				events.Events.Curr.EnabledSets[setName]--
@@ -474,7 +470,7 @@ func ManageChampionshipRewardMessage(userId int64, rankPosition int, writeMsgDat
 }
 
 func ManageDailyRewardMessage(userId int64, level int, writeMsgData *types.WriteMessageData, utils types.Utils) []string {
-	fmt.Printf("\n\nDEBUG >>> Generating daily reward message for user: %v (%v) - Level: %v\n\n", Users[userId].UserName, userId, level)
+	// fmt.Printf("\n\nDEBUG >>> Generating daily reward message for user: %v (%v) - Level: %v\n\n", Users[userId].UserName, userId, level)
 
 	// Generate the reward message informations
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
