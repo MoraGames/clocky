@@ -111,6 +111,15 @@ func (sj SetJsonSlice) ToSlice() SetSlice {
 	return slice
 }
 
+func (s SetSlice) GetByName(name string) *Set {
+	for _, set := range s {
+		if set.Name == name {
+			return set
+		}
+	}
+	return nil
+}
+
 // Notes: The set is replaced by edits on repeat and mirror sets and the new "equal twins" set
 // aa:aa
 // func equal(h1, h2, m1, m2 int) bool {
