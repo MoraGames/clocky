@@ -518,7 +518,13 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 }
 
 func FastforwardUpdateDailyCounters(utilsVar types.Utils) {
-	for t, now := Events.Curr.LastUpdate.Add(time.Minute), time.Now(); t.Before(now) || now.Second() == 59; t, now = t.Add(time.Minute), time.Now() {
+	t, now := Events.Curr.LastUpdate.AddDate(0, 0, 1), time.Now()
+	if t.IsZero() {
+		utilsVar.Logger.Warn("LastUpdate is zeroed, FastforwardUpdateDailyCounters will not be executed")
+		return
+	}
+
+	for ; t.Before(now) || now.Second() == 59; t, now = t.Add(time.Minute), time.Now() {
 		// Check if the current time is a valid enabled event time (and force skip at 23:59)
 		if t.Hour() == 23 && t.Minute() == 59 {
 			return
