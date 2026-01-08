@@ -267,7 +267,7 @@ func MinutelyUpdateEventsCounters(writeMsgData *types.WriteMessageData, utilsVar
 		events.Events.Curr.EnabledEffects[effect.Name]--
 		events.Events.Curr.RemainedEffectsNum--
 	}
-	events.Events.Curr.RemainedPointsSum -= event.CalculateTotalPoints()
+	events.Events.Curr.RemainedPointsSum -= event.Points
 	events.Events.Curr.LastUpdate = now
 
 	// Update the message data

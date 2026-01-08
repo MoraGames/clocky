@@ -81,9 +81,9 @@ func (ed *EventsData) ResetEventsCurr() {
 	for _, setName := range ed.Stats.EnabledSets {
 		setEventsNum := len(EventsOf(Sets.GetByName(setName).Verify))
 		ed.Curr.EnabledSets[setName] = setEventsNum
-		ed.Curr.RemainedEventsNum += setEventsNum
 	}
-	ed.Curr.RemainedSetsNum = len(ed.Curr.EnabledSets)
+	ed.Curr.RemainedEventsNum += ed.Stats.EnabledEventsNum
+	ed.Curr.RemainedSetsNum = len(ed.Stats.EnabledSets)
 	ed.Curr.EnabledEffects = ed.Stats.EnabledEffects
 	ed.Curr.RemainedEffectsNum = ed.Stats.EnabledEffectsNum
 	ed.Curr.RemainedPointsSum = ed.Stats.EnabledPointsSum
@@ -397,7 +397,7 @@ func (ed *EventsData) GenerateResetMessageContent() (string, []tgbotapi.MessageE
 	rawText := "__**Gli eventi son stati resettati.**__\nEcco alcune info sulla giornata restante:\n\n"
 	rawText += fmt.Sprintf("Set: %v/%v\nEventi: %v/%v\nEffetti: %v/%v\nPunti: %v/%v\n", ed.Curr.RemainedSetsNum, ed.Stats.EnabledSetsNum, ed.Curr.RemainedEventsNum, ed.Stats.EnabledEventsNum, ed.Curr.RemainedEffectsNum, ed.Stats.EnabledEffectsNum, ed.Curr.RemainedPointsSum, ed.Stats.EnabledPointsSum)
 
-	rawText += "\n**Set e Eventi attivi:**\n"
+	rawText += "\n**Set ed Eventi attivi:**\n"
 	for _, setName := range sortedActiveSets {
 		if ed.Curr.EnabledSets[setName] == 0 {
 			rawText += fmt.Sprintf("| ~~%s -> %v~~\n", setName, ed.Curr.EnabledSets[setName])
@@ -406,7 +406,7 @@ func (ed *EventsData) GenerateResetMessageContent() (string, []tgbotapi.MessageE
 		}
 	}
 
-	rawText += "\n**Effetti attivi:**\n"
+	rawText += "\n**Effetti presenti:**\n"
 	for _, effect := range sortedEnabledEffects {
 		if effect.Amount == 0 {
 			rawText += fmt.Sprintf("| ~~%s = %v~~\n", effect.Name, effect.Amount)
@@ -550,7 +550,7 @@ func FastforwardUpdateDailyCounters(utilsVar types.Utils) {
 			Events.Curr.EnabledEffects[effect.Name]--
 			Events.Curr.RemainedEffectsNum--
 		}
-		Events.Curr.RemainedPointsSum -= event.CalculateTotalPoints()
+		Events.Curr.RemainedPointsSum -= event.Points
 		Events.Curr.LastUpdate = t
 
 		// Update the message data
