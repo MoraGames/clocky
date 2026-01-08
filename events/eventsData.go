@@ -41,6 +41,7 @@ type (
 		EnabledEffects    map[string]int
 		EnabledPointsSum  int
 		EnabledEffectsNum int
+		LastUpdate        time.Time
 	}
 
 	EventsResetPinnedMessage struct {
@@ -68,12 +69,12 @@ var (
 	Events                  *EventsData
 	AssignEventsWithDefault = func(utils types.Utils) {
 		Events = NewEventsData(true, utils)
-		Events.ResestEventsCurr()
+		Events.ResetEventsCurr()
 	}
 )
 
-func (ed *EventsData) ResestEventsCurr() {
-	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0}
+func (ed *EventsData) ResetEventsCurr() {
+	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0, time.Now()}
 
 	for _, setName := range ed.Stats.EnabledSets {
 		ed.Curr.EnabledSets[setName] = len(EventsOf(Sets.GetByName(setName).Verify))
@@ -88,7 +89,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 		make(EventsMap),
 		make(EventsKeys, 0),
 		EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)},
-		EventsCurr{make(map[string]int), make(map[string]int), 0, 0},
+		EventsCurr{make(map[string]int), make(map[string]int), 0, 0, time.Now()},
 	}
 
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
@@ -137,7 +138,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
-	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0}
+	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0, time.Now()}
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, utils)
 
 	for eventName := range ed.Map {
@@ -173,7 +174,7 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	}
 
 	// Update Curr Stats
-	ed.ResestEventsCurr()
+	ed.ResetEventsCurr()
 
 	// Save on file the new data
 	ed.SaveOnFile(utils)
@@ -509,4 +510,59 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 			}).Error("Error while pinning message")
 		}
 	}
+}
+
+func FastforwardUpdateDailyCounters(utilsVar types.Utils) {
+	for t, now := Events.Curr.LastUpdate.Add(time.Minute), time.Now(); t.Before(now) || now.Second() == 59; t, now = t.Add(time.Minute), time.Now() {
+		// Check if the current time is a valid enabled event time (and force skip at 23:59)
+		if t.Hour() == 23 && t.Minute() == 59 {
+			return
+		}
+		event, exists := Events.Map[fmt.Sprintf("%d%d:%d%d", t.Hour()/10, t.Hour()%10, t.Minute()/10, t.Minute()%10)]
+		if !exists {
+			return
+		}
+		if !event.Enabled {
+			return
+		}
+
+		// Update the events structures
+		enablingSets := CalculateEnablingSets(t)
+		for _, setName := range enablingSets {
+			Events.Curr.EnabledSets[setName]--
+		}
+		for _, effect := range event.Effects {
+			Events.Curr.EnabledEffects[effect.Name]--
+		}
+		Events.Curr.LastUpdate = t
+
+		// Update the message data
+		// This is commented since in this function we have bot/chat data. Since this fastforward is used only at startup, the first cronjob iteration will update the message with the correct data.
+		//UpdateEventsDataMessage(&types.WriteMessageData{Bot: utilsVar.Bot, ChatID: utilsVar.ChatID, ReplyMessageID: -1}, utilsVar)
+
+		// Save the Events data
+		Events.SaveOnFile(utilsVar)
+	}
+}
+
+func UpdateEventsDataMessage(writeMsgData *types.WriteMessageData, utilsVar types.Utils) {
+	// Read PinnedResetMessage
+	pinnedMessageFile, err := os.ReadFile("files/pinnedMessage.json")
+	if err != nil {
+		utilsVar.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while reading Events data")
+		return
+	}
+	var PinnedResetMessage EventsResetPinnedMessage
+	err = json.Unmarshal(pinnedMessageFile, &PinnedResetMessage)
+	if err != nil {
+		utilsVar.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while unmarshalling Events data")
+		return
+	}
+
+	// Update the message
+	Events.OverwriteResetMessage(PinnedResetMessage.MessageID, writeMsgData, utilsVar)
 }
