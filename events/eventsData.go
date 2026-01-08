@@ -37,11 +37,13 @@ type (
 		EnabledEffects    map[string]int
 	}
 	EventsCurr struct {
-		EnabledSets       map[string]int
-		EnabledEffects    map[string]int
-		EnabledPointsSum  int
-		EnabledEffectsNum int
-		LastUpdate        time.Time
+		EnabledSets        map[string]int
+		RemainedSetsNum    int
+		RemainedEventsNum  int
+		EnabledEffects     map[string]int
+		RemainedEffectsNum int
+		RemainedPointsSum  int
+		LastUpdate         time.Time
 	}
 
 	EventsResetPinnedMessage struct {
@@ -74,14 +76,17 @@ var (
 )
 
 func (ed *EventsData) ResetEventsCurr() {
-	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0, time.Now()}
+	ed.Curr = EventsCurr{make(map[string]int), 0, 0, make(map[string]int), 0, 0, time.Now()}
 
 	for _, setName := range ed.Stats.EnabledSets {
-		ed.Curr.EnabledSets[setName] = len(EventsOf(Sets.GetByName(setName).Verify))
+		setEventsNum := len(EventsOf(Sets.GetByName(setName).Verify))
+		ed.Curr.EnabledSets[setName] = setEventsNum
+		ed.Curr.RemainedEventsNum += setEventsNum
 	}
-	ed.Curr.EnabledPointsSum = ed.Stats.EnabledPointsSum
+	ed.Curr.RemainedSetsNum = len(ed.Curr.EnabledSets)
 	ed.Curr.EnabledEffects = ed.Stats.EnabledEffects
-	ed.Curr.EnabledEffectsNum = ed.Stats.EnabledEffectsNum
+	ed.Curr.RemainedEffectsNum = ed.Stats.EnabledEffectsNum
+	ed.Curr.RemainedPointsSum = ed.Stats.EnabledPointsSum
 }
 
 func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
@@ -89,7 +94,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 		make(EventsMap),
 		make(EventsKeys, 0),
 		EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)},
-		EventsCurr{make(map[string]int), make(map[string]int), 0, 0, time.Now()},
+		EventsCurr{make(map[string]int), 0, 0, make(map[string]int), 0, 0, time.Now()},
 	}
 
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
@@ -138,7 +143,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
-	ed.Curr = EventsCurr{make(map[string]int), make(map[string]int), 0, 0, time.Now()}
+	ed.Curr = EventsCurr{make(map[string]int), 0, 0, make(map[string]int), 0, 0, time.Now()}
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, utils)
 
 	for eventName := range ed.Map {
@@ -389,24 +394,24 @@ func (ed *EventsData) GenerateResetMessageContent() (string, []tgbotapi.MessageE
 	})
 
 	// Generate text
-	rawText := "Gli eventi son stati resettati.\nEcco alcune informazioni:\n\n"
-	rawText += fmt.Sprintf("Set: %v/%v\nEventi: %v/%v\nPunti ottenibili: %v\n", ed.Stats.EnabledSetsNum, ed.Stats.TotalSetsNum, ed.Stats.EnabledEventsNum, ed.Stats.TotalEventsNum, ed.Curr.EnabledPointsSum)
+	rawText := "__**Gli eventi son stati resettati.**__\nEcco alcune info sulla giornata restante:\n\n"
+	rawText += fmt.Sprintf("Set: %v/%v\nEventi: %v/%v\nEffetti: %v/%v\nPunti: %v/%v\n", ed.Curr.RemainedSetsNum, ed.Stats.EnabledSetsNum, ed.Curr.RemainedEventsNum, ed.Stats.EnabledEventsNum, ed.Curr.RemainedEffectsNum, ed.Stats.EnabledEffectsNum, ed.Curr.RemainedPointsSum, ed.Stats.EnabledPointsSum)
 
-	rawText += fmt.Sprintf("\nSet e Eventi Attivi (%v):\n", ed.Stats.EnabledSetsNum)
+	rawText += "\n**Set e Eventi attivi:**\n"
 	for _, setName := range sortedActiveSets {
 		if ed.Curr.EnabledSets[setName] == 0 {
-			rawText += fmt.Sprintf(" | ~~%s -> %v~~\n", setName, ed.Curr.EnabledSets[setName])
+			rawText += fmt.Sprintf("| ~~%s -> %v~~\n", setName, ed.Curr.EnabledSets[setName])
 		} else {
-			rawText += fmt.Sprintf(" | %s -> %v\n", setName, ed.Curr.EnabledSets[setName])
+			rawText += fmt.Sprintf("| %s -> %v\n", setName, ed.Curr.EnabledSets[setName])
 		}
 	}
 
-	rawText += fmt.Sprintf("\nEffetti Attivi (%v):\n", ed.Curr.EnabledEffectsNum)
+	rawText += "\n**Effetti attivi:**\n"
 	for _, effect := range sortedEnabledEffects {
 		if effect.Amount == 0 {
-			rawText += fmt.Sprintf(" | ~~%s = %v~~\n", effect.Name, effect.Amount)
+			rawText += fmt.Sprintf("| ~~%s = %v~~\n", effect.Name, effect.Amount)
 		} else {
-			rawText += fmt.Sprintf(" | %s = %v\n", effect.Name, effect.Amount)
+			rawText += fmt.Sprintf("| %s = %v\n", effect.Name, effect.Amount)
 		}
 	}
 
@@ -530,10 +535,16 @@ func FastforwardUpdateDailyCounters(utilsVar types.Utils) {
 		enablingSets := CalculateEnablingSets(t)
 		for _, setName := range enablingSets {
 			Events.Curr.EnabledSets[setName]--
+			Events.Curr.RemainedEventsNum--
+			if Events.Curr.EnabledSets[setName] == 0 {
+				Events.Curr.RemainedSetsNum--
+			}
 		}
 		for _, effect := range event.Effects {
 			Events.Curr.EnabledEffects[effect.Name]--
+			Events.Curr.RemainedEffectsNum--
 		}
+		Events.Curr.RemainedPointsSum -= event.CalculateTotalPoints()
 		Events.Curr.LastUpdate = t
 
 		// Update the message data

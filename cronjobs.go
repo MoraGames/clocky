@@ -257,10 +257,16 @@ func MinutelyUpdateEventsCounters(writeMsgData *types.WriteMessageData, utilsVar
 	enablingSets := events.CalculateEnablingSets(now)
 	for _, setName := range enablingSets {
 		events.Events.Curr.EnabledSets[setName]--
+		events.Events.Curr.RemainedEventsNum--
+		if events.Events.Curr.EnabledSets[setName] == 0 {
+			events.Events.Curr.RemainedSetsNum--
+		}
 	}
 	for _, effect := range event.Effects {
 		events.Events.Curr.EnabledEffects[effect.Name]--
+		events.Events.Curr.RemainedEffectsNum--
 	}
+	events.Events.Curr.RemainedPointsSum -= event.CalculateTotalPoints()
 	events.Events.Curr.LastUpdate = now
 
 	// Update the message data
