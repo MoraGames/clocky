@@ -518,24 +518,24 @@ func UpdatePinnedMessage(writeMsgData *types.WriteMessageData, utils types.Utils
 }
 
 func FastforwardUpdateDailyCounters(utilsVar types.Utils) {
-	t, now := Events.Curr.LastUpdate.AddDate(0, 0, 1), time.Now()
-	if t.IsZero() {
+	readedT := Events.Curr.LastUpdate
+	fmt.Println("DEBUG >> Fastforwarding from t = ", readedT, " to now = ", time.Now())
+	if readedT.IsZero() {
 		utilsVar.Logger.Warn("LastUpdate is zeroed, FastforwardUpdateDailyCounters will not be executed")
 		return
 	}
 
-	for ; t.Before(now) || now.Second() == 59; t, now = t.Add(time.Minute), time.Now() {
+	for t, now := readedT.Add(time.Minute), time.Now(); t.Before(now) || now.Second() == 59; t, now = t.Add(time.Minute), time.Now() {
 		// Check if the current time is a valid enabled event time (and force skip at 23:59)
 		if t.Hour() == 23 && t.Minute() == 59 {
 			return
 		}
 		event, exists := Events.Map[fmt.Sprintf("%d%d:%d%d", t.Hour()/10, t.Hour()%10, t.Minute()/10, t.Minute()%10)]
-		if !exists {
+		if !exists || !event.Enabled {
 			return
 		}
-		if !event.Enabled {
-			return
-		}
+
+		fmt.Println("DEBUG >> Fastforwarding event at t = ", t.Format("15:04:05"))
 
 		// Update the events structures
 		enablingSets := CalculateEnablingSets(t)

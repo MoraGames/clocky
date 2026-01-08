@@ -241,17 +241,18 @@ func MinutelyUpdateEventsCounters(writeMsgData *types.WriteMessageData, utilsVar
 	// Extract the current time
 	now := time.Now()
 
+	fmt.Println("DEBUG >> Checking event at t = ", now.Format("15:04:05"))
+
 	// Check if the current time is a valid enabled event time (and force skip at 23:59)
 	if now.Hour() == 23 && now.Minute() == 59 {
 		return
 	}
 	event, exists := events.Events.Map[fmt.Sprintf("%d%d:%d%d", now.Hour()/10, now.Hour()%10, now.Minute()/10, now.Minute()%10)]
-	if !exists {
+	if !exists || !event.Enabled {
 		return
 	}
-	if !event.Enabled {
-		return
-	}
+
+	fmt.Println("DEBUG >> Updating event at t = ", now.Format("15:04:05"))
 
 	// Update the events structures
 	enablingSets := events.CalculateEnablingSets(now)
