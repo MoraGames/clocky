@@ -352,12 +352,12 @@ func init() {
 						return sets[i] < sets[j]
 					})
 
-					rawText += fmt.Sprintf("**Set e Eventi attivi (%v):**\n", len(sets))
+					rawText += "**Set ed Eventi attivi:**\n"
 					for _, setName := range sets {
 						if events.Events.Curr.EnabledSets[setName] == 0 {
-							rawText += fmt.Sprintf(" | ~~%s -> %v~~\n", setName, events.Events.Curr.EnabledSets[setName])
+							rawText += fmt.Sprintf("| ~~%s -> %v~~\n", setName, events.Events.Curr.EnabledSets[setName])
 						} else {
-							rawText += fmt.Sprintf(" | %s -> %v\n", setName, events.Events.Curr.EnabledSets[setName])
+							rawText += fmt.Sprintf("| %s -> %v\n", setName, events.Events.Curr.EnabledSets[setName])
 						}
 					}
 					rawText += "\n"
@@ -365,12 +365,12 @@ func init() {
 				if len(args) == 0 || args[0] == "effects" {
 					effects := slicefyEffects()
 
-					rawText += fmt.Sprintf("**Effetti presenti (%v):**\n", len(effects))
+					rawText += "**Effetti presenti:**\n"
 					for _, effect := range effects {
 						if effect.Amount == 0 {
-							rawText += fmt.Sprintf(" | ~~%s = %v~~\n", effect.Name, effect.Amount)
+							rawText += fmt.Sprintf("| ~~%s = %v~~\n", effect.Name, effect.Amount)
 						} else {
-							rawText += fmt.Sprintf(" | %s = %v\n", effect.Name, effect.Amount)
+							rawText += fmt.Sprintf("| %s = %v\n", effect.Name, effect.Amount)
 						}
 					}
 					rawText += "\n"
