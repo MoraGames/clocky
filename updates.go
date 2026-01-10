@@ -159,7 +159,7 @@ func run(utils types.Utils, data types.Data) {
 					case event.Activation.EarnedPoints == 0:
 						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato %+.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					case event.Activation.EarnedPoints == 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%+.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato %+.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					case event.Activation.EarnedPoints > 1:
 						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato %+.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					}
