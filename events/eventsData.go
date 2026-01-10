@@ -528,11 +528,11 @@ func FastforwardUpdateDailyCounters(utilsVar types.Utils) {
 	for t, now := readedT.Add(time.Minute), time.Now(); t.Before(now) || now.Second() == 59; t, now = t.Add(time.Minute), time.Now() {
 		// Check if the current time is a valid enabled event time (and force skip at 23:59)
 		if t.Hour() == 23 && t.Minute() == 59 {
-			return
+			continue
 		}
 		event, exists := Events.Map[fmt.Sprintf("%d%d:%d%d", t.Hour()/10, t.Hour()%10, t.Minute()/10, t.Minute()%10)]
 		if !exists || !event.Enabled {
-			return
+			continue
 		}
 
 		fmt.Println("DEBUG >> Fastforwarding event at t = ", t.Format("15:04:05"))
