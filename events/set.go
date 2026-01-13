@@ -2,12 +2,16 @@ package events
 
 import (
 	"math"
+	"time"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
 )
 
 type SetSlice []*Set
-type SetJsonSlice []*SetJson
+type SetJsonSlice struct {
+	Slice      []*SetJson
+	Expiration time.Time
+}
 type FuncMap map[string]func(h1, h2, m1, m2 int) bool
 type Set struct {
 	Name     string
@@ -85,7 +89,7 @@ var (
 )
 
 func (s SetSlice) ToJsonSlice() SetJsonSlice {
-	jsonSlice := make(SetJsonSlice, 0)
+	jsonSlice := make([]*SetJson, 0)
 	for _, set := range s {
 		jsonSlice = append(jsonSlice, &SetJson{
 			Name:     set.Name,
@@ -94,12 +98,13 @@ func (s SetSlice) ToJsonSlice() SetJsonSlice {
 			Enabled:  set.Enabled,
 		})
 	}
-	return jsonSlice
+	now := time.Now()
+	return SetJsonSlice{Slice: jsonSlice, Expiration: time.Date(now.Year(), now.Month(), now.Day()+1, 23, 59, 50, 0, now.Location())}
 }
 
 func (sj SetJsonSlice) ToSlice() SetSlice {
 	slice := make(SetSlice, 0)
-	for _, setjson := range sj {
+	for _, setjson := range sj.Slice {
 		slice = append(slice, &Set{
 			Name:     setjson.Name,
 			Pattern:  setjson.Pattern,

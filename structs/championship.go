@@ -27,14 +27,15 @@ type Championship struct {
 	Duration     time.Duration
 	Status       string
 	FinalRanking []Rank
+	Expiration   time.Time
 }
 
 func NewChampionship(name string, startDate time.Time, duration time.Duration, status string, finalRanking []Rank) *Championship {
-	return &Championship{name, startDate, duration, status, finalRanking}
+	return &Championship{name, startDate, duration, status, finalRanking, startDate.Add(duration)}
 }
 
 func NewEndedChampionship(name string, startDate time.Time, duration time.Duration, finalRanking []Rank) *Championship {
-	return &Championship{name, startDate, duration, "ended", finalRanking}
+	return &Championship{name, startDate, duration, "ended", finalRanking, startDate.Add(duration)}
 }
 
 func CreateChampionship(name string, startDate time.Time, duration time.Duration) *Championship {
@@ -47,7 +48,7 @@ func CreateChampionship(name string, startDate time.Time, duration time.Duration
 	} else {
 		status = "ongoing"
 	}
-	return &Championship{name, startDate, duration, status, nil}
+	return &Championship{name, startDate, duration, status, nil, startDate.Add(duration)}
 }
 
 func (c *Championship) End(finalRanking []Rank) {
@@ -60,6 +61,7 @@ func (c *Championship) Reset(ranking []Rank, writeMsgData *types.WriteMessageDat
 	prevChampionship := ReadFromFile(utils)
 
 	// Save on file the new data
+	c.Expiration = c.StartDate.Add(c.Duration)
 	c.End(ranking)
 	c.SaveOnFile(utils)
 

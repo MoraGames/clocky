@@ -18,10 +18,11 @@ import (
 
 type (
 	EventsData struct {
-		Map   EventsMap
-		Keys  EventsKeys
-		Stats EventsStats
-		Curr  EventsCurr
+		Map        EventsMap
+		Keys       EventsKeys
+		Stats      EventsStats
+		Curr       EventsCurr
+		Expiration time.Time
 	}
 
 	EventsMap   map[string]*Event
@@ -90,16 +91,17 @@ func (ed *EventsData) ResetEventsCurr() {
 }
 
 func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
+	now := time.Now()
 	ed := &EventsData{
 		make(EventsMap),
 		make(EventsKeys, 0),
 		EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)},
 		EventsCurr{make(map[string]int), 0, 0, make(map[string]int), 0, 0, time.Now()},
+		time.Date(now.Year(), now.Month(), now.Day()+1, 23, 59, 50, 0, now.Location()),
 	}
 
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
 
-	now := time.Now()
 	for i := 0; i < 24*60; i++ {
 		time := time.Date(now.Year(), now.Month(), now.Day(), i/60, i%60, 0, 0, now.Location())
 
@@ -142,8 +144,10 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 }
 
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
+	now := time.Now()
 	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
-	ed.Curr = EventsCurr{make(map[string]int), 0, 0, make(map[string]int), 0, 0, time.Now()}
+	ed.Curr = EventsCurr{make(map[string]int), 0, 0, make(map[string]int), 0, 0, now}
+	ed.Expiration = time.Date(now.Year(), now.Month(), now.Day()+1, 23, 59, 50, 0, now.Location())
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, utils)
 
 	for eventName := range ed.Map {
