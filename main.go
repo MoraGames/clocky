@@ -155,6 +155,7 @@ func main() {
 		},
 		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)
+	ResetExpiredData(types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"})
 	GenerateTelegramUsersList()
 
 	//manage data migrations
