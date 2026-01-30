@@ -151,6 +151,7 @@ func main() {
 			{FileName: "hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
 			{FileName: "championship.json", DataStruct: &events.CurrentChampionship, IfOkay: UpdateChampionshipCronjobs, IfFail: events.AssignChampionshipWithDefault},
 			{FileName: "pinnedChampionshipMessage.json", DataStruct: &structs.PinnedChampionshipResetMessage, IfOkay: nil, IfFail: nil},
+			{FileName: "trackers.json", DataStruct: &UserTrackers, IfOkay: nil, IfFail: nil},
 		},
 		types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: "15:04:05.000000 MST -07:00"},
 	)

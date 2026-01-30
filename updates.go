@@ -16,7 +16,8 @@ import (
 
 // Users is the data structure that contains all the users and their informations
 var (
-	Users = make(map[int64]*structs.User)
+	Users        = make(map[int64]*structs.User)
+	UserTrackers = make(events.UserTrackersMap)
 )
 
 // Run the core of the bot
@@ -78,12 +79,18 @@ func run(utils types.Utils, data types.Data) {
 				"curTime": curTime.Format(utils.TimeFormat),
 			}).Debug("Message received")
 
+			// Check if the user tracker exists
+			if _, exist := UserTrackers[update.Message.From.ID]; !exist {
+				UserTrackers[update.Message.From.ID] = events.NewUserTracker(update.Message.From)
+			}
+
 			// TODO: Rework better this timing system
 			eventKey := update.Message.Time().Format("15:04")
 
 			// Check if the message is a command (and ignore other actions)
 			if types.IsCommand(update.Message) {
-				manageCommands(update)
+				manageCommands(update, curTime)
+				SaveUserTrackers(utils)
 				continue
 			}
 
@@ -176,7 +183,8 @@ func run(utils types.Utils, data types.Data) {
 					}).Debug("Event activated")
 
 					// Add points to the user if they have never participated the event before
-					if !event.HasPartecipated(update.Message.From.ID) {
+					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
+					if !hasPartecipated {
 						event.Partecipate(user, curTime)
 						user.TotalPoints += event.Activation.EarnedPoints
 						user.TotalEventPartecipations++
@@ -191,6 +199,17 @@ func run(utils types.Utils, data types.Data) {
 
 					// Update the user in the data structure
 					Users[update.Message.From.ID] = user
+
+					// Track: Event message received, validated and won
+					UserTrackers[update.Message.From.ID].PushActivity(structs.Activity{
+						TelegramTime:          update.Message.Time(),
+						ServerReceivingTime:   curTime,
+						ServerCompletionTime:  time.Now(),
+						Type:                  structs.EventWinActivity,
+						Message:               update.Message.Text,
+						SuccessfulInteraction: !hasPartecipated,
+						WinnerUserID:          update.Message.From.ID,
+					})
 				} else {
 					// Calculate the delay from o' clock and winner user
 					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
@@ -221,7 +240,8 @@ func run(utils types.Utils, data types.Data) {
 						AddTelegramUserToExistingUser(update.Message.From)
 					}
 					// Add partecipations to the user if they have never participated the event before
-					if !event.HasPartecipated(update.Message.From.ID) {
+					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
+					if !hasPartecipated {
 						event.Partecipate(user, curTime)
 						user.TotalEventPartecipations++
 						user.ChampionshipEventPartecipations++
@@ -230,6 +250,17 @@ func run(utils types.Utils, data types.Data) {
 
 					// Update the user in the data structure
 					Users[update.Message.From.ID] = user
+
+					// Track: Event message received, validated and participated
+					UserTrackers[update.Message.From.ID].PushActivity(structs.Activity{
+						TelegramTime:          update.Message.Time(),
+						ServerReceivingTime:   curTime,
+						ServerCompletionTime:  time.Now(),
+						Type:                  structs.EventParticipationActivity,
+						Message:               update.Message.Text,
+						SuccessfulInteraction: !hasPartecipated,
+						WinnerUserID:          event.Activation.ActivatedBy.TelegramID,
+					})
 				}
 
 				// Save the users file with updated Users data structure
@@ -249,7 +280,20 @@ func run(utils types.Utils, data types.Data) {
 					}).Error("Error while writing data")
 					utils.Logger.Error(Users)
 				}
+			} else {
+				// Track: Non-event message received (or event disabled)
+				UserTrackers[update.Message.From.ID].PushActivity(structs.Activity{
+					TelegramTime:          update.Message.Time(),
+					ServerReceivingTime:   curTime,
+					ServerCompletionTime:  time.Now(),
+					Type:                  structs.NonEventActivity,
+					Message:               update.Message.Text,
+					SuccessfulInteraction: false,
+					WinnerUserID:          0,
+				})
 			}
+
+			SaveUserTrackers(utils)
 		}
 	}
 }
@@ -304,4 +348,19 @@ func UpdateUserEffects(userID int64) {
 		user.AddEffect(structs.ComebackBonus5)
 	}
 	Users[userID] = user
+}
+
+func SaveUserTrackers(utils types.Utils) {
+	setsFile, err := json.MarshalIndent(UserTrackers, "", "	")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while marshalling Trackers data")
+	}
+	err = os.WriteFile("files/trackers.json", setsFile, 0644)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+		}).Error("Error while writing Trackers data")
+	}
 }

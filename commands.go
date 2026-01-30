@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
 	"github.com/MoraGames/clockyuwu/internal/app"
@@ -146,6 +147,8 @@ func init() {
 						respMsg := tgbotapi.NewDocument(msg.Chat.ID, tgbotapi.FileBytes{Name: fileName, Bytes: file})
 						respMsg.Caption = fileName + " recuperato con successo."
 						sendDocument(respMsg, msg.MessageID)
+						logOutcome("file", nil)
+						trackOutcome(&msg, time.Time{}, err)
 					case "upd":
 						if msg.Document == nil {
 							sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "Nessun file allegato al messaggio."), msg.MessageID)
@@ -174,6 +177,7 @@ func init() {
 							return
 						}
 						logOutcome("file", err)
+						trackOutcome(&msg, time.Time{}, err)
 					case "del":
 						err := os.Remove("files/" + fileName)
 						if err != nil {
@@ -182,6 +186,8 @@ func init() {
 							return
 						}
 						sendMessage(tgbotapi.NewMessage(msg.Chat.ID, fileName+" cancellato con successo."), msg.MessageID)
+						logOutcome("file", nil)
+						trackOutcome(&msg, time.Time{}, err)
 					}
 				}(msg)
 				return nil
@@ -603,16 +609,18 @@ func init() {
 	}
 }
 
-func manageCommands(update tgbotapi.Update) {
+func manageCommands(update tgbotapi.Update, serverReceivingTime time.Time) {
 	// fmt.Printf("\n>>> DEBUG <<<\n |- %q\n |- %q (%v)\n |- %v (%v)\n\n", types.Command(update.Message), types.CommandArguments(update.Message), utf8.RuneCountInString(types.CommandArguments(update.Message)), strings.Split(types.CommandArguments(update.Message), " "), len(strings.Split(types.CommandArguments(update.Message), " ")))
 	if cmd, exists := Commands[types.Command(update.Message)]; exists {
 		err := cmd.Execute(*update.Message)
 		// Since /file it's executed in a goroutine, is the only command that manage it own outcome logging. The check avoid double logging.
 		if cmd.Name != "file" {
 			logOutcome(cmd.Name, err)
+			trackOutcome(update.Message, serverReceivingTime, err)
 		}
 	} else {
 		sendMessage(tgbotapi.NewMessage(update.Message.Chat.ID, "Comando sconosciuto. Usa /help per vedere la lista dei comandi disponibili."), update.Message.MessageID)
+		trackOutcome(update.Message, serverReceivingTime, fmt.Errorf("unknown command"))
 	}
 }
 
@@ -625,6 +633,20 @@ func logOutcome(cmdName string, err error) {
 	} else if cmdName != "file" {
 		App.Logger.WithField("cmd", cmdName).Debug("Command executed successfully")
 	}
+
+}
+
+func trackOutcome(msg *tgbotapi.Message, serverReceivingTime time.Time, err error) {
+	// Track: Command message received and executed
+	UserTrackers[msg.From.ID].PushActivity(structs.Activity{
+		TelegramTime:          msg.Time(),
+		ServerReceivingTime:   serverReceivingTime,
+		ServerCompletionTime:  time.Now(),
+		Type:                  structs.CommandActivity,
+		Message:               msg.Text,
+		SuccessfulInteraction: err == nil,
+		WinnerUserID:          0,
+	})
 }
 
 func sendMessage(msg tgbotapi.MessageConfig, replyTo int) {
