@@ -130,7 +130,7 @@ func init() {
 						fileName = args[1]
 						overwrite = true
 					}
-					if fileName != "sets.json" && fileName != "events.json" && fileName != "users.json" && fileName != "pinnedMessage.json" && fileName != "hints.json" && fileName != "championship.json" && fileName != "pinnedChampionshipMessage.json" && fileName != "logs/log.json" {
+					if fileName != "sets.json" && fileName != "events.json" && fileName != "users.json" && fileName != "pinnedMessage.json" && fileName != "hints.json" && fileName != "championship.json" && fileName != "pinnedChampionshipMessage.json" && fileName != "logs/log.json" && fileName != "trackers.json" {
 						sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "File non valido per l'operazione."), msg.MessageID)
 						logOutcome("file", fmt.Errorf("invalid file"))
 						return
@@ -171,6 +171,8 @@ func init() {
 							err = updateData(msg, "files/"+fileName, &events.CurrentChampionship, UpdateChampionshipCronjobs, overwrite)
 						case "pinnedChampionshipMessage.json":
 							err = updateData(msg, "files/"+fileName, &structs.PinnedChampionshipResetMessage, nil, overwrite)
+						case "trackers.json":
+							err = updateData(msg, "files/"+fileName, &UserTrackers, nil, overwrite)
 						default:
 							sendMessage(tgbotapi.NewMessage(msg.Chat.ID, "File non valido per l'operazione."), msg.MessageID)
 							logOutcome("file", fmt.Errorf("invalid file"))
