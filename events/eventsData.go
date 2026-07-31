@@ -110,6 +110,8 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 			ed.Map[event.Name] = event
 			ed.Keys = append(ed.Keys, event.Name)
 
+			fmt.Printf("DEBUG >> Initializating event: %v\n|- Enabled: %v (pts = %v)\n", event.Name, ed.Map[event.Name].Enabled, ed.Map[event.Name].Points)
+
 			ed.Stats.TotalEventsNum++
 			if event.Enabled {
 				ed.Stats.EnabledEventsNum++
@@ -117,6 +119,8 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 			}
 		}
 	}
+
+	fmt.Printf("DEBUG >> Initializated stats:\n|- E.Events: %v\n|- E.Points: %v\n", ed.Stats.EnabledEventsNum, ed.Stats.EnabledPointsSum)
 
 	if newEffects {
 		ed.AssignRandomEffects(
@@ -153,12 +157,16 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	for eventName := range ed.Map {
 		ed.Map[eventName].Reset()
 
+		fmt.Printf("DEBUG >> Resetting event: %v\n|- Enabled: %v (pts = %v)\n", eventName, ed.Map[eventName].Enabled, ed.Map[eventName].Points)
+
 		ed.Stats.TotalEventsNum++
 		if ed.Map[eventName].Enabled {
 			ed.Stats.EnabledEventsNum++
 			ed.Stats.EnabledPointsSum += ed.Map[eventName].Points
 		}
 	}
+
+	fmt.Printf("DEBUG >> Resetted stats:\n|- E.Events: %v\n|- E.Points: %v\n", ed.Stats.EnabledEventsNum, ed.Stats.EnabledPointsSum)
 
 	if newEffects {
 		ed.AssignRandomEffects(
@@ -223,6 +231,8 @@ func (ed *EventsData) EnabledRandomSets(percentage types.Interval, utils types.U
 		}
 	}
 
+	fmt.Printf("DEBUG >> Enabling random sets:\n|- Min: %v%%(%v) = %v\n|- Max: %v%%(%v) = %v\n|- To activate: %v\n|- E.Sets: %v (l=%v)\n|- E.Num: %v\n", percentage.Min*100, ed.Stats.TotalSetsNum, min, percentage.Max*100, ed.Stats.TotalSetsNum, max, setToActivate, ed.Stats.EnabledSets, len(ed.Stats.EnabledSets), ed.Stats.EnabledSetsNum)
+
 	utils.Logger.WithFields(logrus.Fields{
 		"tot": ed.Stats.TotalSetsNum,
 		"num": ed.Stats.EnabledSetsNum,
@@ -259,6 +269,8 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 		}
 	}
 
+	fmt.Printf("DEBUG >> Effects to apply before check: %v\n|- Mul: %v (l = %v | n = %v)\n|- Add: %v (l = %v | n = %v)\n", effectsAmountToApply, multiplierEffectsNames, len(multiplierEffectsNames), multiplierToApplyNum, additiveEffectsNames, len(additiveEffectsNames), additiveToApplyNum)
+
 	// Check if are applicable all effects calculated
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	for additiveToApplyNum > ed.Stats.EnabledEventsNum {
@@ -266,6 +278,7 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 		effectToDecrease := additiveEffectsNames[r.Intn(len(additiveEffectsNames))]
 		effectsAmountToApply[effectToDecrease]--
 		if effectsAmountToApply[effectToDecrease] == 0 {
+			fmt.Printf("|- Removing additive %v\n", effectToDecrease)
 			delete(effectsAmountToApply, effectToDecrease)
 			additiveEffectsNames = RemoveValue(additiveEffectsNames, effectToDecrease)
 		}
@@ -275,14 +288,19 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 		effectToDecrease := multiplierEffectsNames[r.Intn(len(multiplierEffectsNames))]
 		effectsAmountToApply[effectToDecrease]--
 		if effectsAmountToApply[effectToDecrease] == 0 {
+			fmt.Printf("|- Removing multiplier %v\n", effectToDecrease)
 			delete(effectsAmountToApply, effectToDecrease)
 			multiplierEffectsNames = RemoveValue(multiplierEffectsNames, effectToDecrease)
 		}
 	}
 
+	fmt.Printf("DEBUG >> Effects to apply after check: %v\n|- Mul: %v (l = %v | n = %v)\n|- Add: %v (l = %v | n = %v)\n", effectsAmountToApply, multiplierEffectsNames, len(multiplierEffectsNames), multiplierToApplyNum, additiveEffectsNames, len(additiveEffectsNames), additiveToApplyNum)
+
 	utils.Logger.WithFields(logrus.Fields{
 		"toApp": effectsAmountToApply,
 	}).Debug("Effects to enable")
+
+	var effectivelyAppliedMultipliers, effectivelyAppliedAdditives int
 
 	// Apply all effects (multiplier before, additive after)
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -294,9 +312,11 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 				ed.Stats.EnabledEffectsNum++
 				ed.Stats.EnabledEffects[effectName]++
 				i++
+				effectivelyAppliedMultipliers++
 			}
 		}
 	}
+
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	for _, effectName := range additiveEffectsNames {
 		for i := 0; i < effectsAmountToApply[effectName]; {
@@ -308,16 +328,20 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 					ed.Stats.EnabledEffectsNum++
 					ed.Stats.EnabledEffects[effectName]++
 					i++
+					effectivelyAppliedAdditives++
 				} else if len(ed.Map[eventName].Effects) == 1 && ed.Map[eventName].Effects[0].Key == "*" {
 					//Apply effect if there is only one effects and it's a multiplier
 					ed.Map[eventName].AddEffect(effectsToApply[effectName])
 					ed.Stats.EnabledEffectsNum++
 					ed.Stats.EnabledEffects[effectName]++
 					i++
+					effectivelyAppliedAdditives++
 				}
 			}
 		}
 	}
+
+	fmt.Printf("DEBUG >> Final enabled effects:\n|- Mul: %v\n|- Add: %v\n", effectivelyAppliedMultipliers, effectivelyAppliedAdditives)
 
 	utils.Logger.WithFields(logrus.Fields{
 		"num": ed.Stats.EnabledEffectsNum,
