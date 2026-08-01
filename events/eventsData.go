@@ -17,9 +17,10 @@ import (
 
 type (
 	EventsData struct {
-		Map   EventsMap
-		Keys  EventsKeys
-		Stats EventsStats
+		Map        EventsMap
+		Keys       EventsKeys
+		Stats      EventsStats
+		Expiration time.Time
 	}
 
 	EventsMap   map[string]*Event
@@ -59,6 +60,14 @@ var (
 	AssignEventsWithDefault = func(utils types.Utils) {
 		Events = NewEventsData(true, utils)
 	}
+	EventsFileValid = func(utils types.Utils) bool {
+		return Events != nil && !Events.Expiration.IsZero() && time.Now().Before(Events.Expiration)
+	}
+	NormalizeEventsData = func(utils types.Utils) {
+		if Events != nil && Events.Expiration.IsZero() {
+			Events.Expiration = currentDailyExpiration(time.Now())
+		}
+	}
 )
 
 func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
@@ -66,6 +75,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 		make(EventsMap),
 		make(EventsKeys, 0),
 		EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)},
+		currentDailyExpiration(time.Now()),
 	}
 
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
@@ -114,6 +124,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
+	ed.Expiration = currentDailyExpiration(time.Now())
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, utils)
 
 	for eventName := range ed.Map {
@@ -312,7 +323,10 @@ func RemoveValue(s []string, value string) []string {
 
 func (ed *EventsData) SaveOnFile(utils types.Utils) {
 	//Save Sets
-	SetsJson = Sets.ToJsonSlice()
+	SetsJson = SetFile{
+		Slice:      Sets.ToJsonSlice(),
+		Expiration: currentDailyExpiration(time.Now()),
+	}
 	setsFile, err := json.MarshalIndent(SetsJson, "", " ")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{
@@ -327,6 +341,7 @@ func (ed *EventsData) SaveOnFile(utils types.Utils) {
 	}
 
 	//Save Events
+	ed.Expiration = currentDailyExpiration(time.Now())
 	eventsFile, err := json.MarshalIndent(Events, "", " ")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{

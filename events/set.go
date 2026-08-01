@@ -2,6 +2,7 @@ package events
 
 import (
 	"math"
+	"time"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
 )
@@ -23,6 +24,11 @@ type SetJson struct {
 	Enabled  bool
 }
 
+type SetFile struct {
+	Slice      SetJsonSlice
+	Expiration time.Time
+}
+
 var (
 	SetsFunctions = FuncMap{
 		//"Equal":            equal,
@@ -41,7 +47,30 @@ var (
 		"Equal Twins":      equalTwins,
 		"Half":             half,
 	}
-	Sets = SetSlice{
+	Sets     = defaultSets()
+	SetsJson = SetFile{}
+
+	AssignSetsFromSetsJson = func(utils types.Utils) {
+		Sets = mergeSetsWithDefaults(SetsJson.Slice)
+		SetsJson.Slice = Sets.ToJsonSlice()
+		if SetsJson.Expiration.IsZero() {
+			SetsJson.Expiration = currentDailyExpiration(time.Now())
+		}
+	}
+	AssignSetsWithDefault = func(utils types.Utils) {
+		Sets = defaultSets()
+		SetsJson = SetFile{
+			Slice:      Sets.ToJsonSlice(),
+			Expiration: currentDailyExpiration(time.Now()),
+		}
+	}
+	SetsFileValid = func(utils types.Utils) bool {
+		return !SetsJson.Expiration.IsZero() && time.Now().Before(SetsJson.Expiration)
+	}
+)
+
+func defaultSets() SetSlice {
+	return SetSlice{
 		//{"Equal", "aa:aa", "static", false, equal},
 		{"Short Equal", "?a:aa", "static", false, shortEqual},
 		{"Repeat", "ab:ab", "static", false, repeat},
@@ -51,38 +80,51 @@ var (
 		{"Short Fall", "?c:ba", "static", false, shortFall},
 		{"Rapid Rise", "ac:eg", "static", false, rapidRise},
 		{"Short Rapid Rise", "?a:ce", "static", false, shortRapidRise},
-		{"shortRapidFall", "?e:ca", "static", false, shortRapidFall},
-		{"double", "n:2*n", "static", false, double},
-		{"shortTriple", "[unnamed]", "static", false, shortTriple},
+		{"Short Rapid Fall", "?e:ca", "static", false, shortRapidFall},
+		{"Double", "n:2*n", "static", false, double},
+		{"Short Triple", "[unnamed]", "static", false, shortTriple},
 		{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 		{"Equal Twins", "aa:bb", "static", false, equalTwins},
 		{"Half", "2*n:n", "static", false, half},
 	}
-	SetsJson = SetJsonSlice{}
+}
 
-	AssignSetsFromSetsJson = func(utils types.Utils) {
-		Sets = SetsJson.ToSlice()
-	}
-	AssignSetsWithDefault = func(utils types.Utils) {
-		Sets = SetSlice{
-			//{"Equal", "aa:aa", "static", false, equal},
-			{"Short Equal", "?a:aa", "static", false, shortEqual},
-			{"Repeat", "ab:ab", "static", false, repeat},
-			{"Mirror", "ab:ba", "static", false, mirror},
-			{"Rise", "ab:cd", "static", false, rise},
-			{"Short Rise", "?a:bc", "static", false, shortRise},
-			{"Short Fall", "?c:ba", "static", false, shortFall},
-			{"Rapid Rise", "ac:eg", "static", false, rapidRise},
-			{"Short Rapid Rise", "?a:ce", "static", false, shortRapidRise},
-			{"Short Rapid Fall", "?e:ca", "static", false, shortRapidFall},
-			{"Double", "n:2*n", "static", false, double},
-			{"Short Triple", "[unnamed]", "static", false, shortTriple},
-			{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
-			{"Equal Twins", "aa:bb", "static", false, equalTwins},
-			{"Half", "2*n:n", "static", false, half},
+func mergeSetsWithDefaults(persisted SetJsonSlice) SetSlice {
+	defaultSlice := defaultSets()
+	persistedByName := make(map[string]*SetJson, len(persisted))
+	for _, set := range persisted {
+		if set != nil {
+			persistedByName[set.Name] = set
 		}
 	}
-)
+
+	merged := make(SetSlice, 0, len(defaultSlice))
+	for _, defaultSet := range defaultSlice {
+		persistedSet, exists := persistedByName[defaultSet.Name]
+		if !exists || persistedSet == nil {
+			merged = append(merged, defaultSet)
+			continue
+		}
+
+		merged = append(merged, &Set{
+			Name:     persistedSet.Name,
+			Pattern:  persistedSet.Pattern,
+			Typology: persistedSet.Typology,
+			Enabled:  persistedSet.Enabled,
+			Verify:   defaultSet.Verify,
+		})
+	}
+
+	return merged
+}
+
+func currentDailyExpiration(now time.Time) time.Time {
+	expiration := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 30, 0, now.Location())
+	if now.Before(expiration) {
+		return expiration
+	}
+	return expiration.AddDate(0, 0, 1)
+}
 
 func (s SetSlice) ToJsonSlice() SetJsonSlice {
 	jsonSlice := make(SetJsonSlice, 0)

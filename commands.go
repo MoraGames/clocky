@@ -158,9 +158,9 @@ func init() {
 						var err error
 						switch fileName {
 						case "sets.json":
-							err = updateData(msg, "files/"+fileName, &events.Sets, events.AssignSetsFromSetsJson, overwrite)
+							err = updateData(msg, "files/"+fileName, &events.SetsJson, events.AssignSetsFromSetsJson, overwrite)
 						case "events.json":
-							err = updateData(msg, "files/"+fileName, &events.Events, nil, overwrite)
+							err = updateData(msg, "files/"+fileName, &events.Events, events.NormalizeEventsData, overwrite)
 						case "users.json":
 							err = updateData(msg, "files/"+fileName, &Users, nil, overwrite)
 						case "pinnedMessage.json":
@@ -168,7 +168,7 @@ func init() {
 						case "hints.json":
 							err = updateData(msg, "files/"+fileName, &events.HintRewardedUsers, nil, overwrite)
 						case "championship.json":
-							err = updateData(msg, "files/"+fileName, &events.CurrentChampionship, UpdateChampionshipCronjobs, overwrite)
+							err = updateData(msg, "files/"+fileName, &events.CurrentChampionship, NormalizeChampionshipDataAndUpdateCronjobs, overwrite)
 						case "pinnedChampionshipMessage.json":
 							err = updateData(msg, "files/"+fileName, &structs.PinnedChampionshipResetMessage, nil, overwrite)
 						case "trackers.json":

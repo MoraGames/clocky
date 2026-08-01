@@ -12,6 +12,14 @@ var (
 	AssignChampionshipWithDefault = func(utils types.Utils) {
 		CurrentChampionship = structs.CreateChampionship("Clocky Championship", FirstWeekdayFrom(time.Now(), time.Sunday), 336*time.Hour)
 	}
+	ChampionshipFileValid = func(utils types.Utils) bool {
+		return CurrentChampionship != nil && !CurrentChampionship.IsExpired(time.Now())
+	}
+	NormalizeChampionshipData = func(utils types.Utils) {
+		if CurrentChampionship != nil {
+			CurrentChampionship.RefreshExpiration()
+		}
+	}
 )
 
 func FirstWeekdayFrom(start time.Time, weekday time.Weekday) time.Time {

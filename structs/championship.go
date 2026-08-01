@@ -25,16 +25,17 @@ type Championship struct {
 	Name         string
 	StartDate    time.Time
 	Duration     time.Duration
+	Expiration   time.Time
 	Status       string
 	FinalRanking []Rank
 }
 
 func NewChampionship(name string, startDate time.Time, duration time.Duration, status string, finalRanking []Rank) *Championship {
-	return &Championship{name, startDate, duration, status, finalRanking}
+	return &Championship{name, startDate, duration, startDate.Add(duration), status, finalRanking}
 }
 
 func NewEndedChampionship(name string, startDate time.Time, duration time.Duration, finalRanking []Rank) *Championship {
-	return &Championship{name, startDate, duration, "ended", finalRanking}
+	return &Championship{name, startDate, duration, startDate.Add(duration), "ended", finalRanking}
 }
 
 func CreateChampionship(name string, startDate time.Time, duration time.Duration) *Championship {
@@ -47,7 +48,24 @@ func CreateChampionship(name string, startDate time.Time, duration time.Duration
 	} else {
 		status = "ongoing"
 	}
-	return &Championship{name, startDate, duration, status, nil}
+	return &Championship{name, startDate, duration, startDate.Add(duration), status, nil}
+}
+
+func (c *Championship) RefreshExpiration() {
+	if c == nil {
+		return
+	}
+	c.Expiration = c.StartDate.Add(c.Duration)
+}
+
+func (c *Championship) IsExpired(now time.Time) bool {
+	if c == nil {
+		return true
+	}
+	if c.Expiration.IsZero() {
+		c.RefreshExpiration()
+	}
+	return !now.Before(c.Expiration)
 }
 
 func (c *Championship) End(finalRanking []Rank) {
@@ -89,6 +107,7 @@ func ReadFromFile(utils types.Utils) *Championship {
 }
 
 func (c *Championship) SaveOnFile(utils types.Utils) {
+	c.RefreshExpiration()
 	championshipFile, err := json.MarshalIndent(c, "", "	")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{

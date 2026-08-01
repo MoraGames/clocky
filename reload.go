@@ -34,6 +34,11 @@ func reloadStatus(reloads []types.Reload, utils types.Utils) {
 					"data": reload.DataStruct,
 					"err":  err,
 				}).Error("Error while unmarshalling data")
+			} else if reload.Validate != nil && !reload.Validate(utils) {
+				hasFailed = true
+				utils.Logger.WithFields(logrus.Fields{
+					"file": reload.FileName,
+				}).Warn("Reloaded data is expired")
 			}
 		} else {
 			hasFailed = true

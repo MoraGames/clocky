@@ -144,12 +144,15 @@ func main() {
 	//try to reload the status from files
 	reloadStatus(
 		[]types.Reload{
-			{FileName: "sets.json", DataStruct: &events.SetsJson, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
-			{FileName: "events.json", DataStruct: &events.Events, IfOkay: nil, IfFail: events.AssignEventsWithDefault},
+			{FileName: "sets.json", DataStruct: &events.SetsJson, Validate: events.SetsFileValid, IfOkay: events.AssignSetsFromSetsJson, IfFail: events.AssignSetsWithDefault},
+			{FileName: "events.json", DataStruct: &events.Events, Validate: events.EventsFileValid, IfOkay: events.NormalizeEventsData, IfFail: events.AssignEventsWithDefault},
 			{FileName: "users.json", DataStruct: &Users, IfOkay: nil, IfFail: nil},
 			{FileName: "pinnedMessage.json", DataStruct: &events.PinnedResetMessage, IfOkay: nil, IfFail: nil},
 			{FileName: "hints.json", DataStruct: &events.HintRewardedUsers, IfOkay: nil, IfFail: nil},
-			{FileName: "championship.json", DataStruct: &events.CurrentChampionship, IfOkay: UpdateChampionshipCronjobs, IfFail: events.AssignChampionshipWithDefault},
+			{FileName: "championship.json", DataStruct: &events.CurrentChampionship, Validate: events.ChampionshipFileValid, IfOkay: NormalizeChampionshipDataAndUpdateCronjobs, IfFail: func(utils types.Utils) {
+				events.AssignChampionshipWithDefault(utils)
+				UpdateChampionshipCronjobs(utils)
+			}},
 			{FileName: "pinnedChampionshipMessage.json", DataStruct: &structs.PinnedChampionshipResetMessage, IfOkay: nil, IfFail: nil},
 			{FileName: "trackers.json", DataStruct: &UserTrackers, IfOkay: nil, IfFail: nil},
 		},
@@ -172,4 +175,9 @@ func WriteMessage(bot *tgbotapi.BotAPI, chatID int64, replyMessageID int, text s
 		msg.ReplyToMessageID = replyMessageID
 	}
 	bot.Send(msg)
+}
+
+func NormalizeChampionshipDataAndUpdateCronjobs(utils types.Utils) {
+	events.NormalizeChampionshipData(utils)
+	UpdateChampionshipCronjobs(utils)
 }
