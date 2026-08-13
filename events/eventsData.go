@@ -273,20 +273,22 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 
 	// Check if are applicable all effects calculated
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	for additiveToApplyNum > ed.Stats.EnabledEventsNum {
+	for additiveToApplyNum > ed.Stats.EnabledEventsNum && len(additiveEffectsNames) > 0 {
 		// Remove a random additive effect
 		effectToDecrease := additiveEffectsNames[r.Intn(len(additiveEffectsNames))]
 		effectsAmountToApply[effectToDecrease]--
+		additiveToApplyNum--
 		if effectsAmountToApply[effectToDecrease] == 0 {
 			fmt.Printf("|- Removing additive %v\n", effectToDecrease)
 			delete(effectsAmountToApply, effectToDecrease)
 			additiveEffectsNames = RemoveValue(additiveEffectsNames, effectToDecrease)
 		}
 	}
-	for multiplierToApplyNum > ed.Stats.EnabledEventsNum {
+	for multiplierToApplyNum > ed.Stats.EnabledEventsNum && len(multiplierEffectsNames) > 0 {
 		// Remove a random multiplier effect
 		effectToDecrease := multiplierEffectsNames[r.Intn(len(multiplierEffectsNames))]
 		effectsAmountToApply[effectToDecrease]--
+		multiplierToApplyNum--
 		if effectsAmountToApply[effectToDecrease] == 0 {
 			fmt.Printf("|- Removing multiplier %v\n", effectToDecrease)
 			delete(effectsAmountToApply, effectToDecrease)
@@ -362,7 +364,7 @@ func EventsOf(setFunc func(int, int, int, int) bool) []*Event {
 }
 
 func RemoveValue(s []string, value string) []string {
-	newS := make([]string, len(s)-1)
+	newS := make([]string, 0, len(s))
 	for _, v := range s {
 		if v != value {
 			newS = append(newS, v)
