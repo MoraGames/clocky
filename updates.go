@@ -108,9 +108,9 @@ func run(utils types.Utils, data types.Data) {
 					user, exist := Users[update.Message.From.ID]
 					if !exist {
 						user = structs.NewUser(update.Message.From)
-					} else if user.UserName != update.Message.From.UserName {
+					} else if name := structs.DisplayName(update.Message.From); user.UserName != name {
 						// Update the username in case it has changed
-						user.UserName = update.Message.From.UserName
+						user.UserName = name
 					}
 					if user.TelegramUser == nil {
 						AddTelegramUserToExistingUser(update.Message.From)
@@ -232,9 +232,9 @@ func run(utils types.Utils, data types.Data) {
 					user, exist := Users[update.Message.From.ID]
 					if !exist {
 						user = structs.NewUser(update.Message.From)
-					} else if user.UserName != update.Message.From.UserName {
+					} else if name := structs.DisplayName(update.Message.From); user.UserName != name {
 						// Update the username in case it has changed
-						user.UserName = update.Message.From.UserName
+						user.UserName = name
 					}
 					if user.TelegramUser == nil {
 						AddTelegramUserToExistingUser(update.Message.From)
