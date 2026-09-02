@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
@@ -19,6 +20,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
+
+var jokerScheduleGeneration atomic.Uint64
 
 func DefineDefaultCronJobs() {
 	// Daily reset cronjob - at 23:59:30
@@ -34,6 +37,7 @@ func DefineDefaultCronJobs() {
 				&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 				types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 			)
+			ScheduleJokerAnnouncements()
 
 			// Reward the users based on their performance
 			// Then reset the daily user's stats (unconditionally)
@@ -155,6 +159,51 @@ func DefineDefaultCronJobs() {
 	App.Logger.WithFields(logrus.Fields{
 		"gcJobs": utils.StringifyJobs(App.GocronScheduler.Jobs()),
 	}).Info("GoCron jobs set")
+}
+
+func ScheduleJokerAnnouncements() {
+	if events.Events == nil {
+		return
+	}
+
+	generation := jokerScheduleGeneration.Add(1)
+	now := time.Now()
+	random := rand.New(rand.NewSource(now.UnixNano()))
+	for _, event := range events.Events.Map {
+		if event.JokerFormat == "" {
+			continue
+		}
+
+		announcementDelay := time.Duration(random.Intn(21)+5) * time.Second
+		announcementAt := event.Time.Add(-announcementDelay)
+		if !announcementAt.After(now) {
+			continue
+		}
+
+		go func(event *events.Event, announcementAt time.Time, generation uint64) {
+			timer := time.NewTimer(time.Until(announcementAt))
+			defer timer.Stop()
+			<-timer.C
+			if jokerScheduleGeneration.Load() != generation {
+				return
+			}
+
+			format, found := events.JokerFormatByName(event.JokerFormat)
+			if !found {
+				return
+			}
+			entities, text := utils.ParseToEntities(ComposeMessage(
+				[]string{
+					"🃏 Il prossimo evento usa un **formato Joker**: %s.\n\n__%s__",
+				},
+				format.Name,
+				format.Description,
+			), TelegramUsersList)
+			message := tgbotapi.NewMessage(App.DefaultChatID, text)
+			message.Entities = entities
+			App.BotAPI.Send(message)
+		}(event, announcementAt, generation)
+	}
 }
 
 func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData *types.WriteMessageData, utilsVar types.Utils) {

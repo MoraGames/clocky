@@ -494,6 +494,7 @@ func init() {
 									&types.WriteMessageData{Bot: App.BotAPI, ChatID: App.DefaultChatID, ReplyMessageID: -1},
 									types.Utils{Config: App.Config, Logger: App.Logger, TimeFormat: App.TimeFormat},
 								)
+								ScheduleJokerAnnouncements()
 							case "rewards":
 								DailyUserRewardAndReset(
 									Users,

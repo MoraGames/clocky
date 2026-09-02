@@ -13,6 +13,7 @@ type (
 		Name           string
 		Points         int
 		Enabled        bool
+		JokerFormat    string
 		Effects        []*structs.Effect
 		Activation     *EventActivation
 		Partecipations map[int64]*EventPartecipation
@@ -38,6 +39,7 @@ func NewEvent(eventTime time.Time) *Event {
 		Name:           eventTime.Format("15:04"),
 		Enabled:        enabled,
 		Points:         points,
+		JokerFormat:    "",
 		Effects:        nil,
 		Activation:     nil,
 		Partecipations: make(map[int64]*EventPartecipation),

@@ -15,6 +15,7 @@ type Set struct {
 	Pattern  string
 	Typology string
 	Enabled  bool
+	Joker    bool
 	Verify   func(h1, h2, m1, m2 int) bool
 }
 type SetJson struct {
@@ -22,6 +23,7 @@ type SetJson struct {
 	Pattern  string
 	Typology string
 	Enabled  bool
+	Joker    bool
 }
 
 type SetFile struct {
@@ -72,20 +74,20 @@ var (
 func defaultSets() SetSlice {
 	return SetSlice{
 		//{"Equal", "aa:aa", "static", false, equal},
-		{"Short Equal", "?a:aa", "static", false, shortEqual},
-		{"Repeat", "ab:ab", "static", false, repeat},
-		{"Mirror", "ab:ba", "static", false, mirror},
-		{"Rise", "ab:cd", "static", false, rise},
-		{"Short Rise", "?a:bc", "static", false, shortRise},
-		{"Short Fall", "?c:ba", "static", false, shortFall},
-		{"Rapid Rise", "ac:eg", "static", false, rapidRise},
-		{"Short Rapid Rise", "?a:ce", "static", false, shortRapidRise},
-		{"Short Rapid Fall", "?e:ca", "static", false, shortRapidFall},
-		{"Double", "n:2*n", "static", false, double},
-		{"Short Triple", "[unnamed]", "static", false, shortTriple},
-		{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
-		{"Equal Twins", "aa:bb", "static", false, equalTwins},
-		{"Half", "2*n:n", "static", false, half},
+		{"Short Equal", "?a:aa", "static", false, false, shortEqual},
+		{"Repeat", "ab:ab", "static", false, false, repeat},
+		{"Mirror", "ab:ba", "static", false, false, mirror},
+		{"Rise", "ab:cd", "static", false, false, rise},
+		{"Short Rise", "?a:bc", "static", false, false, shortRise},
+		{"Short Fall", "?c:ba", "static", false, false, shortFall},
+		{"Rapid Rise", "ac:eg", "static", false, false, rapidRise},
+		{"Short Rapid Rise", "?a:ce", "static", false, false, shortRapidRise},
+		{"Short Rapid Fall", "?e:ca", "static", false, false, shortRapidFall},
+		{"Double", "n:2*n", "static", false, false, double},
+		{"Short Triple", "[unnamed]", "static", false, false, shortTriple},
+		{"Perfect Square", "[unnamed]", "static", false, false, perfectSquare},
+		{"Equal Twins", "aa:bb", "static", false, false, equalTwins},
+		{"Half", "2*n:n", "static", false, false, half},
 	}
 }
 
@@ -111,6 +113,7 @@ func mergeSetsWithDefaults(persisted SetJsonSlice) SetSlice {
 			Pattern:  persistedSet.Pattern,
 			Typology: persistedSet.Typology,
 			Enabled:  persistedSet.Enabled,
+			Joker:    persistedSet.Joker,
 			Verify:   defaultSet.Verify,
 		})
 	}
@@ -126,6 +129,15 @@ func currentDailyExpiration(now time.Time) time.Time {
 	return expiration.AddDate(0, 0, 1)
 }
 
+func (s SetSlice) Find(name string) *Set {
+	for _, set := range s {
+		if set.Name == name {
+			return set
+		}
+	}
+	return nil
+}
+
 func (s SetSlice) ToJsonSlice() SetJsonSlice {
 	jsonSlice := make(SetJsonSlice, 0)
 	for _, set := range s {
@@ -134,6 +146,7 @@ func (s SetSlice) ToJsonSlice() SetJsonSlice {
 			Pattern:  set.Pattern,
 			Typology: set.Typology,
 			Enabled:  set.Enabled,
+			Joker:    set.Joker,
 		})
 	}
 	return jsonSlice
@@ -147,6 +160,7 @@ func (sj SetJsonSlice) ToSlice() SetSlice {
 			Pattern:  setjson.Pattern,
 			Typology: setjson.Typology,
 			Enabled:  setjson.Enabled,
+			Joker:    setjson.Joker,
 			Verify:   SetsFunctions[setjson.Name],
 		})
 	}

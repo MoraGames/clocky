@@ -67,6 +67,9 @@ var (
 		if Events != nil && Events.Expiration.IsZero() {
 			Events.Expiration = currentDailyExpiration(time.Now())
 		}
+		if Events != nil {
+			Events.AssignJokerFormats()
+		}
 	}
 )
 
@@ -78,7 +81,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 		currentDailyExpiration(time.Now()),
 	}
 
-	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, utils)
+	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, types.Interval{Min: 0.10, Max: 0.20}, utils)
 
 	now := time.Now()
 	for i := 0; i < 24*60; i++ {
@@ -96,6 +99,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 			}
 		}
 	}
+	ed.AssignJokerFormats()
 
 	if newEffects {
 		ed.AssignRandomEffects(
@@ -125,7 +129,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
 	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
 	ed.Expiration = currentDailyExpiration(time.Now())
-	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, utils)
+	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, types.Interval{Min: 0.10, Max: 0.20}, utils)
 
 	for eventName := range ed.Map {
 		ed.Map[eventName].Reset()
@@ -136,6 +140,7 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 			ed.Stats.EnabledPointsSum += ed.Map[eventName].Points
 		}
 	}
+	ed.AssignJokerFormats()
 
 	if newEffects {
 		ed.AssignRandomEffects(
@@ -168,7 +173,7 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	}
 }
 
-func (ed *EventsData) EnabledRandomSets(percentage types.Interval, utils types.Utils) error {
+func (ed *EventsData) EnabledRandomSets(percentage types.Interval, jokerPercentage types.Interval, utils types.Utils) error {
 	if percentage.Min < 0 {
 		return fmt.Errorf("minPercentage must be >= 0")
 	} else if percentage.Max > 1 {
@@ -176,23 +181,38 @@ func (ed *EventsData) EnabledRandomSets(percentage types.Interval, utils types.U
 	} else if percentage.Min > percentage.Max {
 		return fmt.Errorf("minPercentage must be <= maxPercentage")
 	}
+	if jokerPercentage.Min < 0 {
+		return fmt.Errorf("minJokerPercentage must be >= 0")
+	} else if jokerPercentage.Max > 1 {
+		return fmt.Errorf("maxJokerPercentage must be <= 1")
+	} else if jokerPercentage.Min > jokerPercentage.Max {
+		return fmt.Errorf("minJokerPercentage must be <= maxJokerPercentage")
+	}
 
 	ed.Stats.TotalSetsNum = len(Sets)
 	for _, set := range Sets {
 		set.Enabled = false
+		set.Joker = false
 	}
 
 	min, max := int(math.Round(percentage.Min*float64(ed.Stats.TotalSetsNum))), int(math.Round(percentage.Max*float64(ed.Stats.TotalSetsNum)))
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	setToActivate := r.Intn(max-min) + min
+	setToActivate := r.Intn(max-min+1) + min
 
-	for i := 0; i < setToActivate; {
+	minJoker, maxJoker := int(math.Round(jokerPercentage.Min*float64(setToActivate))), int(math.Round(jokerPercentage.Max*float64(setToActivate)))
+	setToActivateJoker := r.Intn(maxJoker-minJoker+1) + minJoker
+
+	for i, j := 0, 0; i < setToActivate; {
 		setIndex := r.Intn(ed.Stats.TotalSetsNum)
 		if !Sets[setIndex].Enabled {
 			Sets[setIndex].Enabled = true
 			ed.Stats.EnabledSetsNum++
 			ed.Stats.EnabledSets = append(ed.Stats.EnabledSets, Sets[setIndex].Name)
+			if j < setToActivateJoker {
+				Sets[setIndex].Joker = true
+				j++
+			}
 			i++
 		}
 	}
@@ -345,7 +365,11 @@ func (ed *EventsData) WriteResetMessage(writeMsgData *types.WriteMessageData, ut
 
 	text += fmt.Sprintf("\nSchemi Attivi (%v):\n", ed.Stats.EnabledSetsNum)
 	for _, setName := range sortedActiveSets {
-		text += fmt.Sprintf(" | %q\n", setName)
+		jokerMessage := ""
+		if setFound := Sets.Find(setName); setFound != nil && setFound.Joker {
+			jokerMessage = "🃏 "
+		}
+		text += fmt.Sprintf(" | %s%q\n", jokerMessage, setName)
 	}
 
 	text += fmt.Sprintf("\nEffetti Attivi (%v):\n", ed.Stats.EnabledEffectsNum)
