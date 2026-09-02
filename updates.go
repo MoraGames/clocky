@@ -160,15 +160,15 @@ func run(utils types.Utils, data types.Data) {
 					var msg tgbotapi.MessageConfig
 					switch {
 					case event.Activation.EarnedPoints < -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					case event.Activation.EarnedPoints == -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					case event.Activation.EarnedPoints == 0:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					case event.Activation.EarnedPoints == 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					case event.Activation.EarnedPoints > 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%.3fs", update.Message.From.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
 					}
 
 					msg.ReplyToMessageID = update.Message.MessageID
@@ -239,6 +239,7 @@ func run(utils types.Utils, data types.Data) {
 					if user.TelegramUser == nil {
 						AddTelegramUserToExistingUser(update.Message.From)
 					}
+
 					// Add partecipations to the user if they have never participated the event before
 					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
 					if !hasPartecipated {
