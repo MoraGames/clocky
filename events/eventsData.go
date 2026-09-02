@@ -208,8 +208,7 @@ func (ed *EventsData) EnabledRandomSets(percentage types.Interval, utils types.U
 
 func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.EffectPresence) {
 	var r *rand.Rand
-	multiplierEffectsNames, additiveEffectsNames := make([]string, 0), make([]string, 0)
-	effectsAmountToApply, effectsToApply, multiplierToApplyNum, additiveToApplyNum := make(map[string]int), make(map[string]*structs.Effect), 0, 0
+	effectsAmountToApply, effectsNamesToApply, totalEffectsAmount := make(map[string]int), make([]string, 0), 0
 
 	for _, effect := range effects {
 		r = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -220,37 +219,23 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 				maxEventsEffected++
 			}
 
-			eventsEffected := r.Intn(maxEventsEffected-minEventsEffected) + minEventsEffected
-			effectsAmountToApply[effect.Effect.Name] += eventsEffected
-			effectsToApply[effect.Effect.Name] = effect.Effect
-			if effect.Effect.Key == "*" {
-				multiplierEffectsNames = append(multiplierEffectsNames, effect.Effect.Name)
-				multiplierToApplyNum += eventsEffected
-			} else if effect.Effect.Key == "+" || effect.Effect.Key == "-" {
-				additiveEffectsNames = append(additiveEffectsNames, effect.Effect.Name)
-				additiveToApplyNum += eventsEffected
-			}
+			numEventsWithEffect := r.Intn(maxEventsEffected-minEventsEffected) + minEventsEffected
+			effectsNamesToApply = append(effectsNamesToApply, effect.Effect.Name)
+			effectsAmountToApply[effect.Effect.Name] += numEventsWithEffect
+			totalEffectsAmount += numEventsWithEffect
 		}
 	}
 
 	// Check if are applicable all effects calculated
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	for additiveToApplyNum > ed.Stats.EnabledEventsNum {
-		// Remove a random additive effect
-		effectToDecrease := additiveEffectsNames[r.Intn(len(additiveEffectsNames))]
+	for totalEffectsAmount > ed.Stats.EnabledEventsNum*3 {
+		// Remove a random effect
+		effectToDecrease := effectsNamesToApply[r.Intn(len(effectsNamesToApply))]
 		effectsAmountToApply[effectToDecrease]--
+		totalEffectsAmount--
 		if effectsAmountToApply[effectToDecrease] == 0 {
 			delete(effectsAmountToApply, effectToDecrease)
-			additiveEffectsNames = RemoveValue(additiveEffectsNames, effectToDecrease)
-		}
-	}
-	for multiplierToApplyNum > ed.Stats.EnabledEventsNum {
-		// Remove a random multiplier effect
-		effectToDecrease := multiplierEffectsNames[r.Intn(len(multiplierEffectsNames))]
-		effectsAmountToApply[effectToDecrease]--
-		if effectsAmountToApply[effectToDecrease] == 0 {
-			delete(effectsAmountToApply, effectToDecrease)
-			multiplierEffectsNames = RemoveValue(multiplierEffectsNames, effectToDecrease)
+			effectsNamesToApply = RemoveValue(effectsNamesToApply, effectToDecrease)
 		}
 	}
 
@@ -258,37 +243,16 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 		"toApp": effectsAmountToApply,
 	}).Debug("Effects to enable")
 
-	// Apply all effects (multiplier before, additive after)
+	// Apply all effects
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	for _, effectName := range multiplierEffectsNames {
+	for _, effectName := range effectsNamesToApply {
 		for i := 0; i < effectsAmountToApply[effectName]; {
 			eventName := ed.Keys[r.Intn(len(ed.Keys))]
-			if ed.Map[eventName].Enabled && len(ed.Map[eventName].Effects) == 0 {
-				ed.Map[eventName].AddEffect(effectsToApply[effectName])
+			if ed.Map[eventName].Enabled && len(ed.Map[eventName].Effects) < 3 {
+				ed.Map[eventName].AddEffect(structs.Effects[effectName])
 				ed.Stats.EnabledEffectsNum++
 				ed.Stats.EnabledEffects[effectName]++
 				i++
-			}
-		}
-	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	for _, effectName := range additiveEffectsNames {
-		for i := 0; i < effectsAmountToApply[effectName]; {
-			eventName := ed.Keys[r.Intn(len(ed.Keys))]
-			if ed.Map[eventName].Enabled {
-				if len(ed.Map[eventName].Effects) == 0 {
-					//Apply effect if there are no other effects
-					ed.Map[eventName].AddEffect(effectsToApply[effectName])
-					ed.Stats.EnabledEffectsNum++
-					ed.Stats.EnabledEffects[effectName]++
-					i++
-				} else if len(ed.Map[eventName].Effects) == 1 && ed.Map[eventName].Effects[0].Key == "*" {
-					//Apply effect if there is only one effects and it's a multiplier
-					ed.Map[eventName].AddEffect(effectsToApply[effectName])
-					ed.Stats.EnabledEffectsNum++
-					ed.Stats.EnabledEffects[effectName]++
-					i++
-				}
 			}
 		}
 	}
@@ -312,7 +276,7 @@ func EventsOf(setFunc func(int, int, int, int) bool) []*Event {
 }
 
 func RemoveValue(s []string, value string) []string {
-	newS := make([]string, len(s)-1)
+	newS := make([]string, 0, len(s)-1)
 	for _, v := range s {
 		if v != value {
 			newS = append(newS, v)
