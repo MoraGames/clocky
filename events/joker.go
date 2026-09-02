@@ -14,9 +14,11 @@ type JokerFormat struct {
 }
 
 var jokerFormats = []JokerFormat{
-	{Name: "Keycap", Description: "cifre rappresentate con emoji numeriche", Format: formatKeycap, Parse: parseKeycap},
-	{Name: "Roman numerals", Description: "cifre scritte con numeri romani, separate da spazi", Format: formatRoman, Parse: parseRoman},
-	{Name: "Repeated question marks", Description: "un punto interrogativo ripetuto tante volte quanto il valore della cifra", Format: formatRepeatedQuestionMarks, Parse: parseRepeatedQuestionMarks},
+	{Name: "Emoji Time", Description: "Usa le emoji con i numeri da 0️⃣ a 9️⃣ per formare l'orario!", Format: formatKeycap, Parse: parseKeycap},
+	{Name: "Roman Numerals", Description: "Ricorda, solo N, I, V e X erano simboli utilizzati; dovrai separarli con spazi.", Format: formatRoman, Parse: parseRoman},
+	{Name: "Many Repetition", Description: "Un punto interrogativo, ripetuto per molte domande... oppure diversi orari e qualche #.", Format: formatRepeatedQuestionMarks, Parse: parseRepeatedQuestionMarks},
+	{Name: "Clocky Clock", Description: "Semplicemente 4 orologi, tutti che segnano l'ora in punto!", Format: formatClockyClock, Parse: parseClockyClock},
+	{Name: "Alternative Sings", Description: "Un layout, 10 cifre alternative, tutte che vanno dal ! al =.", Format: formatAlternativeSings, Parse: parseAlternativeSings},
 }
 
 func JokerFormats() []JokerFormat {
@@ -143,7 +145,7 @@ func formatRepeatedQuestionMarks(value time.Time) string {
 
 func repeatedQuestionMarks(digit int) string {
 	if digit == 0 {
-		return "0"
+		return "#"
 	}
 	return strings.Repeat("?", digit)
 }
@@ -157,7 +159,7 @@ func parseRepeatedQuestionMarks(text string) (int, int, bool) {
 	for _, part := range parts {
 		for _, token := range strings.Fields(part) {
 			digit := 0
-			if token == "0" {
+			if token == "#" {
 				digits = append(digits, 0)
 				continue
 			}
@@ -166,6 +168,84 @@ func parseRepeatedQuestionMarks(text string) (int, int, bool) {
 			}
 			digit = len(token)
 			digits = append(digits, digit)
+		}
+	}
+	if len(digits) != 4 {
+		return 0, 0, false
+	}
+	hour, minute := digits[0]*10+digits[1], digits[2]*10+digits[3]
+	return hour, minute, hour < 24 && minute < 60
+}
+
+var clockyClockDigits = []string{"🕛", "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗", "🕘"}
+
+func formatClockyClock(value time.Time) string {
+	digits := []int{value.Hour() / 10, value.Hour() % 10, value.Minute() / 10, value.Minute() % 10}
+	parts := make([]string, 0, len(digits))
+	for _, digit := range digits {
+		parts = append(parts, clockyClockDigits[digit])
+	}
+	return parts[0] + parts[1] + ":" + parts[2] + parts[3]
+}
+
+func parseClockyClock(text string) (int, int, bool) {
+	parts := strings.Split(text, ":")
+	if len(parts) != 2 {
+		return 0, 0, false
+	}
+	digits := make([]int, 0, 4)
+	for _, part := range parts {
+		for _, token := range strings.Fields(part) {
+			found := false
+			for digit, symbol := range clockyClockDigits {
+				if token == symbol {
+					digits = append(digits, digit)
+					found = true
+					break
+				}
+			}
+			if !found {
+				return 0, 0, false
+			}
+		}
+	}
+	if len(digits) != 4 {
+		return 0, 0, false
+	}
+	hour, minute := digits[0]*10+digits[1], digits[2]*10+digits[3]
+	return hour, minute, hour < 24 && minute < 60
+}
+
+var alternativeSingsDigits = []string{"!", "\"", "£", "$", "%", "&", "/", "(", ")", "="}
+
+func formatAlternativeSings(value time.Time) string {
+	digits := []int{value.Hour() / 10, value.Hour() % 10, value.Minute() / 10, value.Minute() % 10}
+	parts := make([]string, 0, len(digits))
+	for _, digit := range digits {
+		parts = append(parts, alternativeSingsDigits[digit])
+	}
+	return parts[0] + parts[1] + ":" + parts[2] + parts[3]
+}
+
+func parseAlternativeSings(text string) (int, int, bool) {
+	parts := strings.Split(text, ":")
+	if len(parts) != 2 {
+		return 0, 0, false
+	}
+	digits := make([]int, 0, 4)
+	for _, part := range parts {
+		for _, token := range strings.Fields(part) {
+			found := false
+			for digit, symbol := range alternativeSingsDigits {
+				if token == symbol {
+					digits = append(digits, digit)
+					found = true
+					break
+				}
+			}
+			if !found {
+				return 0, 0, false
+			}
 		}
 	}
 	if len(digits) != 4 {

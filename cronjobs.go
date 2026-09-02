@@ -192,13 +192,10 @@ func ScheduleJokerAnnouncements() {
 			if !found {
 				return
 			}
-			entities, text := utils.ParseToEntities(ComposeMessage(
-				[]string{
-					"🃏 Il prossimo evento usa un **formato Joker**: %s.\n\n__%s__",
-				},
-				format.Name,
-				format.Description,
-			), TelegramUsersList)
+			entities, text := utils.ParseToEntities(
+				fmt.Sprintf("🃏 Il prossimo evento usa un **formato Joker**: %s.\n\n%%%s%%", format.Name, format.Description),
+				TelegramUsersList,
+			)
 			message := tgbotapi.NewMessage(App.DefaultChatID, text)
 			message.Entities = entities
 			App.BotAPI.Send(message)
