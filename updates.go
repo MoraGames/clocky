@@ -315,7 +315,14 @@ func UpdateUserEffects(userID int64) {
 	)
 
 	// Get interval from ranking leader
-	leaderPoints := ranking[0].Points
+	var leaderPoints int
+	if len(ranking) > 0 {
+		leaderPoints = ranking[0].Points
+	} else {
+		// Check if ranking is empty (no users have participated yet)
+		// Extra: I'm surprised that this is never happened before. Rankings are empty at the first participation of the championship every time.
+		leaderPoints = 0
+	}
 	userPoints := 0
 	for _, rank := range ranking {
 		if rank.Username == Users[userID].UserName {
