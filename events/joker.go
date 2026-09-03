@@ -167,7 +167,7 @@ func parseClockyClock(text string) (int, int, bool) {
 	return hour, minute, hour < 24 && minute < 60
 }
 
-var alternativeSingsDigits = []string{"!", "\"", "£", "$", "%", "&", "/", "(", ")", "="}
+var alternativeSingsDigits = []string{"=", "!", "\"", "£", "$", "%", "&", "/", "(", ")"}
 
 func formatAlternativeSings(value time.Time) string {
 	digits := []int{value.Hour() / 10, value.Hour() % 10, value.Minute() / 10, value.Minute() % 10}
