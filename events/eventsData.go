@@ -228,6 +228,9 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 	effectsAmountToApply, effectsNamesToApply, totalEffectsAmount := make(map[string]int), make([]string, 0), 0
 
 	for _, effect := range effects {
+
+		// fmt.Println("DEBUG] Testing for effect ", effect.Effect.Name, "with probability", effect.Possible)
+
 		r = rand.New(rand.NewSource(time.Now().UnixNano()))
 		if r.Float64() < effect.Possible {
 			// Effects will be assigned
@@ -236,16 +239,24 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 				maxEventsEffected++
 			}
 
+			// fmt.Println("DEBUG] Effect ", effect.Effect.Name, "will be assigned to ", minEventsEffected, "-", maxEventsEffected, "events")
+
 			numEventsWithEffect := r.Intn(maxEventsEffected-minEventsEffected) + minEventsEffected
 			effectsNamesToApply = append(effectsNamesToApply, effect.Effect.Name)
 			effectsAmountToApply[effect.Effect.Name] += numEventsWithEffect
 			totalEffectsAmount += numEventsWithEffect
+
+			// fmt.Println("DEBUG] Effect ", effect.Effect.Name, "assigned to ", numEventsWithEffect, "events")
+			// fmt.Println("     |- effectsNamesToApply: ", effectsNamesToApply)
+			// fmt.Println("     |- effectsAmountToApply: ", effectsAmountToApply)
+			// fmt.Println("     |- totalEffectsAmount: ", totalEffectsAmount)
 		}
 	}
 
 	// Check if are applicable all effects calculated
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	for totalEffectsAmount > ed.Stats.EnabledEventsNum*3 {
+		// fmt.Println("DEBUG] Reducing effects amount from", totalEffectsAmount, "to", ed.Stats.EnabledEventsNum*3)
 		// Remove a random effect
 		effectToDecrease := effectsNamesToApply[r.Intn(len(effectsNamesToApply))]
 		effectsAmountToApply[effectToDecrease]--
@@ -254,6 +265,10 @@ func (ed *EventsData) AssignRandomEffects(utils types.Utils, effects ...structs.
 			delete(effectsAmountToApply, effectToDecrease)
 			effectsNamesToApply = RemoveValue(effectsNamesToApply, effectToDecrease)
 		}
+		// fmt.Println("DEBUG] Effect decreased is ", effectToDecrease)
+		// fmt.Println("     |- effectsNamesToApply: ", effectsNamesToApply)
+		// fmt.Println("     |- effectsAmountToApply: ", effectsAmountToApply)
+		// fmt.Println("     |- totalEffectsAmount: ", totalEffectsAmount)
 	}
 
 	utils.Logger.WithFields(logrus.Fields{

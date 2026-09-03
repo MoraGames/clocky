@@ -55,11 +55,13 @@ var (
 	// Map of all the effects
 	Effects = map[string]*Effect{
 		"Mul -5":                   QuintupleNegativePoints,
+		"Mul -4":                   QuadrupleNegativePoints,
 		"Mul -3":                   TripleNegativePoints,
 		"Mul -2":                   DoubleNegativePoints,
 		"Mul -1":                   SingleNegativePoints,
 		"Mul +2":                   DoublePositivePoints,
 		"Mul +3":                   TriplePositivePoints,
+		"Mul +4":                   QuadruplePositivePoints,
 		"Mul +5":                   QuintuplePositivePoints,
 		"Mul +6":                   SixtuplePositivePoints,
 		"Sub 4":                    SubFourPoints,
