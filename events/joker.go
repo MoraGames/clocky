@@ -63,30 +63,13 @@ func formatKeycap(value time.Time) string {
 	for _, digit := range digits {
 		parts = append(parts, keycapDigits[digit])
 	}
-	return parts[0] + parts[1] + " : " + parts[2] + parts[3]
+	return strings.Join([]string{parts[0], parts[1], ":", parts[2], parts[3]}, " ")
 }
 
 func parseKeycap(text string) (int, int, bool) {
-	parts := strings.Split(text, " : ")
-	if len(parts) != 2 {
+	digits, ok := parseJokerDigits(text, keycapDigits)
+	if !ok {
 		return 0, 0, false
-	}
-	digits := make([]int, 0, 4)
-	for _, part := range parts {
-		for len(part) > 0 {
-			found := false
-			for digit, symbol := range keycapDigits {
-				if strings.HasPrefix(part, symbol) {
-					digits = append(digits, digit)
-					part = strings.TrimPrefix(part, symbol)
-					found = true
-					break
-				}
-			}
-			if !found {
-				return 0, 0, false
-			}
-		}
 	}
 	if len(digits) != 4 {
 		return 0, 0, false
@@ -107,25 +90,9 @@ func formatRoman(value time.Time) string {
 }
 
 func parseRoman(text string) (int, int, bool) {
-	parts := strings.Split(text, " : ")
-	if len(parts) != 2 {
+	digits, ok := parseJokerDigits(text, romanDigits)
+	if !ok {
 		return 0, 0, false
-	}
-	digits := make([]int, 0, 4)
-	for _, part := range parts {
-		for _, token := range strings.Fields(part) {
-			found := false
-			for digit, symbol := range romanDigits {
-				if token == symbol {
-					digits = append(digits, digit)
-					found = true
-					break
-				}
-			}
-			if !found {
-				return 0, 0, false
-			}
-		}
 	}
 	if len(digits) != 4 {
 		return 0, 0, false
@@ -151,13 +118,13 @@ func repeatedQuestionMarks(digit int) string {
 }
 
 func parseRepeatedQuestionMarks(text string) (int, int, bool) {
-	parts := strings.Split(text, " : ")
-	if len(parts) != 2 {
+	parts, ok := splitJokerParts(text)
+	if !ok {
 		return 0, 0, false
 	}
 	digits := make([]int, 0, 4)
 	for _, part := range parts {
-		for _, token := range strings.Fields(part) {
+		for _, token := range part {
 			digit := 0
 			if token == "#" {
 				digits = append(digits, 0)
@@ -185,29 +152,13 @@ func formatClockyClock(value time.Time) string {
 	for _, digit := range digits {
 		parts = append(parts, clockyClockDigits[digit])
 	}
-	return parts[0] + parts[1] + ":" + parts[2] + parts[3]
+	return strings.Join([]string{parts[0], parts[1], ":", parts[2], parts[3]}, " ")
 }
 
 func parseClockyClock(text string) (int, int, bool) {
-	parts := strings.Split(text, ":")
-	if len(parts) != 2 {
+	digits, ok := parseJokerDigits(text, clockyClockDigits)
+	if !ok {
 		return 0, 0, false
-	}
-	digits := make([]int, 0, 4)
-	for _, part := range parts {
-		for _, token := range strings.Fields(part) {
-			found := false
-			for digit, symbol := range clockyClockDigits {
-				if token == symbol {
-					digits = append(digits, digit)
-					found = true
-					break
-				}
-			}
-			if !found {
-				return 0, 0, false
-			}
-		}
 	}
 	if len(digits) != 4 {
 		return 0, 0, false
@@ -224,19 +175,47 @@ func formatAlternativeSings(value time.Time) string {
 	for _, digit := range digits {
 		parts = append(parts, alternativeSingsDigits[digit])
 	}
-	return parts[0] + parts[1] + ":" + parts[2] + parts[3]
+	return strings.Join([]string{parts[0], parts[1], ":", parts[2], parts[3]}, " ")
 }
 
 func parseAlternativeSings(text string) (int, int, bool) {
-	parts := strings.Split(text, ":")
-	if len(parts) != 2 {
+	digits, ok := parseJokerDigits(text, alternativeSingsDigits)
+	if !ok {
 		return 0, 0, false
+	}
+	if len(digits) != 4 {
+		return 0, 0, false
+	}
+	hour, minute := digits[0]*10+digits[1], digits[2]*10+digits[3]
+	return hour, minute, hour < 24 && minute < 60
+}
+
+func splitJokerParts(text string) ([][]string, bool) {
+	parts := strings.Split(text, " : ")
+	if len(parts) != 2 {
+		return nil, false
+	}
+	result := make([][]string, 0, 2)
+	for _, part := range parts {
+		symbols := strings.Split(part, " ")
+		if len(symbols) != 2 || symbols[0] == "" || symbols[1] == "" {
+			return nil, false
+		}
+		result = append(result, symbols)
+	}
+	return result, true
+}
+
+func parseJokerDigits(text string, symbols []string) ([]int, bool) {
+	parts, ok := splitJokerParts(text)
+	if !ok {
+		return nil, false
 	}
 	digits := make([]int, 0, 4)
 	for _, part := range parts {
-		for _, token := range strings.Fields(part) {
+		for _, token := range part {
 			found := false
-			for digit, symbol := range alternativeSingsDigits {
+			for digit, symbol := range symbols {
 				if token == symbol {
 					digits = append(digits, digit)
 					found = true
@@ -244,13 +223,9 @@ func parseAlternativeSings(text string) (int, int, bool) {
 				}
 			}
 			if !found {
-				return 0, 0, false
+				return nil, false
 			}
 		}
 	}
-	if len(digits) != 4 {
-		return 0, 0, false
-	}
-	hour, minute := digits[0]*10+digits[1], digits[2]*10+digits[3]
-	return hour, minute, hour < 24 && minute < 60
+	return digits, true
 }

@@ -1,20 +1,40 @@
 package events
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
 
 func TestJokerFormatsRoundTrip(t *testing.T) {
+	for _, format := range JokerFormats() {
+		for hourValue := 0; hourValue < 24; hourValue++ {
+			for minuteValue := 0; minuteValue < 60; minuteValue++ {
+				expected := time.Date(0, time.January, 1, hourValue, minuteValue, 0, 0, time.UTC)
+				text := format.Format(expected)
+				parts := strings.Fields(text)
+				if len(parts) != 5 || parts[2] != ":" {
+					t.Fatalf("format %q did not use the canonical spaced format: %q", format.Name, text)
+				}
+				hour, minute, ok := format.Parse(text)
+				if !ok || hour != expected.Hour() || minute != expected.Minute() {
+					t.Fatalf("format %q failed round trip with %q", format.Name, text)
+				}
+				if !format.Matches(text, expected) {
+					t.Fatalf("format %q did not match its own output %q", format.Name, text)
+				}
+			}
+		}
+	}
+}
+
+func TestJokerFormatsRejectCompactFormat(t *testing.T) {
 	expected := time.Date(0, time.January, 1, 12, 34, 0, 0, time.UTC)
 	for _, format := range JokerFormats() {
 		text := format.Format(expected)
-		hour, minute, ok := format.Parse(text)
-		if !ok || hour != expected.Hour() || minute != expected.Minute() {
-			t.Fatalf("format %q failed round trip with %q", format.Name, text)
-		}
-		if !format.Matches(text, expected) {
-			t.Fatalf("format %q did not match its own output %q", format.Name, text)
+		compact := strings.ReplaceAll(text, " ", "")
+		if format.Matches(compact, expected) {
+			t.Fatalf("format %q accepted compact joker format %q", format.Name, compact)
 		}
 	}
 }
@@ -30,7 +50,7 @@ func TestJokerFormatsRejectWrongTime(t *testing.T) {
 
 func TestRepeatedQuestionMarksUsesQuestionMarks(t *testing.T) {
 	expected := time.Date(0, time.January, 1, 12, 34, 0, 0, time.UTC)
-	format, found := JokerFormatByName("Repeated question marks")
+	format, found := JokerFormatByName("Many Repetition")
 	if !found {
 		t.Fatal("expected repeated question marks format")
 	}

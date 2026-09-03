@@ -332,7 +332,11 @@ func UpdateUserEffects(userID int64) {
 	interval := leaderPoints - userPoints
 
 	//Remove the Comeback effect
-	user := Users[userID]
+	user, ok := Users[userID]
+	if !ok {
+		// Extra: What? Even there? This crashes was never happened before.
+		return
+	}
 	user.RemoveEffect(structs.ComebackBonus1)
 	user.RemoveEffect(structs.ComebackBonus2)
 	user.RemoveEffect(structs.ComebackBonus3)
