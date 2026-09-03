@@ -67,9 +67,6 @@ var (
 		if Events != nil && Events.Expiration.IsZero() {
 			Events.Expiration = currentDailyExpiration(time.Now())
 		}
-		if Events != nil {
-			Events.AssignJokerFormats()
-		}
 	}
 )
 

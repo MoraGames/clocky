@@ -160,6 +160,13 @@ func TestEventsResetWritesFilesAndReloadStatusLoadsThem(t *testing.T) {
 	if time.Now().After(savedEvents.Expiration) {
 		t.Fatal("expected events file expiration to be in the future")
 	}
+	var savedJokerFormats map[string]string
+	for eventName, event := range savedEvents.Map {
+		if event.JokerFormat != "" {
+			savedJokerFormats = map[string]string{eventName: event.JokerFormat}
+			break
+		}
+	}
 
 	events.Sets = nil
 	events.SetsJson = events.SetFile{}
@@ -196,5 +203,10 @@ func TestEventsResetWritesFilesAndReloadStatusLoadsThem(t *testing.T) {
 	}
 	if time.Now().After(events.Events.Expiration) {
 		t.Fatal("expected reloaded events expiration to be in the future")
+	}
+	for eventName, expectedFormat := range savedJokerFormats {
+		if got := events.Events.Map[eventName].JokerFormat; got != expectedFormat {
+			t.Fatalf("expected reloaded event %s to preserve JokerFormat %q, got %q", eventName, expectedFormat, got)
+		}
 	}
 }

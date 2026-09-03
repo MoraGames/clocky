@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
 	"os"
 	"slices"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
@@ -21,7 +22,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var jokerScheduleGeneration atomic.Uint64
+var (
+	jokerScheduleMu     sync.Mutex
+	jokerScheduleCancel context.CancelFunc
+)
 
 func DefineDefaultCronJobs() {
 	// Daily reset cronjob - at 23:59:30
@@ -162,11 +166,18 @@ func DefineDefaultCronJobs() {
 }
 
 func ScheduleJokerAnnouncements() {
+	jokerScheduleMu.Lock()
+	if jokerScheduleCancel != nil {
+		jokerScheduleCancel()
+	}
+	scheduleContext, cancel := context.WithCancel(context.Background())
+	jokerScheduleCancel = cancel
+	jokerScheduleMu.Unlock()
+
 	if events.Events == nil {
 		return
 	}
 
-	generation := jokerScheduleGeneration.Add(1)
 	now := time.Now()
 	random := rand.New(rand.NewSource(now.UnixNano()))
 	for _, event := range events.Events.Map {
@@ -180,11 +191,15 @@ func ScheduleJokerAnnouncements() {
 			continue
 		}
 
-		go func(event *events.Event, announcementAt time.Time, generation uint64) {
+		go func(event *events.Event, announcementAt time.Time, scheduleContext context.Context) {
 			timer := time.NewTimer(time.Until(announcementAt))
 			defer timer.Stop()
-			<-timer.C
-			if jokerScheduleGeneration.Load() != generation {
+			select {
+			case <-timer.C:
+			case <-scheduleContext.Done():
+				return
+			}
+			if scheduleContext.Err() != nil {
 				return
 			}
 
@@ -193,13 +208,13 @@ func ScheduleJokerAnnouncements() {
 				return
 			}
 			entities, text := utils.ParseToEntities(
-				fmt.Sprintf("🃏 Il prossimo evento usa un **formato Joker**: %s.\n\n%%%s%%", format.Name, format.Description),
+				fmt.Sprintf("🃏 **Evento Joker** in arrivo!\nIl formato scelto è: __%s__.\n%%%s%%", format.Name, format.Description),
 				TelegramUsersList,
 			)
 			message := tgbotapi.NewMessage(App.DefaultChatID, text)
 			message.Entities = entities
 			App.BotAPI.Send(message)
-		}(event, announcementAt, generation)
+		}(event, announcementAt, scheduleContext)
 	}
 }
 
