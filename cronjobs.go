@@ -208,7 +208,7 @@ func ScheduleJokerAnnouncements() {
 				return
 			}
 			entities, text := utils.ParseToEntities(
-				fmt.Sprintf("🃏 **Evento Joker** in arrivo!\nIl formato scelto è: __%s__.\n%%%s%%", format.Name, format.Description),
+				fmt.Sprintf("🃏 **Evento Joker** in arrivo!\nIl formato scelto è: __%s__.\n%%%%%s%%%%", format.Name, format.Description),
 				TelegramUsersList,
 			)
 			message := tgbotapi.NewMessage(App.DefaultChatID, text)
