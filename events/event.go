@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/structs"
@@ -9,14 +10,16 @@ import (
 
 type (
 	Event struct {
-		Time           time.Time
-		Name           string
-		Points         int
-		Enabled        bool
-		JokerFormat    string
-		Effects        []*structs.Effect
-		Activation     *EventActivation
-		Partecipations map[int64]*EventPartecipation
+		Time                       time.Time
+		Name                       string
+		Points                     int
+		Enabled                    bool
+		JokerFormat                string
+		JokerAnnouncementMessageID int
+		Effects                    []*structs.Effect
+		Activation                 *EventActivation
+		Partecipations             map[int64]*EventPartecipation
+		ParticipationMutex         sync.RWMutex
 	}
 
 	EventActivation struct {
@@ -50,7 +53,10 @@ func (e *Event) Reset() {
 	e.Enabled, e.Points = CalculateStatus(e.Time)
 	e.Effects = nil
 	e.Activation = nil
+	e.ParticipationMutex.Lock()
 	e.Partecipations = make(map[int64]*EventPartecipation)
+	e.ParticipationMutex.Unlock()
+	e.JokerAnnouncementMessageID = 0
 }
 
 func (e *Event) AddEffect(effect *structs.Effect) {
@@ -67,11 +73,25 @@ func (e *Event) Activate(by *structs.User, at, telegramAt time.Time, points int)
 }
 
 func (e *Event) HasPartecipated(userID int64) bool {
+	e.ParticipationMutex.RLock()
+	defer e.ParticipationMutex.RUnlock()
 	_, ok := e.Partecipations[userID]
 	return ok
 }
 
+func (e *Event) HasPartecipations() bool {
+	e.ParticipationMutex.RLock()
+	defer e.ParticipationMutex.RUnlock()
+	return len(e.Partecipations) > 0
+}
+
+func (e *Event) SetJokerAnnouncementMessageID(messageID int) {
+	e.JokerAnnouncementMessageID = messageID
+}
+
 func (e *Event) Partecipate(by *structs.User, at time.Time) {
+	e.ParticipationMutex.Lock()
+	defer e.ParticipationMutex.Unlock()
 	e.Partecipations[by.TelegramID] = &EventPartecipation{
 		PartecipatedBy: by,
 		PartecipatedAt: at,

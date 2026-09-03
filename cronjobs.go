@@ -213,7 +213,37 @@ func ScheduleJokerAnnouncements() {
 			)
 			message := tgbotapi.NewMessage(App.DefaultChatID, text)
 			message.Entities = entities
-			App.BotAPI.Send(message)
+			sentMessage, err := App.BotAPI.Send(message)
+			if err != nil {
+				App.Logger.WithFields(logrus.Fields{
+					"event": event.Name,
+					"err":   err,
+				}).Error("Joker announcement not sent")
+				return
+			}
+			event.SetJokerAnnouncementMessageID(sentMessage.MessageID)
+
+			cleanupTimer := time.NewTimer(time.Until(event.Time.Add(time.Minute + 2*time.Second)))
+			defer cleanupTimer.Stop()
+			select {
+			case <-cleanupTimer.C:
+			case <-scheduleContext.Done():
+				return
+			}
+			if scheduleContext.Err() != nil || event.HasPartecipations() {
+				return
+			}
+			_, err = App.BotAPI.Request(tgbotapi.DeleteMessageConfig{
+				ChatID:    App.DefaultChatID,
+				MessageID: sentMessage.MessageID,
+			})
+			if err != nil {
+				App.Logger.WithFields(logrus.Fields{
+					"event":     event.Name,
+					"messageID": sentMessage.MessageID,
+					"err":       err,
+				}).Error("Joker announcement not deleted")
+			}
 		}(event, announcementAt, scheduleContext)
 	}
 }
