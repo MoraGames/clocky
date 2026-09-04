@@ -124,11 +124,13 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 }
 
 func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageData, utils types.Utils) {
+	resetAt := time.Now()
 	ed.Stats = EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)}
-	ed.Expiration = currentDailyExpiration(time.Now())
+	ed.Expiration = currentDailyExpiration(resetAt)
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, types.Interval{Min: 0.10, Max: 0.20}, utils)
 
 	for eventName := range ed.Map {
+		ed.Map[eventName].Time = eventTimeOnDate(ed.Map[eventName].Time, ed.Expiration)
 		ed.Map[eventName].Reset()
 
 		ed.Stats.TotalEventsNum++
@@ -168,6 +170,14 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	if writeMsgData != nil {
 		ed.WriteResetMessage(writeMsgData, utils)
 	}
+}
+
+func eventTimeOnDate(eventTime, date time.Time) time.Time {
+	return time.Date(
+		date.Year(), date.Month(), date.Day(),
+		eventTime.Hour(), eventTime.Minute(), eventTime.Second(), eventTime.Nanosecond(),
+		date.Location(),
+	)
 }
 
 func (ed *EventsData) EnabledRandomSets(percentage types.Interval, jokerPercentage types.Interval, utils types.Utils) error {
