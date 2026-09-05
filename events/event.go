@@ -16,6 +16,9 @@ type (
 		Enabled                    bool
 		JokerFormat                string
 		JokerAnnouncementMessageID int
+		ButtonCombo                bool
+		ButtonComboMessageID       int
+		ButtonComboResolved        bool
 		Effects                    []*structs.Effect
 		Activation                 *EventActivation
 		Partecipations             map[int64]*EventPartecipation
@@ -43,6 +46,7 @@ func NewEvent(eventTime time.Time) *Event {
 		Enabled:        enabled,
 		Points:         points,
 		JokerFormat:    "",
+		ButtonCombo:    false,
 		Effects:        nil,
 		Activation:     nil,
 		Partecipations: make(map[int64]*EventPartecipation),
@@ -53,6 +57,8 @@ func (e *Event) Reset() {
 	e.Enabled, e.Points = CalculateStatus(e.Time)
 	e.Effects = nil
 	e.Activation = nil
+	e.ButtonComboMessageID = 0
+	e.ButtonComboResolved = false
 	e.ParticipationMutex.Lock()
 	e.Partecipations = make(map[int64]*EventPartecipation)
 	e.ParticipationMutex.Unlock()
@@ -87,6 +93,35 @@ func (e *Event) HasPartecipations() bool {
 
 func (e *Event) SetJokerAnnouncementMessageID(messageID int) {
 	e.JokerAnnouncementMessageID = messageID
+}
+
+func (e *Event) SetButtonComboMessageID(messageID int) {
+	e.ParticipationMutex.Lock()
+	defer e.ParticipationMutex.Unlock()
+	e.ButtonComboMessageID = messageID
+}
+
+func (e *Event) TryResolveButtonCombo(buttonUserID int64) (int64, int, bool) {
+	e.ParticipationMutex.Lock()
+	defer e.ParticipationMutex.Unlock()
+	if !e.ButtonCombo || e.ButtonComboResolved || e.Activation == nil {
+		return 0, 0, false
+	}
+	e.ButtonComboResolved = true
+	if buttonUserID == e.Activation.ActivatedBy.TelegramID {
+		return buttonUserID, 3, true
+	}
+	return e.Activation.ActivatedBy.TelegramID, -3, true
+}
+
+func (e *Event) ExpireButtonCombo() (int, bool) {
+	e.ParticipationMutex.Lock()
+	defer e.ParticipationMutex.Unlock()
+	if !e.ButtonCombo || e.ButtonComboResolved || e.Activation == nil {
+		return 0, false
+	}
+	e.ButtonComboResolved = true
+	return e.ButtonComboMessageID, true
 }
 
 func (e *Event) Partecipate(by *structs.User, at time.Time) {

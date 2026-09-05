@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/events"
@@ -68,7 +69,8 @@ func run(utils types.Utils, data types.Data) {
 		// Check the type of the update
 		if update.CallbackQuery != nil {
 			utils.Logger.WithFields(logrus.Fields{}).Debug("CallbackQuery received")
-			// TODO: Manage CallbackQuery
+			handleButtonComboCallback(update, curTime, utils)
+			continue
 		}
 		if update.Message != nil {
 			// Log Message
@@ -158,21 +160,34 @@ func run(utils types.Utils, data types.Data) {
 
 					// Respond to the user with event activated informations
 					var msg tgbotapi.MessageConfig
-					switch {
-					case event.Activation.EarnedPoints < -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
-					case event.Activation.EarnedPoints == -1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
-					case event.Activation.EarnedPoints == 0:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
-					case event.Activation.EarnedPoints == 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
-					case event.Activation.EarnedPoints > 1:
-						msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+					if event.ButtonCombo {
+						msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Evento speciale!\nPremi il pulsante più velocemente di tutti gli altri.")
+						msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+							tgbotapi.NewInlineKeyboardRow(
+								tgbotapi.NewInlineKeyboardButtonData("Premi qui!", "button_combo:"+event.Name),
+							),
+						)
+					} else {
+						switch {
+						case event.Activation.EarnedPoints < -1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						case event.Activation.EarnedPoints == -1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Accidenti %v! %v punto per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						case event.Activation.EarnedPoints == 0:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Peccato %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						case event.Activation.EarnedPoints == 1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punto per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						case event.Activation.EarnedPoints > 1:
+							msg = tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Complimenti %v! %v punti per te%v.\nHai impiegato +%.3fs", user.UserName, event.Activation.EarnedPoints, effectText, delay.Round(time.Millisecond).Seconds()))
+						}
 					}
 
 					msg.ReplyToMessageID = update.Message.MessageID
-					data.Bot.Send(msg)
+					sentMessage, err := data.Bot.Send(msg)
+					if event.ButtonCombo && err == nil {
+						event.SetButtonComboMessageID(sentMessage.MessageID)
+						scheduleButtonComboExpiration(event, data.Bot)
+					}
 
 					// Log Event activated
 					utils.Logger.WithFields(logrus.Fields{
@@ -186,30 +201,37 @@ func run(utils types.Utils, data types.Data) {
 					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
 					if !hasPartecipated {
 						event.Partecipate(user, curTime)
-						user.TotalPoints += event.Activation.EarnedPoints
 						user.TotalEventPartecipations++
-						user.TotalEventWins++
-						user.ChampionshipPoints += event.Activation.EarnedPoints
 						user.ChampionshipEventPartecipations++
-						user.ChampionshipEventWins++
-						user.DailyPoints += event.Activation.EarnedPoints
 						user.DailyEventPartecipations++
-						user.DailyEventWins++
+						if !event.ButtonCombo {
+							user.TotalPoints += event.Activation.EarnedPoints
+							user.TotalEventWins++
+							user.ChampionshipPoints += event.Activation.EarnedPoints
+							user.ChampionshipEventWins++
+							user.DailyPoints += event.Activation.EarnedPoints
+							user.DailyEventWins++
+						}
 					}
 
 					// Update the user in the data structure
 					Users[update.Message.From.ID] = user
 
-					// Track: Event message received, validated and won
+					// Track: Event message received, validated and participated or won
 					UserTrackers[update.Message.From.ID].PushActivity(structs.Activity{
 						TelegramTime:          update.Message.Time(),
 						ServerReceivingTime:   curTime,
 						ServerCompletionTime:  time.Now(),
-						Type:                  structs.EventWinActivity,
+						Type:                  structs.EventParticipationActivity,
 						Message:               update.Message.Text,
 						SuccessfulInteraction: !hasPartecipated,
-						WinnerUserID:          update.Message.From.ID,
+						WinnerUserID:          0,
 					})
+					if !event.ButtonCombo {
+						activity := UserTrackers[update.Message.From.ID].DailyActivities[len(UserTrackers[update.Message.From.ID].DailyActivities)-1].Activities
+						activity[len(activity)-1].Type = structs.EventWinActivity
+						activity[len(activity)-1].WinnerUserID = update.Message.From.ID
+					}
 				} else {
 					// Calculate the delay from o' clock and winner user
 					delay := curTime.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
@@ -297,6 +319,86 @@ func run(utils types.Utils, data types.Data) {
 			SaveUserTrackers(utils)
 		}
 	}
+}
+
+func scheduleButtonComboExpiration(event *events.Event, bot *tgbotapi.BotAPI) {
+	delay := time.Until(event.Time.Add(time.Minute))
+	if delay < 0 {
+		delay = 0
+	}
+	time.AfterFunc(delay, func() {
+		messageID, expired := event.ExpireButtonCombo()
+		if !expired || messageID == 0 {
+			return
+		}
+		if _, err := bot.Request(tgbotapi.DeleteMessageConfig{
+			ChatID:    App.DefaultChatID,
+			MessageID: messageID,
+		}); err != nil {
+			App.Logger.WithError(err).WithField("event", event.Name).Error("Button combo message not deleted")
+		}
+	})
+}
+
+func handleButtonComboCallback(update tgbotapi.Update, receivedAt time.Time, utils types.Utils) {
+	callback := update.CallbackQuery
+	if callback == nil || !strings.HasPrefix(callback.Data, "button_combo:") {
+		return
+	}
+
+	eventName := strings.TrimPrefix(callback.Data, "button_combo:")
+	event, found := events.Events.Map[eventName]
+	if !found {
+		_, _ = App.BotAPI.Request(tgbotapi.NewCallback(callback.ID, "Sfida non disponibile."))
+		return
+	}
+
+	winnerID, bonus, resolved := event.TryResolveButtonCombo(callback.From.ID)
+	if !resolved {
+		_, _ = App.BotAPI.Request(tgbotapi.NewCallback(callback.ID, "La sfida è già terminata."))
+		return
+	}
+
+	winner, found := Users[winnerID]
+	if !found {
+		_, _ = App.BotAPI.Request(tgbotapi.NewCallback(callback.ID, "Utente non disponibile."))
+		return
+	}
+	winner.TotalPoints += event.Activation.EarnedPoints + bonus
+	winner.TotalEventWins++
+	winner.ChampionshipPoints += event.Activation.EarnedPoints + bonus
+	winner.ChampionshipEventWins++
+	winner.DailyPoints += event.Activation.EarnedPoints + bonus
+	winner.DailyEventWins++
+	Users[winnerID] = winner
+	event.Activation.EarnedPoints += bonus
+
+	if _, ok := UserTrackers[winnerID]; !ok {
+		UserTrackers[winnerID] = events.NewUserTracker(winner.TelegramUser)
+	}
+	UserTrackers[winnerID].PushActivity(structs.Activity{
+		TelegramTime:          event.Activation.ArrivedAt,
+		ServerReceivingTime:   receivedAt,
+		ServerCompletionTime:  time.Now(),
+		Type:                  structs.EventWinActivity,
+		Message:               "button combo",
+		SuccessfulInteraction: true,
+		WinnerUserID:          winnerID,
+	})
+
+	_, _ = App.BotAPI.Request(tgbotapi.NewCallback(callback.ID, "Pulsante registrato!"))
+	if callback.Message != nil {
+		result := fmt.Sprintf("Complimenti %v! %v punti per te.", winner.UserName, event.Activation.EarnedPoints)
+		_, _ = App.BotAPI.Request(tgbotapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, result))
+	}
+
+	file, err := json.MarshalIndent(Users, "", " ")
+	if err == nil {
+		if err = os.WriteFile("files/users.json", file, 0644); err != nil {
+			utils.Logger.WithError(err).Error("Error while writing Users data")
+		}
+	}
+	SaveUserTrackers(utils)
 }
 
 func UpdateUserEffects(userID int64) {

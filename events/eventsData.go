@@ -96,6 +96,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 			}
 		}
 	}
+	ed.AssignButtonCombos()
 	ed.AssignJokerFormats()
 
 	if newEffects {
@@ -139,6 +140,7 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 			ed.Stats.EnabledPointsSum += ed.Map[eventName].Points
 		}
 	}
+	ed.AssignButtonCombos()
 	ed.AssignJokerFormats()
 
 	if newEffects {
@@ -169,6 +171,34 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	// Write Reset Message
 	if writeMsgData != nil {
 		ed.WriteResetMessage(writeMsgData, utils)
+	}
+}
+
+func (ed *EventsData) AssignButtonCombos() {
+	if len(ed.Keys) == 0 {
+		return
+	}
+	for _, event := range ed.Map {
+		event.ButtonCombo = false
+	}
+
+	min := int(math.Round(0.05 * float64(ed.Stats.EnabledEventsNum)))
+	max := int(math.Round(0.10 * float64(ed.Stats.EnabledEventsNum)))
+	if max < min {
+		max = min
+	}
+	numCombos := min
+	if max > min {
+		numCombos += rand.New(rand.NewSource(time.Now().UnixNano())).Intn(max - min + 1)
+	}
+
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for assigned := 0; assigned < numCombos; {
+		event := ed.Map[ed.Keys[random.Intn(len(ed.Keys))]]
+		if event.Enabled && !event.ButtonCombo {
+			event.ButtonCombo = true
+			assigned++
+		}
 	}
 }
 
