@@ -157,6 +157,7 @@ func run(utils types.Utils, data types.Data) {
 							}
 						}
 					}
+					event.Activation.Effects = append([]*structs.Effect(nil), curEffects...)
 
 					// Respond to the user with event activated informations
 					var msg tgbotapi.MessageConfig
@@ -364,6 +365,10 @@ func handleButtonComboCallback(update tgbotapi.Update, receivedAt time.Time, uti
 		_, _ = App.BotAPI.Request(tgbotapi.NewCallback(callback.ID, "Utente non disponibile."))
 		return
 	}
+	buttonEffect := structs.ButtonMalus
+	if callback.From.ID == event.Activation.ActivatedBy.TelegramID {
+		buttonEffect = structs.ButtonBonus
+	}
 	winner.TotalPoints += event.Activation.EarnedPoints + bonus
 	winner.TotalEventWins++
 	winner.ChampionshipPoints += event.Activation.EarnedPoints + bonus
@@ -388,7 +393,7 @@ func handleButtonComboCallback(update tgbotapi.Update, receivedAt time.Time, uti
 
 	_, _ = App.BotAPI.Request(tgbotapi.NewCallback(callback.ID, "Pulsante registrato!"))
 	if callback.Message != nil {
-		result := fmt.Sprintf("Complimenti %v! %v punti per te.", winner.UserName, event.Activation.EarnedPoints)
+		result := buttonComboResult(event, callback.From, winner, buttonEffect, receivedAt)
 		_, _ = App.BotAPI.Request(tgbotapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, result))
 	}
 
@@ -399,6 +404,35 @@ func handleButtonComboCallback(update tgbotapi.Update, receivedAt time.Time, uti
 		}
 	}
 	SaveUserTrackers(utils)
+}
+
+func buttonComboResult(event *events.Event, buttonUser *tgbotapi.User, winner *structs.User, buttonEffect *structs.Effect, receivedAt time.Time) string {
+	points := event.Activation.EarnedPoints
+	effects := append([]*structs.Effect(nil), event.Activation.Effects...)
+	effects = append(effects, buttonEffect)
+	effectText := " grazie agli effetti:\n"
+	for index, effect := range effects {
+		if index > 0 {
+			effectText += ", "
+		}
+		effectText += fmt.Sprintf("%q", effect.Name)
+	}
+	delay := receivedAt.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
+	if buttonEffect == structs.ButtonMalus {
+		return fmt.Sprintf("Ottimo %v, hai impiegato +%.3fs e applicato un malus all'evento.\n%v hai comunque vinto, ma totalizzi %v punti%v.", structs.DisplayName(buttonUser), delay.Round(time.Millisecond).Seconds(), winner.UserName, points, effectText)
+	}
+
+	message := "Complimenti"
+	if points < 0 {
+		message = "Accidenti"
+	} else if points == 0 {
+		message = "Peccato"
+	}
+	pointLabel := "punti"
+	if points == 1 || points == -1 {
+		pointLabel = "punto"
+	}
+	return fmt.Sprintf("%v %v! %v %v per te%v.\nHai impiegato +%.3fs", message, winner.UserName, points, pointLabel, effectText, delay.Round(time.Millisecond).Seconds())
 }
 
 func UpdateUserEffects(userID int64) {

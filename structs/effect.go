@@ -51,6 +51,8 @@ var (
 	NoNegative             = &Effect{"No Negative", "User", "+", 0}
 	ConsistentParticipant1 = &Effect{"Consistent Participant 1", "User", "+", 1}
 	ConsistentParticipant2 = &Effect{"Consistent Participant 2", "User", "+", 3}
+	ButtonBonus            = &Effect{"Button Bonus", "Event", "+", 3}
+	ButtonMalus            = &Effect{"Button Malus", "Event", "-", 3}
 
 	// Map of all the effects
 	Effects = map[string]*Effect{
@@ -84,5 +86,7 @@ var (
 		"No Negative":              NoNegative,
 		"Consistent Participant 1": ConsistentParticipant1,
 		"Consistent Participant 2": ConsistentParticipant2,
+		"Button Bonus":             ButtonBonus,
+		"Button Malus":             ButtonMalus,
 	}
 )

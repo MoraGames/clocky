@@ -30,6 +30,7 @@ type (
 		ActivatedAt  time.Time
 		ArrivedAt    time.Time
 		EarnedPoints int
+		Effects      []*structs.Effect
 	}
 
 	EventPartecipation struct {
