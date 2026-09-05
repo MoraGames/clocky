@@ -332,11 +332,19 @@ func scheduleButtonComboExpiration(event *events.Event, bot *tgbotapi.BotAPI) {
 		if !expired || messageID == 0 {
 			return
 		}
-		if _, err := bot.Request(tgbotapi.DeleteMessageConfig{
-			ChatID:    App.DefaultChatID,
-			MessageID: messageID,
-		}); err != nil {
-			App.Logger.WithError(err).WithField("event", event.Name).Error("Button combo message not deleted")
+		if _, err := bot.Request(tgbotapi.NewEditMessageReplyMarkup(
+			App.DefaultChatID,
+			messageID,
+			tgbotapi.InlineKeyboardMarkup{},
+		)); err != nil {
+			App.Logger.WithError(err).WithField("event", event.Name).Error("Button combo keyboard not removed")
+		}
+		if _, err := bot.Request(tgbotapi.NewEditMessageText(
+			App.DefaultChatID,
+			messageID,
+			"Neanche un utente ha confermato la partecipazione dell'evento speciale.\nNessun partecipante è stato considerato vincitore dell'evento.",
+		)); err != nil {
+			App.Logger.WithError(err).WithField("event", event.Name).Error("Button combo expiration message not updated")
 		}
 	})
 }
