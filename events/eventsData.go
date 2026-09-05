@@ -182,8 +182,8 @@ func (ed *EventsData) AssignButtonCombos() {
 		event.ButtonCombo = false
 	}
 
-	min := int(math.Round(0.05 * float64(ed.Stats.EnabledEventsNum)))
-	max := int(math.Round(0.10 * float64(ed.Stats.EnabledEventsNum)))
+	min := int(math.Round(0.10 * float64(ed.Stats.EnabledEventsNum)))
+	max := int(math.Round(0.15 * float64(ed.Stats.EnabledEventsNum)))
 	if max < min {
 		max = min
 	}
