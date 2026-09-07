@@ -427,7 +427,7 @@ func buttonComboResult(event *events.Event, buttonUser *tgbotapi.User, winner *s
 	}
 	delay := receivedAt.Sub(time.Date(event.Activation.ArrivedAt.Year(), event.Activation.ArrivedAt.Month(), event.Activation.ArrivedAt.Day(), event.Activation.ArrivedAt.Hour(), event.Activation.ArrivedAt.Minute(), 0, 0, event.Activation.ArrivedAt.Location()))
 	if buttonEffect == structs.ButtonMalus {
-		return fmt.Sprintf("Ottimo %v, hai impiegato +%.3fs e applicato un malus all'evento.\n%v hai comunque vinto, ma totalizzi %v punti%v.", structs.DisplayName(buttonUser), delay.Round(time.Millisecond).Seconds(), winner.UserName, points, effectText)
+		return fmt.Sprintf("Ottimo %v, hai impiegato +%.3fs e applicato un malus all'evento.\nHa comunque vinto %v, ma totalizza %v punti%v.", structs.DisplayName(buttonUser), delay.Round(time.Millisecond).Seconds(), winner.UserName, points, effectText)
 	}
 
 	message := "Complimenti"
