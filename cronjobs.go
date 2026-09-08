@@ -419,7 +419,11 @@ func ManageDailyRewardMessage(userId int64, writeMsgData *types.WriteMessageData
 	var availableSets, choosedSets []string
 	var setsEvents [][]*events.Event
 	var eventsNumInChoosedSets int
-	availableSets = append(availableSets, events.Events.Stats.EnabledSets...)
+	for _, setName := range events.Events.Stats.EnabledSets {
+		if _, exists := events.SetsFunctions[setName]; exists {
+			availableSets = append(availableSets, setName)
+		}
+	}
 
 	for (len(choosedSets) < 3 && len(choosedSets) < len(availableSets)) || (eventsNumInChoosedSets < 20 && len(choosedSets) < len(availableSets)) {
 		randIndex := r.Intn(len(availableSets))
