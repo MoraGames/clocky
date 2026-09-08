@@ -34,13 +34,13 @@ type SetFile struct {
 var (
 	SetsFunctions = FuncMap{
 		//"Equal":            equal,
-		"Short Equal":      shortEqual,
-		"Repeat":           repeat,
-		"Mirror":           mirror,
-		"Rise":             rise,
-		"Short Rise":       shortRise,
-		"Short Fall":       shortFall,
-		"Rapid Rise":       rapidRise,
+		"Short Equal": shortEqual,
+		"Repeat":      repeat,
+		"Mirror":      mirror,
+		//"Rise":             rise,
+		"Short Rise": shortRise,
+		"Short Fall": shortFall,
+		//"Rapid Rise":       rapidRise,
 		"Short Rapid Rise": shortRapidRise,
 		"Short Rapid Fall": shortRapidFall,
 		"Double":           double,
@@ -48,6 +48,7 @@ var (
 		"Perfect Square":   perfectSquare,
 		"Equal Twins":      equalTwins,
 		"Half":             half,
+		"Flexible Rise":    flexibleRise,
 	}
 	Sets     = defaultSets()
 	SetsJson = SetFile{}
@@ -77,10 +78,10 @@ func defaultSets() SetSlice {
 		{"Short Equal", "?a:aa", "static", false, false, shortEqual},
 		{"Repeat", "ab:ab", "static", false, false, repeat},
 		{"Mirror", "ab:ba", "static", false, false, mirror},
-		{"Rise", "ab:cd", "static", false, false, rise},
+		//{"Rise", "ab:cd", "static", false, false, rise},
 		{"Short Rise", "?a:bc", "static", false, false, shortRise},
 		{"Short Fall", "?c:ba", "static", false, false, shortFall},
-		{"Rapid Rise", "ac:eg", "static", false, false, rapidRise},
+		//{"Rapid Rise", "ac:eg", "static", false, false, rapidRise},
 		{"Short Rapid Rise", "?a:ce", "static", false, false, shortRapidRise},
 		{"Short Rapid Fall", "?e:ca", "static", false, false, shortRapidFall},
 		{"Double", "n:2*n", "static", false, false, double},
@@ -88,6 +89,7 @@ func defaultSets() SetSlice {
 		{"Perfect Square", "[unnamed]", "static", false, false, perfectSquare},
 		{"Equal Twins", "aa:bb", "static", false, false, equalTwins},
 		{"Half", "2*n:n", "static", false, false, half},
+		{"Flexible Rise", "a:b", "static", false, false, flexibleRise},
 	}
 }
 
@@ -188,10 +190,11 @@ func mirror(h1, h2, m1, m2 int) bool {
 	return h1 == m2 && h2 == m1
 }
 
-// ab:cd
-func rise(h1, h2, m1, m2 int) bool {
-	return h2 == h1+1 && m1 == h2+1 && m2 == m1+1
-}
+// Notes: The set is replaced by the new "flexible rise" set
+// // ab:cd
+// func rise(h1, h2, m1, m2 int) bool {
+// 	return h2 == h1+1 && m1 == h2+1 && m2 == m1+1
+// }
 
 // ?a:bc
 func shortRise(_, h2, m1, m2 int) bool {
@@ -203,10 +206,11 @@ func shortFall(_, h2, m1, m2 int) bool {
 	return m1 == m2+1 && h2 == m1+1
 }
 
+// Notes: The set is replaced by the new "flexible rise" set
 // ac:eg
-func rapidRise(h1, h2, m1, m2 int) bool {
-	return h2 == h1+2 && m1 == h2+2 && m2 == m1+2
-}
+// func rapidRise(h1, h2, m1, m2 int) bool {
+// 	return h2 == h1+2 && m1 == h2+2 && m2 == m1+2
+// }
 
 // ?a:ce
 func shortRapidRise(_, h2, m1, m2 int) bool {
@@ -243,4 +247,9 @@ func equalTwins(h1, h2, m1, m2 int) bool {
 // 2*n:n
 func half(h1, h2, m1, m2 int) bool {
 	return (h1*10 + h2) == (m1*10+m2)*2
+}
+
+// [unnamed]
+func flexibleRise(h1, h2, m1, m2 int) bool {
+	return (h2 == h1+1 || h2 == h1+2) && (m1 == h2+1 || m1 == h2+2) && (m2 == m1+1 || m2 == m1+2)
 }
