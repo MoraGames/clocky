@@ -68,6 +68,13 @@ func (c *Championship) IsExpired(now time.Time) bool {
 	return !now.Before(c.Expiration)
 }
 
+func (c *Championship) IsFogActive(now time.Time) bool {
+	if c == nil || c.Expiration.IsZero() || now.Before(c.StartDate) || !now.Before(c.Expiration) {
+		return false
+	}
+	return c.Expiration.Sub(now) <= 24*time.Hour
+}
+
 func (c *Championship) End(finalRanking []Rank) {
 	c.FinalRanking = finalRanking
 	c.Status = "ended"

@@ -314,6 +314,7 @@ func init() {
 				var ranking []structs.Rank
 				var povTelegramUserID int64
 				var args []string
+				championshipRanking := true
 				if cmdArgs := msg.CommandArguments(); cmdArgs != "" {
 					args = strings.Split(cmdArgs, " ")
 				}
@@ -331,14 +332,17 @@ func init() {
 					if len(args) == 1 {
 						switch args[0] {
 						case string(structs.RankScopeDay):
+							championshipRanking = false
 							ranking = structs.GetRanking(Users, structs.RankScopeDay, true)
 						case string(structs.RankScopeChampionship):
 							ranking = structs.GetRanking(Users, structs.RankScopeChampionship, true)
 						case string(structs.RankScopeTotal):
+							championshipRanking = false
 							ranking = structs.GetRanking(Users, structs.RankScopeTotal, false)
 						}
 						povTelegramUserID = msg.From.ID
 					} else if len(args) == 2 {
+						championshipRanking = true
 						username := args[1]
 						var userId int64
 						var founded bool
@@ -373,10 +377,12 @@ func init() {
 						} else {
 							switch args[0] {
 							case string(structs.RankScopeDay):
+								championshipRanking = false
 								ranking = structs.GetRanking(Users, structs.RankScopeDay, true)
 							case string(structs.RankScopeChampionship):
 								ranking = structs.GetRanking(Users, structs.RankScopeChampionship, true)
 							case string(structs.RankScopeTotal):
+								championshipRanking = false
 								ranking = structs.GetRanking(Users, structs.RankScopeTotal, false)
 							}
 							povTelegramUserID = userId
@@ -395,8 +401,11 @@ func init() {
 						}
 					}
 					rankingString := ""
+					fogActive := events.CurrentChampionship != nil && events.CurrentChampionship.IsFogActive(time.Now())
 					for i, r := range ranking {
-						if r.UserTelegramID == povTelegramUserID {
+						if fogActive && championshipRanking {
+							rankingString += fmt.Sprintf("%v] %v: %v %%%%(%v)%%%%\n", i+1, r.Username, fogSpoiler(), fogSpoiler())
+						} else if r.UserTelegramID == povTelegramUserID {
 							rankingString += fmt.Sprintf("**%v] %v:** %v\n", i+1, r.Username, r.Points)
 						} else {
 							rankingString += fmt.Sprintf("%v] %v: %v %%%%(%+d)%%%%\n", i+1, r.Username, r.Points, r.Points-povPoints)
@@ -405,6 +414,9 @@ func init() {
 
 					// Send the message
 					rawText = fmt.Sprintf("__**La classifica è la seguente:**__\n\n%v", rankingString)
+					if fogActive && championshipRanking {
+						rawText += "\nI punteggi sono temporaneamente nascosti."
+					}
 				}
 				entities, text := utils.ParseToEntities(rawText, TelegramUsersList)
 				respMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
@@ -556,14 +568,20 @@ func init() {
 				}
 
 				if len(args) == 2 {
+					championshipStats := fmt.Sprintf(
+						"**Statistiche del campionato:**\n- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+						user.ChampionshipPoints, user.ChampionshipEventPartecipations, user.ChampionshipEventWins, user.ChampionshipEventPartecipations-user.ChampionshipEventWins,
+						float64(user.ChampionshipPoints)/float64(user.ChampionshipEventPartecipations), float64(user.ChampionshipPoints)/float64(user.ChampionshipEventWins), float64(user.ChampionshipEventWins)/float64(user.ChampionshipEventPartecipations),
+					)
+					if events.CurrentChampionship != nil && events.CurrentChampionship.IsFogActive(time.Now()) {
+						championshipStats = fmt.Sprintf("**Statistiche del campionato:**\n- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n- Punti/Partecipazioni: %v\n- Punti/Vittorie: %v\n- Vittorie/Partecipazioni: %v\n\n", fogSpoiler(), user.ChampionshipEventPartecipations, user.ChampionshipEventWins, user.ChampionshipEventPartecipations-user.ChampionshipEventWins, fogSpoiler(), fogSpoiler(), fogSpoiler())
+					}
 					rawText += ComposeMessage(
 						[]string{
 							"**Statistiche di oggi:**\n",
 							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
 							"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-							"**Statistiche del campionato:**\n",
-							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
-							"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+							"%v",
 							"**Statistiche di sempre:**\n",
 							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
 							"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
@@ -574,8 +592,7 @@ func init() {
 						},
 						user.DailyPoints, user.DailyEventPartecipations, user.DailyEventWins, user.DailyEventPartecipations-user.DailyEventWins,
 						float64(user.DailyPoints)/float64(user.DailyEventPartecipations), float64(user.DailyPoints)/float64(user.DailyEventWins), float64(user.DailyEventWins)/float64(user.DailyEventPartecipations),
-						user.ChampionshipPoints, user.ChampionshipEventPartecipations, user.ChampionshipEventWins, user.ChampionshipEventPartecipations-user.ChampionshipEventWins,
-						float64(user.ChampionshipPoints)/float64(user.ChampionshipEventPartecipations), float64(user.ChampionshipPoints)/float64(user.ChampionshipEventWins), float64(user.ChampionshipEventWins)/float64(user.ChampionshipEventPartecipations),
+						championshipStats,
 						user.TotalPoints, user.TotalEventPartecipations, user.TotalEventWins, user.TotalEventPartecipations-user.TotalEventWins,
 						float64(user.TotalPoints)/float64(user.TotalEventPartecipations), float64(user.TotalPoints)/float64(user.TotalEventWins), float64(user.TotalEventWins)/float64(user.TotalEventPartecipations),
 						user.TotalChampionshipPartecipations, user.TotalChampionshipWins,
@@ -583,21 +600,26 @@ func init() {
 						user.StringifyEffects(false),
 					)
 				} else {
+					championshipStats := fmt.Sprintf(
+						"**Statistiche del campionato:**\n- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+						user.ChampionshipPoints, user.ChampionshipEventPartecipations, user.ChampionshipEventWins,
+						float64(user.ChampionshipPoints)/float64(user.ChampionshipEventWins), float64(user.ChampionshipEventWins)/float64(user.ChampionshipEventPartecipations),
+					)
+					if events.CurrentChampionship != nil && events.CurrentChampionship.IsFogActive(time.Now()) {
+						championshipStats = fmt.Sprintf("**Statistiche del campionato:**\n- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n- Punti/Vittorie: %v\n- Vittorie/Partecipazioni: %v\n\n", fogSpoiler(), user.ChampionshipEventPartecipations, user.ChampionshipEventWins, fogSpoiler(), fogSpoiler())
+					}
 					rawText += ComposeMessage(
 						[]string{
 							"**Statistiche di oggi:**\n",
 							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
 							"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
-							"**Statistiche del campionato:**\n",
-							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
-							"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+							"%v",
 							"**Statistiche di sempre:**\n",
 							"- Streak partecipazioni: %v\n- Streak attività: %v\n\n",
 						},
 						user.DailyPoints, user.DailyEventPartecipations, user.DailyEventWins,
 						float64(user.DailyPoints)/float64(user.DailyEventWins), float64(user.DailyEventWins)/float64(user.DailyEventPartecipations),
-						user.ChampionshipPoints, user.ChampionshipEventPartecipations, user.ChampionshipEventWins,
-						float64(user.ChampionshipPoints)/float64(user.ChampionshipEventWins), float64(user.ChampionshipEventWins)/float64(user.ChampionshipEventPartecipations),
+						championshipStats,
 						user.DailyPartecipationStreak, user.DailyActivityStreak,
 					)
 				}
@@ -781,6 +803,10 @@ func ComposeMessage(subMessages []string, args ...any) string {
 		msg += subMessage
 	}
 	return fmt.Sprintf(msg, args...)
+}
+
+func fogSpoiler() string {
+	return "||▒▒▒||"
 }
 
 func GenerateTelegramUsersList() {

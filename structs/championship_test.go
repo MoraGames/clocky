@@ -35,6 +35,22 @@ func TestChampionshipRefreshExpirationAndExpiry(t *testing.T) {
 	}
 }
 
+func TestChampionshipFogWindow(t *testing.T) {
+	loc := time.FixedZone("CET", 3600)
+	start := time.Date(2026, 8, 1, 23, 59, 25, 0, loc)
+	championship := CreateChampionship("Test Championship", start, 14*24*time.Hour)
+
+	if championship.IsFogActive(championship.Expiration.Add(-24*time.Hour - time.Second)) {
+		t.Fatal("fog should be inactive before the final 24 hours")
+	}
+	if !championship.IsFogActive(championship.Expiration.Add(-24 * time.Hour)) {
+		t.Fatal("fog should start exactly 24 hours before expiration")
+	}
+	if championship.IsFogActive(championship.Expiration) {
+		t.Fatal("fog should be inactive after the championship ends")
+	}
+}
+
 func TestChampionshipSaveAndReadRoundTrip(t *testing.T) {
 	tempDir := t.TempDir()
 	oldWD, err := os.Getwd()
