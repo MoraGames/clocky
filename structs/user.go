@@ -25,6 +25,10 @@ type User struct {
 	TotalChampionshipWins           int
 	DailyPartecipationStreak        int
 	DailyActivityStreak             int
+	Overheating                     bool
+	OverheatingParticipationStreak  int
+	OverheatingMissedEventStreak    int
+	OverheatingLastEventSequence    int64
 	Effects                         []*Effect
 	FirstParticipation              time.Time
 }
@@ -45,7 +49,42 @@ func DisplayName(telegramUser *tgbotapi.User) string {
 }
 
 func NewUser(telegramUser *tgbotapi.User) *User {
-	return &User{telegramUser, telegramUser.ID, DisplayName(telegramUser), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, make([]*Effect, 0), time.Now()}
+	return &User{TelegramUser: telegramUser, TelegramID: telegramUser.ID, UserName: DisplayName(telegramUser), Effects: make([]*Effect, 0), FirstParticipation: time.Now()}
+}
+
+const (
+	overheatingParticipationLimit = 15
+	overheatingRecoveryEvents     = 5
+)
+
+func (u *User) RegisterEventParticipation(eventSequence int64) bool {
+	if eventSequence <= u.OverheatingLastEventSequence {
+		return !u.Overheating
+	}
+
+	missedEvents := int(eventSequence - u.OverheatingLastEventSequence - 1)
+	if u.Overheating {
+		if missedEvents >= overheatingRecoveryEvents {
+			u.Overheating = false
+			u.OverheatingParticipationStreak = 0
+			u.OverheatingMissedEventStreak = 0
+		} else {
+			u.OverheatingMissedEventStreak += missedEvents
+			u.OverheatingLastEventSequence = eventSequence
+			return false
+		}
+	}
+
+	if missedEvents == 0 && u.OverheatingLastEventSequence != 0 {
+		u.OverheatingParticipationStreak++
+	} else {
+		u.OverheatingParticipationStreak = 1
+	}
+	u.OverheatingLastEventSequence = eventSequence
+	if u.OverheatingParticipationStreak > overheatingParticipationLimit {
+		u.Overheating = true
+	}
+	return true
 }
 
 func (u *User) Minimize() *UserMinimal {

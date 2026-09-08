@@ -17,10 +17,11 @@ import (
 
 type (
 	EventsData struct {
-		Map        EventsMap
-		Keys       EventsKeys
-		Stats      EventsStats
-		Expiration time.Time
+		Map               EventsMap
+		Keys              EventsKeys
+		Stats             EventsStats
+		Expiration        time.Time
+		NextEventSequence int64
 	}
 
 	EventsMap   map[string]*Event
@@ -64,8 +65,14 @@ var (
 		return Events != nil && !Events.Expiration.IsZero() && time.Now().Before(Events.Expiration)
 	}
 	NormalizeEventsData = func(utils types.Utils) {
-		if Events != nil && Events.Expiration.IsZero() {
+		if Events == nil {
+			return
+		}
+		if Events.Expiration.IsZero() {
 			Events.Expiration = currentDailyExpiration(time.Now())
+		}
+		if Events.NextEventSequence == 0 {
+			Events.assignEventSequences()
 		}
 	}
 )
@@ -76,6 +83,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 		make(EventsKeys, 0),
 		EventsStats{0, 0, nil, 0, 0, 0, 0, make(map[string]int)},
 		currentDailyExpiration(time.Now()),
+		0,
 	}
 
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.00}, types.Interval{Min: 0.10, Max: 0.20}, utils)
@@ -96,6 +104,7 @@ func NewEventsData(newEffects bool, utils types.Utils) *EventsData {
 			}
 		}
 	}
+	ed.assignEventSequences()
 	ed.AssignButtonCombos()
 	ed.AssignJokerFormats()
 
@@ -140,6 +149,7 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 			ed.Stats.EnabledPointsSum += ed.Map[eventName].Points
 		}
 	}
+	ed.assignEventSequences()
 	ed.AssignButtonCombos()
 	ed.AssignJokerFormats()
 
@@ -171,6 +181,17 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	// Write Reset Message
 	if writeMsgData != nil {
 		ed.WriteResetMessage(writeMsgData, utils)
+	}
+}
+
+func (ed *EventsData) assignEventSequences() {
+	for _, eventName := range ed.Keys {
+		event := ed.Map[eventName]
+		if !event.Enabled {
+			continue
+		}
+		ed.NextEventSequence++
+		event.Sequence = ed.NextEventSequence
 	}
 }
 

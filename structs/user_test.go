@@ -68,3 +68,42 @@ func Test_RemoveUserEffect_SameEffectMultipleTimes(t *testing.T) {
 	ensureHasEffects(t, &user, &testEffect1, &testEffect3)
 	ensureNotHasEffects(t, &user, &testEffect2)
 }
+
+func TestUserOverheatingStartsAfterFifteenConsecutiveParticipations(t *testing.T) {
+	user := &User{}
+
+	for sequence := int64(1); sequence <= 15; sequence++ {
+		if !user.RegisterEventParticipation(sequence) {
+			t.Fatalf("participation %d should be allowed", sequence)
+		}
+	}
+	if user.Overheating {
+		t.Fatal("user should not overheat after exactly fifteen participations")
+	}
+	if !user.RegisterEventParticipation(16) {
+		t.Fatal("the participation activating overheating should be allowed")
+	}
+	if !user.Overheating {
+		t.Fatal("user should overheat after the sixteenth consecutive participation")
+	}
+	if user.RegisterEventParticipation(17) {
+		t.Fatal("user should not participate while overheated")
+	}
+}
+
+func TestUserOverheatingEndsAfterFiveMissedEvents(t *testing.T) {
+	user := &User{}
+	for sequence := int64(1); sequence <= 16; sequence++ {
+		user.RegisterEventParticipation(sequence)
+	}
+
+	if user.RegisterEventParticipation(22) == false {
+		t.Fatal("user should be allowed to participate after missing five events")
+	}
+	if user.Overheating {
+		t.Fatal("user should no longer be overheated")
+	}
+	if user.OverheatingParticipationStreak != 1 {
+		t.Fatalf("expected a new participation streak, got %d", user.OverheatingParticipationStreak)
+	}
+}

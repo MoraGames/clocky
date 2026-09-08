@@ -118,6 +118,16 @@ func run(utils types.Utils, data types.Data) {
 						AddTelegramUserToExistingUser(update.Message.From)
 					}
 
+					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
+					if !hasPartecipated && !user.RegisterEventParticipation(event.Sequence) {
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Sei in overheating: la tua partecipazione non è stata considerata")
+						msg.ReplyToMessageID = update.Message.MessageID
+						data.Bot.Send(msg)
+						Users[update.Message.From.ID] = user
+						saveUsers(utils)
+						continue
+					}
+
 					// Check (and eventually update) the user effects
 					UpdateUserEffects(update.Message.From.ID)
 
@@ -199,7 +209,6 @@ func run(utils types.Utils, data types.Data) {
 					}).Debug("Event activated")
 
 					// Add points to the user if they have never participated the event before
-					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
 					if !hasPartecipated {
 						event.Partecipate(user, curTime)
 						user.TotalEventPartecipations++
@@ -265,6 +274,14 @@ func run(utils types.Utils, data types.Data) {
 
 					// Add partecipations to the user if they have never participated the event before
 					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
+					if !hasPartecipated && !user.RegisterEventParticipation(event.Sequence) {
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Sei in overheating: la tua partecipazione non è stata considerata")
+						msg.ReplyToMessageID = update.Message.MessageID
+						data.Bot.Send(msg)
+						Users[update.Message.From.ID] = user
+						saveUsers(utils)
+						continue
+					}
 					if !hasPartecipated {
 						event.Partecipate(user, curTime)
 						user.TotalEventPartecipations++
@@ -288,22 +305,7 @@ func run(utils types.Utils, data types.Data) {
 				}
 
 				// Save the users file with updated Users data structure
-				file, err := json.MarshalIndent(Users, "", " ")
-				if err != nil {
-					utils.Logger.WithFields(logrus.Fields{
-						"err": err,
-						"msg": "Error while marshalling Users data",
-					}).Error("Error while marshalling data")
-					utils.Logger.Error(Users)
-				}
-				err = os.WriteFile("files/users.json", file, 0644)
-				if err != nil {
-					utils.Logger.WithFields(logrus.Fields{
-						"err": err,
-						"msg": "Error while writing Users data",
-					}).Error("Error while writing data")
-					utils.Logger.Error(Users)
-				}
+				saveUsers(utils)
 			} else {
 				// Track: Non-event message received (or event disabled)
 				UserTrackers[update.Message.From.ID].PushActivity(structs.Activity{
@@ -518,5 +520,24 @@ func SaveUserTrackers(utils types.Utils) {
 		utils.Logger.WithFields(logrus.Fields{
 			"err": err,
 		}).Error("Error while writing Trackers data")
+	}
+}
+
+func saveUsers(utils types.Utils) {
+	file, err := json.MarshalIndent(Users, "", " ")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": "Error while marshalling Users data",
+		}).Error("Error while marshalling data")
+		utils.Logger.Error(Users)
+	}
+	err = os.WriteFile("files/users.json", file, 0644)
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{
+			"err": err,
+			"msg": "Error while writing Users data",
+		}).Error("Error while writing data")
+		utils.Logger.Error(Users)
 	}
 }

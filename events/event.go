@@ -19,6 +19,7 @@ type (
 		ButtonCombo                bool
 		ButtonComboMessageID       int
 		ButtonComboResolved        bool
+		Sequence                   int64
 		Effects                    []*structs.Effect
 		Activation                 *EventActivation
 		Partecipations             map[int64]*EventPartecipation
