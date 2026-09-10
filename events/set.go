@@ -1,10 +1,13 @@
 package events
 
 import (
+	"encoding/json"
 	"math"
+	"os"
 	"time"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
+	"github.com/sirupsen/logrus"
 )
 
 type SetSlice []*Set
@@ -68,6 +71,7 @@ var (
 			Slice:      Sets.ToJsonSlice(),
 			Expiration: currentDailyExpiration(time.Now()),
 		}
+		SaveSetsOnFile(utils)
 	}
 	SetsFileValid = func(utils types.Utils) bool {
 		return !SetsJson.Expiration.IsZero() && time.Now().Before(SetsJson.Expiration)
@@ -92,6 +96,17 @@ func defaultSets() SetSlice {
 		{"Equal Twins", "aa:bb", "static", false, false, equalTwins},
 		{"Half", "2*n:n", "static", false, false, half},
 		{"Flexible Rise", "a:b", "static", false, false, flexibleRise},
+	}
+}
+
+func SaveSetsOnFile(utils types.Utils) {
+	setsFile, err := json.MarshalIndent(SetsJson, "", " ")
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{"err": err}).Error("Error while marshalling Sets data")
+		return
+	}
+	if err := os.WriteFile("files/sets.json", setsFile, 0644); err != nil {
+		utils.Logger.WithFields(logrus.Fields{"err": err}).Error("Error while writing Sets data")
 	}
 }
 

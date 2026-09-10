@@ -60,6 +60,7 @@ var (
 	Events                  *EventsData
 	AssignEventsWithDefault = func(utils types.Utils) {
 		Events = NewEventsData(true, utils)
+		Events.SaveOnFile(utils)
 	}
 	EventsFileValid = func(utils types.Utils) bool {
 		return Events != nil && !Events.Expiration.IsZero() && time.Now().Before(Events.Expiration)

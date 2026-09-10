@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -88,6 +89,9 @@ func TestReloadStatus_ExpiredFilesFallBackToDefaults(t *testing.T) {
 		},
 		Expiration: time.Now().Add(-time.Hour),
 	})
+	writeTempJSON(t, "events.json", events.EventsData{
+		Expiration: time.Now().Add(-time.Hour),
+	})
 	writeTempJSON(t, "championship.json", &structs.Championship{
 		Name:         "Clocky Championship",
 		StartDate:    time.Now().Add(-14 * 24 * time.Hour),
@@ -104,6 +108,13 @@ func TestReloadStatus_ExpiredFilesFallBackToDefaults(t *testing.T) {
 			Validate:   events.SetsFileValid,
 			IfOkay:     events.AssignSetsFromSetsJson,
 			IfFail:     events.AssignSetsWithDefault,
+		},
+		{
+			FileName:   "events.json",
+			DataStruct: &events.Events,
+			Validate:   events.EventsFileValid,
+			IfOkay:     events.NormalizeEventsData,
+			IfFail:     events.AssignEventsWithDefault,
 		},
 		{
 			FileName:   "championship.json",
@@ -125,6 +136,22 @@ func TestReloadStatus_ExpiredFilesFallBackToDefaults(t *testing.T) {
 	}
 	if events.CurrentChampionship.IsExpired(time.Now()) {
 		t.Fatal("expected championship fallback to be valid")
+	}
+	if events.Events == nil || events.Events.Expiration.Before(time.Now()) {
+		t.Fatal("expected events fallback to be valid")
+	}
+	for _, fileName := range []string{"sets.json", "events.json", "championship.json"} {
+		if _, err := os.Stat("files/" + fileName); err != nil {
+			t.Fatalf("expected regenerated %s to be persisted: %v", fileName, err)
+		}
+		pattern := "files/backups/" + fileName[:len(fileName)-5] + "_json.*.json"
+		matches, err := filepath.Glob(pattern)
+		if err != nil {
+			t.Fatalf("glob backups for %s: %v", fileName, err)
+		}
+		if len(matches) != 1 {
+			t.Fatalf("expected one backup for expired %s, got %d", fileName, len(matches))
+		}
 	}
 }
 

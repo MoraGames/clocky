@@ -2,6 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/MoraGames/clockyuwu/pkg/types"
 	"github.com/sirupsen/logrus"
@@ -36,6 +41,7 @@ func reloadStatus(reloads []types.Reload, utils types.Utils) {
 				}).Error("Error while unmarshalling data")
 			} else if reload.Validate != nil && !reload.Validate(utils) {
 				hasFailed = true
+				backupExpiredFile(reload.FileName, utils)
 				utils.Logger.WithFields(logrus.Fields{
 					"file": reload.FileName,
 				}).Warn("Reloaded data is expired")
@@ -84,4 +90,27 @@ func reloadStatus(reloads []types.Reload, utils types.Utils) {
 		"okaysFunc": numOfOkayFunc,
 		"total":     len(reloads),
 	}).Info("Reloading data completed")
+}
+
+func backupExpiredFile(fileName string, utils types.Utils) {
+	content, err := os.ReadFile(filepath.Join("files", fileName))
+	if err != nil {
+		utils.Logger.WithFields(logrus.Fields{"file": fileName, "err": err}).Error("Unable to read expired file for backup")
+		return
+	}
+
+	backupDir := filepath.Join("files", "backups")
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		utils.Logger.WithFields(logrus.Fields{"file": fileName, "err": err}).Error("Unable to create expired files backup directory")
+		return
+	}
+
+	baseName := strings.ReplaceAll(filepath.Base(fileName), ".", "_")
+	backupName := fmt.Sprintf("%s.%s.json", baseName, time.Now().Format("20060102_150405.000000000"))
+	backupPath := filepath.Join(backupDir, backupName)
+	if err := os.WriteFile(backupPath, content, 0644); err != nil {
+		utils.Logger.WithFields(logrus.Fields{"file": fileName, "backup": backupPath, "err": err}).Error("Unable to write expired file backup")
+		return
+	}
+	utils.Logger.WithFields(logrus.Fields{"file": fileName, "backup": backupPath}).Info("Expired file backed up")
 }

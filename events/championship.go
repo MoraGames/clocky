@@ -11,6 +11,7 @@ var (
 	CurrentChampionship           *structs.Championship
 	AssignChampionshipWithDefault = func(utils types.Utils) {
 		CurrentChampionship = structs.CreateChampionship("Clocky Championship", FirstWeekdayFrom(time.Now(), time.Sunday), 336*time.Hour)
+		CurrentChampionship.SaveOnFile(utils)
 	}
 	ChampionshipFileValid = func(utils types.Utils) bool {
 		return CurrentChampionship != nil && !CurrentChampionship.IsExpired(time.Now())
