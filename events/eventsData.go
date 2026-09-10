@@ -382,7 +382,7 @@ func (ed *EventsData) SaveOnFile(utils types.Utils) {
 	//Save Sets
 	SetsJson = SetFile{
 		Slice:      Sets.ToJsonSlice(),
-		Expiration: currentDailyExpiration(time.Now()),
+		Expiration: ed.Expiration,
 	}
 	setsFile, err := json.MarshalIndent(SetsJson, "", " ")
 	if err != nil {
@@ -398,7 +398,6 @@ func (ed *EventsData) SaveOnFile(utils types.Utils) {
 	}
 
 	//Save Events
-	ed.Expiration = currentDailyExpiration(time.Now())
 	eventsFile, err := json.MarshalIndent(Events, "", " ")
 	if err != nil {
 		utils.Logger.WithFields(logrus.Fields{

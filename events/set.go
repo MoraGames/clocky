@@ -31,6 +31,8 @@ type SetFile struct {
 	Expiration time.Time
 }
 
+const dailyExpirationGracePeriod = 2 * time.Second
+
 var (
 	SetsFunctions = FuncMap{
 		//"Equal":            equal,
@@ -125,7 +127,7 @@ func mergeSetsWithDefaults(persisted SetJsonSlice) SetSlice {
 
 func currentDailyExpiration(now time.Time) time.Time {
 	expiration := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 30, 0, now.Location())
-	if now.Before(expiration) {
+	if now.Before(expiration.Add(-dailyExpirationGracePeriod)) {
 		return expiration
 	}
 	return expiration.AddDate(0, 0, 1)

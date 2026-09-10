@@ -7,9 +7,20 @@ import (
 
 func TestCurrentDailyExpiration_BeforeCutoffUsesToday(t *testing.T) {
 	loc := time.FixedZone("CET", 3600)
-	now := time.Date(2026, 8, 1, 23, 59, 29, 0, loc)
+	now := time.Date(2026, 8, 1, 23, 59, 27, 0, loc)
 	got := currentDailyExpiration(now)
 	want := time.Date(2026, 8, 1, 23, 59, 30, 0, loc)
+
+	if !got.Equal(want) {
+		t.Fatalf("expected expiration %v, got %v", want, got)
+	}
+}
+
+func TestCurrentDailyExpiration_GracePeriodUsesTomorrow(t *testing.T) {
+	loc := time.FixedZone("CET", 3600)
+	now := time.Date(2026, 8, 1, 23, 59, 28, 0, loc)
+	got := currentDailyExpiration(now)
+	want := time.Date(2026, 8, 2, 23, 59, 30, 0, loc)
 
 	if !got.Equal(want) {
 		t.Fatalf("expected expiration %v, got %v", want, got)
