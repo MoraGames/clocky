@@ -140,14 +140,21 @@ func (ed *EventsData) Reset(newEffects bool, writeMsgData *types.WriteMessageDat
 	ed.Expiration = currentDailyExpiration(resetAt)
 	ed.EnabledRandomSets(types.Interval{Min: 0.65, Max: 1.0}, types.Interval{Min: 0.10, Max: 0.20}, utils)
 
-	for eventName := range ed.Map {
-		ed.Map[eventName].Time = eventTimeOnDate(ed.Map[eventName].Time, ed.Expiration)
-		ed.Map[eventName].Reset()
+	ed.Map = make(EventsMap)
+	ed.Keys = make(EventsKeys, 0)
+	for i := 0; i < 24*60; i++ {
+		eventTime := time.Date(ed.Expiration.Year(), ed.Expiration.Month(), ed.Expiration.Day(), i/60, i%60, 0, 0, ed.Expiration.Location())
 
-		ed.Stats.TotalEventsNum++
-		if ed.Map[eventName].Enabled {
-			ed.Stats.EnabledEventsNum++
-			ed.Stats.EnabledPointsSum += ed.Map[eventName].Points
+		if CalculateValid(eventTime) {
+			event := NewEvent(eventTime)
+			ed.Map[event.Name] = event
+			ed.Keys = append(ed.Keys, event.Name)
+
+			ed.Stats.TotalEventsNum++
+			if event.Enabled {
+				ed.Stats.EnabledEventsNum++
+				ed.Stats.EnabledPointsSum += event.Points
+			}
 		}
 	}
 	ed.assignEventSequences()
