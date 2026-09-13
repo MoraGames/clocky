@@ -568,10 +568,16 @@ func init() {
 				}
 
 				if len(args) == 2 {
-					championshipStats := fmt.Sprintf(
-						"**Statistiche del campionato:**\n- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+					championshipStats := ComposeMessage(
+						[]string{
+							"**Statistiche del campionato:**\n"
+							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n"
+							"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+							"- Streak vittorie: %v\n- Streak partecipazioni: %v\n- Streak assenze: %v\n\n",
+						},
 						user.ChampionshipPoints, user.ChampionshipEventPartecipations, user.ChampionshipEventWins, user.ChampionshipEventPartecipations-user.ChampionshipEventWins,
 						float64(user.ChampionshipPoints)/float64(user.ChampionshipEventPartecipations), float64(user.ChampionshipPoints)/float64(user.ChampionshipEventWins), float64(user.ChampionshipEventWins)/float64(user.ChampionshipEventPartecipations),
+						user.ChampionshipWinStreak, user.ChampionshipPartecipationStreak, user.ChampionshipAbsenceStreak
 					)
 					if events.CurrentChampionship != nil && events.CurrentChampionship.IsFogActive(time.Now()) {
 						championshipStats = fmt.Sprintf("**Statistiche del campionato:**\n- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n- Punti/Partecipazioni: %v\n- Punti/Vittorie: %v\n- Vittorie/Partecipazioni: %v\n\n", fogSpoiler(), user.ChampionshipEventPartecipations, user.ChampionshipEventWins, user.ChampionshipEventPartecipations-user.ChampionshipEventWins, fogSpoiler(), fogSpoiler(), fogSpoiler())
@@ -586,9 +592,10 @@ func init() {
 							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n- Sconfitte: %v\n\n",
 							"- Punti/Partecipazioni: %.2f\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
 							"- Campionati svolti: %v\n- Campionati vinti: %v\n",
-							"- Streak partecipazioni: %v\n- Streak attività: %v\n\n",
-							"**Effetti attivi:**\n",
-							"- %v",
+							"- Streak indizi: %v\n- Streak attività: %v\n\n",
+							"**Stato attuale:**\n",
+							"- Punti Overheating: %v\n",
+							"- Effetti: %v\n",
 						},
 						user.DailyPoints, user.DailyEventPartecipations, user.DailyEventWins, user.DailyEventPartecipations-user.DailyEventWins,
 						float64(user.DailyPoints)/float64(user.DailyEventPartecipations), float64(user.DailyPoints)/float64(user.DailyEventWins), float64(user.DailyEventWins)/float64(user.DailyEventPartecipations),
@@ -597,11 +604,16 @@ func init() {
 						float64(user.TotalPoints)/float64(user.TotalEventPartecipations), float64(user.TotalPoints)/float64(user.TotalEventWins), float64(user.TotalEventWins)/float64(user.TotalEventPartecipations),
 						user.TotalChampionshipPartecipations, user.TotalChampionshipWins,
 						user.DailyPartecipationStreak, user.DailyActivityStreak,
+						user.OverheatingPoints,
 						user.StringifyEffects(false),
 					)
 				} else {
-					championshipStats := fmt.Sprintf(
-						"**Statistiche del campionato:**\n- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+					championshipStats := ComposeMessage(
+						[]string{
+							"**Statistiche del campionato:**\n",
+							"- Punti: %v\n- Partecipazioni: %v\n- Vittorie: %v\n\n",
+							"- Punti/Vittorie: %.2f\n- Vittorie/Partecipazioni: %.2f\n\n",
+						},
 						user.ChampionshipPoints, user.ChampionshipEventPartecipations, user.ChampionshipEventWins,
 						float64(user.ChampionshipPoints)/float64(user.ChampionshipEventWins), float64(user.ChampionshipEventWins)/float64(user.ChampionshipEventPartecipations),
 					)
@@ -616,11 +628,14 @@ func init() {
 							"%v",
 							"**Statistiche di sempre:**\n",
 							"- Streak partecipazioni: %v\n- Streak attività: %v\n\n",
+							"**Stato attuale:**\n",
+							"- Punti Overheating: %v\n",
 						},
 						user.DailyPoints, user.DailyEventPartecipations, user.DailyEventWins,
 						float64(user.DailyPoints)/float64(user.DailyEventWins), float64(user.DailyEventWins)/float64(user.DailyEventPartecipations),
 						championshipStats,
 						user.DailyPartecipationStreak, user.DailyActivityStreak,
+						user.OverheatingPoints
 					)
 				}
 
