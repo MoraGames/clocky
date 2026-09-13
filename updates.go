@@ -119,13 +119,8 @@ func run(utils types.Utils, data types.Data) {
 					}
 
 					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
-					if !hasPartecipated && !user.RegisterEventParticipation(event.Sequence) {
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Sei in overheating: la tua partecipazione non è stata considerata")
-						msg.ReplyToMessageID = update.Message.MessageID
-						data.Bot.Send(msg)
-						Users[update.Message.From.ID] = user
-						saveUsers(utils)
-						continue
+					if !hasPartecipated {
+						user.RegisterEventParticipation(event.Sequence)
 					}
 
 					// Check (and eventually update) the user effects
@@ -217,6 +212,7 @@ func run(utils types.Utils, data types.Data) {
 						if !event.ButtonCombo {
 							user.TotalPoints += event.Activation.EarnedPoints
 							user.TotalEventWins++
+							user.RegisterEventWin()
 							user.ChampionshipPoints += event.Activation.EarnedPoints
 							user.ChampionshipEventWins++
 							user.DailyPoints += event.Activation.EarnedPoints
@@ -274,15 +270,8 @@ func run(utils types.Utils, data types.Data) {
 
 					// Add partecipations to the user if they have never participated the event before
 					hasPartecipated := event.HasPartecipated(update.Message.From.ID)
-					if !hasPartecipated && !user.RegisterEventParticipation(event.Sequence) {
-						msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Sei in overheating: la tua partecipazione non è stata considerata")
-						msg.ReplyToMessageID = update.Message.MessageID
-						data.Bot.Send(msg)
-						Users[update.Message.From.ID] = user
-						saveUsers(utils)
-						continue
-					}
 					if !hasPartecipated {
+						user.RegisterEventParticipation(event.Sequence)
 						event.Partecipate(user, curTime)
 						user.TotalEventPartecipations++
 						user.ChampionshipEventPartecipations++
@@ -381,6 +370,7 @@ func handleButtonComboCallback(update tgbotapi.Update, receivedAt time.Time, uti
 	}
 	winner.TotalPoints += event.Activation.EarnedPoints + bonus
 	winner.TotalEventWins++
+	winner.RegisterEventWin()
 	winner.ChampionshipPoints += event.Activation.EarnedPoints + bonus
 	winner.ChampionshipEventWins++
 	winner.DailyPoints += event.Activation.EarnedPoints + bonus

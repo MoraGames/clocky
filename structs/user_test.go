@@ -69,41 +69,64 @@ func Test_RemoveUserEffect_SameEffectMultipleTimes(t *testing.T) {
 	ensureNotHasEffects(t, &user, &testEffect2)
 }
 
-func TestUserOverheatingStartsAfterFifteenConsecutiveParticipations(t *testing.T) {
+func TestUserOverheatingUsesBucketThresholds(t *testing.T) {
 	user := &User{}
-
-	for sequence := int64(1); sequence <= 15; sequence++ {
-		if !user.RegisterEventParticipation(sequence) {
-			t.Fatalf("participation %d should be allowed", sequence)
-		}
+	user.OverheatingPoints = 90
+	if user.IsOverheating() {
+		t.Fatal("user should not overheat at 90 points")
 	}
-	if user.Overheating {
-		t.Fatal("user should not overheat after exactly fifteen participations")
+	user.OverheatingPoints = 91
+	if !user.IsOverheating() {
+		t.Fatal("user should overheat above 90 points")
 	}
-	if !user.RegisterEventParticipation(16) {
-		t.Fatal("the participation activating overheating should be allowed")
+	if !user.RegisterEventParticipation(1) {
+		t.Fatal("overheating should not block participation")
 	}
-	if !user.Overheating {
-		t.Fatal("user should overheat after the sixteenth consecutive participation")
+	user.OverheatingPoints = 40
+	if !user.IsOverheating() {
+		t.Fatal("user should remain overheated at 40 points")
 	}
-	if user.RegisterEventParticipation(17) {
-		t.Fatal("user should not participate while overheated")
+	user.OverheatingPoints = 39
+	if user.IsOverheating() {
+		t.Fatal("user should leave overheating below 40 points")
 	}
 }
 
-func TestUserOverheatingEndsAfterFiveMissedEvents(t *testing.T) {
+func TestUserOverheatingUpdatesStreaksAndDecay(t *testing.T) {
 	user := &User{}
-	for sequence := int64(1); sequence <= 16; sequence++ {
-		user.RegisterEventParticipation(sequence)
+	user.RegisterEventParticipation(1)
+	user.RegisterEventWin()
+	user.RegisterEventParticipation(4)
+
+	if user.ChampionshipParticipationStreak != 1 || user.ChampionshipAbsenceStreak != 0 || user.ChampionshipWinStreak != 0 {
+		t.Fatalf("unexpected streaks: participation=%d absence=%d win=%d", user.ChampionshipParticipationStreak, user.ChampionshipAbsenceStreak, user.ChampionshipWinStreak)
+	}
+	if user.OverheatingPoints != -1 {
+		t.Fatalf("expected two absence decays and one win gain, got %d points", user.OverheatingPoints)
 	}
 
-	if user.RegisterEventParticipation(22) == false {
-		t.Fatal("user should be allowed to participate after missing five events")
+	user.RegisterEventWin()
+	if user.ChampionshipWinStreak != 1 || user.OverheatingPoints != 2 {
+		t.Fatalf("unexpected win streak or points: win=%d points=%d", user.ChampionshipWinStreak, user.OverheatingPoints)
 	}
-	if user.Overheating {
-		t.Fatal("user should no longer be overheated")
+	user.RegisterEventParticipation(5)
+	if user.ChampionshipAbsenceStreak != 0 || user.ChampionshipParticipationStreak != 2 {
+		t.Fatalf("unexpected streak reset: participation=%d absence=%d", user.ChampionshipParticipationStreak, user.ChampionshipAbsenceStreak)
 	}
-	if user.OverheatingParticipationStreak != 1 {
-		t.Fatalf("expected a new participation streak, got %d", user.OverheatingParticipationStreak)
+}
+
+func TestUserResetChampionshipOverheating(t *testing.T) {
+	user := &User{
+		ChampionshipParticipationStreak: 3,
+		ChampionshipWinStreak:           4,
+		ChampionshipAbsenceStreak:       5,
+		OverheatingPoints:               91,
+		Overheating:                     true,
+	}
+
+	user.ResetChampionshipOverheating()
+
+	if user.ChampionshipParticipationStreak != 0 || user.ChampionshipWinStreak != 0 || user.ChampionshipAbsenceStreak != 0 || user.OverheatingPoints != 0 || user.Overheating {
+		t.Fatalf("championship overheating statistics were not reset: %+v", user)
 	}
 }

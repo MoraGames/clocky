@@ -25,10 +25,12 @@ type User struct {
 	TotalChampionshipWins           int
 	DailyPartecipationStreak        int
 	DailyActivityStreak             int
+	ChampionshipParticipationStreak int
+	ChampionshipWinStreak           int
+	ChampionshipAbsenceStreak       int
+	OverheatingPoints               int
 	Overheating                     bool
-	OverheatingParticipationStreak  int
-	OverheatingMissedEventStreak    int
-	OverheatingLastEventSequence    int64
+	LastEventSequence               int64
 	Effects                         []*Effect
 	FirstParticipation              time.Time
 }
@@ -52,39 +54,55 @@ func NewUser(telegramUser *tgbotapi.User) *User {
 	return &User{TelegramUser: telegramUser, TelegramID: telegramUser.ID, UserName: DisplayName(telegramUser), Effects: make([]*Effect, 0), FirstParticipation: time.Now()}
 }
 
-const (
-	overheatingParticipationLimit = 15
-	overheatingRecoveryEvents     = 5
-)
-
 func (u *User) RegisterEventParticipation(eventSequence int64) bool {
-	if eventSequence <= u.OverheatingLastEventSequence {
-		return !u.Overheating
+	if eventSequence <= u.LastEventSequence {
+		return true
 	}
 
-	missedEvents := int(eventSequence - u.OverheatingLastEventSequence - 1)
+	for missed := u.LastEventSequence + 1; missed < eventSequence; missed++ {
+		u.ChampionshipParticipationStreak = 0
+		u.ChampionshipWinStreak = 0
+		u.ChampionshipAbsenceStreak++
+		u.OverheatingPoints += max(-2-(u.ChampionshipAbsenceStreak/12), -4)
+	}
+
+	u.ChampionshipParticipationStreak++
+	u.ChampionshipWinStreak = 0
+	u.ChampionshipAbsenceStreak = 0
+	u.LastEventSequence = eventSequence
+	u.updateOverheating()
+	return true
+}
+
+func (u *User) RegisterEventWin() {
+	u.ChampionshipWinStreak++
+	u.OverheatingPoints += 3 + (u.ChampionshipWinStreak / 6)
+	u.updateOverheating()
+}
+
+func (u *User) ResetChampionshipOverheating() {
+	u.ChampionshipParticipationStreak = 0
+	u.ChampionshipWinStreak = 0
+	u.ChampionshipAbsenceStreak = 0
+	u.OverheatingPoints = 0
+	u.Overheating = false
+}
+
+func (u *User) IsOverheating() bool {
+	u.updateOverheating()
+	return u.Overheating
+}
+
+func (u *User) updateOverheating() {
 	if u.Overheating {
-		if missedEvents >= overheatingRecoveryEvents {
+		if u.OverheatingPoints < 40 {
 			u.Overheating = false
-			u.OverheatingParticipationStreak = 0
-			u.OverheatingMissedEventStreak = 0
-		} else {
-			u.OverheatingMissedEventStreak += missedEvents
-			u.OverheatingLastEventSequence = eventSequence
-			return false
 		}
+		return
 	}
-
-	if missedEvents == 0 && u.OverheatingLastEventSequence != 0 {
-		u.OverheatingParticipationStreak++
-	} else {
-		u.OverheatingParticipationStreak = 1
-	}
-	u.OverheatingLastEventSequence = eventSequence
-	if u.OverheatingParticipationStreak > overheatingParticipationLimit {
+	if u.OverheatingPoints > 90 {
 		u.Overheating = true
 	}
-	return true
 }
 
 func (u *User) Minimize() *UserMinimal {

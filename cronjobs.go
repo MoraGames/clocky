@@ -277,6 +277,7 @@ func ChampionshipUserRewardAndReset(users map[int64]*structs.User, writeMsgData 
 			Users[userId].ChampionshipPoints = 0
 			Users[userId].ChampionshipEventPartecipations = 0
 			Users[userId].ChampionshipEventWins = 0
+			Users[userId].ResetChampionshipOverheating()
 		}
 	}
 
