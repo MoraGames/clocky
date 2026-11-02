@@ -44,6 +44,7 @@ var (
 		"Perfect Square":   perfectSquare,
 		"Equal Twins":      equalTwins,
 		"Half":             half,
+		"Blackjack":        blackjack,
 	}
 	Sets = SetSlice{
 		//{"Equal", "aa:aa", "static", false, equal},
@@ -61,6 +62,7 @@ var (
 		{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 		{"Equal Twins", "aa:bb", "static", false, equalTwins},
 		{"Half", "2*n:n", "static", false, half},
+		{"Blackjack", "a+b+c+d=21", "static", false, blackjack},
 	}
 	SetsJson = SetJsonSlice{}
 
@@ -84,6 +86,7 @@ var (
 			{"Perfect Square", "[unnamed]", "static", false, perfectSquare},
 			{"Equal Twins", "aa:bb", "static", false, equalTwins},
 			{"Half", "2*n:n", "static", false, half},
+			{"Blackjack", "a+b+c+d=21", "static", false, blackjack},
 		}
 	}
 )
@@ -201,4 +204,9 @@ func equalTwins(h1, h2, m1, m2 int) bool {
 // 2*n:n
 func half(h1, h2, m1, m2 int) bool {
 	return (h1*10 + h2) == (m1*10+m2)*2
+}
+
+// a+b+c+d=21, hell yeah
+func blackjack(h1, h2, m1, m2 int) bool {
+	return h1+h2+m1+m2 == 21
 }
